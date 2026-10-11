@@ -1,0 +1,26 @@
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.venv/
+build/
+dist/
+# versions.lock / versions.pc.lock are written per machine from versions.lock.template and stay
+# local (they hold host names and paths); see the per-machine block below.
+# Never commit game DLLs, the decompile, or third-party checkouts.
+decompiled/
+*.dll
+*.dylib
+*.so
+
+# Private: the third-party security review stays outside the public repo.
+docs/SECURITY_REVIEW.md
+# Community run data (Spire Codex exports) and other raw data are never committed.
+data/
+*.jsonl.gz
+# Per-machine outputs.
+results/
+bench/results/
+.cache/
+versions.lock
+versions.pc.lock

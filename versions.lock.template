@@ -1,0 +1,52 @@
+# versions.lock -- copy to versions.lock on each machine and fill in (it stays local and is
+# gitignored: it holds host names and paths); every record and label
+# carries sha256(versions.lock) (design v1.1 §3.5). Values in <angle brackets> are to fill.
+# Format: one `key = value` per line; comments with '#'. Do not reorder keys once pinned.
+
+[lock]
+schema = 1
+written = <YYYY-MM-DD>
+host = <mac-m1pro | pc-wsl2 | cloud-burst-<id>>
+spireline_commit = <git rev-parse HEAD>
+
+[game]
+version = 0.107.1
+steam_build = 23811903
+platform = <macos | windows>                     # the machine the live game runs on
+sts2_dll_sha256 = <sha256 of the installed sts2.dll>
+app_archive = <path of the ditto/zip archive of the pristine install>
+app_archive_sha256 = <sha256 of the archive>
+steam_auto_update = only-on-launch
+steam_cloud = off
+
+[emulator]                                        # r33hab/sts2, default branch spire-coach
+repo = https://github.com/r33hab/sts2
+commit = b7452170ce1df91de29d3c94acb11d87c7efc708
+patches = <space-separated sha256 of each patches/*.diff, in apply order; empty if none>
+decompile_tool = ilspycmd 8.2.0.7535
+decompile_sha256 = <sha256 over the sorted decompiled/ tree>
+dotnet_sdk = <dotnet --version>
+build_runtime = <osx-arm64 | linux-x64>           # scripts/build.sh supports both (build.sh:10-17)
+native_lib_sha256 = <sha256 of the built NativeAOT library>
+tests_csharp = <passed>/<total> (+<skipped> skipped) at pin   # FINDINGS says 4801/4801; HANDOFF 3,650 +1
+tests_python = <passed>/<total> (+<skipped> skipped) at pin   # FINDINGS says 526/527; HANDOFF 492 +6
+security_review = <sha256 of the private SECURITY_REVIEW.md, kept outside the repo> <go | fallback>
+
+[mod]                                             # r33hab/STS2MCP, branch spire-coach
+repo = https://github.com/r33hab/STS2MCP
+commit = 5a63f924f7e9dcbde4a1f70664e6d301c72e47c4
+schema_version = 4
+dll_sha256 = <sha256 of the STS2_MCP.dll built from source>
+manifest_sha256 = <sha256 of mod_manifest.json as installed>
+allow_hidden_state = false                        # STS2_MCP.conf; the adapter never sends ?hidden=1
+
+[fallback]                                        # only if the review fails (design §3.6 step 5)
+evangambit_sts2 = 37e4264
+cicero225_sts2mcp = <commit>
+
+[python]
+python = 3.12.<patch>
+venv = ~/.venvs/spireline
+uv = <uv --version>
+uv_lock_sha256 = <sha256 of uv.lock>
+firewall_policy_hash = <spireline.infoset.DEFAULT_POLICY.policy_hash>

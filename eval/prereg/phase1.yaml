@@ -1,0 +1,176 @@
+# Spireline pre-registration, Phase 1 (combat oracle + first regret report).
+# STATUS: DRAFT. Every value below is DRAFT until this file is frozen: commit it, record its
+# sha256 in LOG.md, and only then launch any Phase-1 battery or label run. After freezing,
+# changes go in a new version of this file with a dated reason in docs/DECISIONS.md.
+# Sources: design v1.1 (spireline-design-v1.1.md) §1.4, §4.1, §4.3, §4.5, §5.2, §7.1-7.4, §8.
+
+prereg_id: spireline-phase1
+version: "0.2-DRAFT"
+status: DRAFT
+drafted: 2026-10-10
+revised: 2026-10-11     # retargeted to A10, Acts 1-3, Defect first (docs/DECISIONS.md D11-D14)
+frozen: null            # date + commit when frozen
+
+pins:                   # must equal versions.lock at launch; versions_lock_hash filled at freeze
+  game_version: "0.107.1"
+  game_build: 23811903
+  emulator: "r33hab/sts2@b7452170ce1df91de29d3c94acb11d87c7efc708"   # plus patches/*.diff hashes
+  mod: "r33hab/STS2MCP@5a63f924f7e9dcbde4a1f70664e6d301c72e47c4"    # spire-coach branch, schema 4
+  versions_lock_hash: null
+  firewall_policy_hash: null   # FirewallPolicy.policy_hash at launch (all allow-lists empty today)
+
+scope:
+  primary_track: D      # Defect, A10, Acts 1-3 (D11, D12)
+  secondary_track: I    # Ironclad at A10, positions whose cards are all captured (0 UNSUPPORTED)
+  ascension: 10         # all ten Ascension modifiers on; no other ascension is reported (D11)
+  acts: [1, 2, 3]       # Act-1-first gates are steps on the way, not the scope (D11)
+  value_level: L0
+  value_units: "L0 points"     # 1 point = 0.01 of u_L0; never reported as pp of P(win)
+  llm_components: none         # docs/DECISIONS.md D7, D14: baselines B4/B5, LLM priors, E1 removed
+  run_layer_test_corpus: "Spire Codex public export v0.107.1, A10 subset (D13): test only, never trained or tuned on"
+
+seeds:                  # spireline/eval/seeds.py; tests/test_prereg.py checks these hashes
+  alphabet: "0123456789ABCDEFGHJKLMNPQRSTUVWXYZ"   # the game's: no I, no O (SeedHelper.cs:12-24)
+  length: 10
+  derivation: >-
+    seed(pool, block, i) = pool + 9 base-34 digits of
+    blake2b("spireline-v1:{pool}:{block}:{i}", digest_size=16), little-endian,
+    least significant digit first; a seed already in the block is skipped.
+  block_hash: 'sha256 over "\n".join(seeds) + "\n", prefixed "sha256:"'
+  pools:
+    T: {use: "self-play training", blocks: open}
+    E:
+      use: "promotion and baseline batteries: one fresh block per comparison, never reused"
+      block_size: 2000
+      n_blocks: 20
+      assignment:                 # DRAFT
+        E00: "Phase 0 B0/B1 Defect A10 baseline batteries (first discordance and time-per-floor estimates)"
+        E01-E19: "one per promotion or pre-registered battery, in order; record each use in LOG.md"
+      block_hashes:
+        E00: "sha256:ce19cd1c62aff087545240a6670a4cd8019386878eb6bf67aafa4c45ffe31df3"
+        E01: "sha256:8a3c8b0bb33a7cd3bd07e599126c1c91997f893e7c28bbfea108e1b071c12c98"
+        E02: "sha256:b730ef33e4a21a763707d6ff3050f286bc82d94a720bf8216c346094a06f6c4b"
+        E03: "sha256:0a15bed1ae1c8cc89fe7c0900c32eb2a3a92176da3ca95cdfa50275232f85737"
+        E04: "sha256:9e4dadc327e8304a4955e75f102b624d5e1b86e61b92e341feacc80548441fe6"
+        E05: "sha256:e824e46dc09007ae57e1da348ac71d22057ca11e88dc4f06773b921600bc2704"
+        E06: "sha256:1b2a8c41243d4ede5d56961ad4f31bbac37a6334631bf68eccd135a8087f201e"
+        E07: "sha256:8f4624d1134a30ac3abeb7ef765094bc98bfb9743460bdbd29503b12ccc3d6d9"
+        E08: "sha256:b9fe384e54830fdfff6aacc567c926500ffdaace9ae7b40a26363adf669fdf59"
+        E09: "sha256:e7bfbdb35d1c99a24868a914137d3441404c383474187e319c40f9d842a8bd3a"
+        E10: "sha256:98bab8f19d04094765d2bddd3b0bbbe1fa64f17473318c9dc793de98a3c09fd8"
+        E11: "sha256:82c6e8f5c73b40150b2988d3c3560b23e8b892bd09bd66d8ed867049f78fcb51"
+        E12: "sha256:1d0d5406ae69b6951a6f69415fbaca8d39bd6d22435ef47bb6321879b61e7497"
+        E13: "sha256:83b70a8672c869c656dd1d17c0bbe44ae7bd21e9ddb05f34a6229bd3a20ef652"
+        E14: "sha256:bcaa756420fdb48bc086c4ee0caa7884c7b88b48fd816d6307b3cb6c56984e7a"
+        E15: "sha256:373402b074953380a12b21799700839b3decb909d41d53a1126c655b23f83904"
+        E16: "sha256:79365a4b09d0207b0fda150c2b96f475fd17fcbaaf6bfcd29f295f7f47081f31"
+        E17: "sha256:df8056ee476e9003313cd1016934cd4f9eb364ff13bb7311f80a2f351fc2b503"
+        E18: "sha256:394e201db6b44966205b979dd898aa6f776b465c34c21467c7d5773a0fa471e7"
+        E19: "sha256:15c35e706d46a18e88ff3197e22fc06a4ea58797f58f87242840e72f90195089"
+    F:
+      use: "final test: touched once per phase gate, never for tuning or promotion"
+      block_size: 2000
+      n_blocks: 1
+      block_hashes:
+        F00: "sha256:c98d3c0f1c67fc8472243e7653e1909b99fbdc37e7df716dea5a1274eec48941"
+    P: {use: "oracle positions (SpireBench self-play sources)", blocks: open}
+  spirebench_manifest: "MANIFEST.sha256 over the test split's position ids, written before any test-split scoring"
+
+tier_a:                 # §4.5, §7.1
+  track_D: {silver: 1000, dev: 600, test: 400, gold: 200}     # gold is a subset of silver
+  track_I: {silver: 400, dev: 250, test: 150}
+  mix: {boss: 0.40, elite: 0.30, hallway: 0.30}                # bosses and elites oversampled 2x
+  position_sources: [play_agent_self_play, rules_policy, epsilon_perturbed_play, tier_L_live]
+  stratify_by: [act, fight_type, turn_index]
+  bronze:
+    volume: 100000
+    continuation: tempo_rollout
+    keep_if: "Kendall tau vs silver >= 0.6 on decisive positions"
+  silver:
+    continuation: "PLAY@60"
+    min_fresh_worlds_per_survivor: 100
+    target_half_width_L0_points: 1.0
+  gold:
+    continuation: "PLAY@300"
+    target_half_width_L0_points: 0.5
+    requires: [stability_vs_B8_continuation, zero_fidelity_flags, ai_particles_not_assumed, referee_spot_check_2pct]
+
+tier_b:                 # Phase 2; listed so the cost-cut rule below has its referent. Act 1 first (a step, D11)
+  silver: {n: 300, dev: 180, test: 120, act: 1, method: "V_run + paired deck fights (3 x 8 x 8)"}
+  gold: {n: 80, dev: 50, test: 30, act: 1, method: "PLAY-lite act rollouts + AIVAT control variate",
+         target_half_width_pp: 2.0}
+
+epsilon:                # §1.4 verdict table
+  QUICK_combat:   {quantity: "Q^tempo",    level: L0, epsilon: 1.0, units: "L0 points"}
+  DEEP_combat:    {quantity: "Q^PLAY@16",  level: L0, epsilon: 1.0, units: "L0 points"}
+  silver_label:   {quantity: "Q^PLAY@60",  level: L0, epsilon: 1.0, units: "L0 points"}
+  gold_label:     {quantity: "Q^PLAY@300", level: L0, epsilon: 0.5, units: "L0 points"}
+  QUICK_macro:    {quantity: "V_run + paired deck fights", level: L1, epsilon: 2.0, units: "pp P(clear act)"}
+  tier_b_gold:    {quantity: "act rollouts", level: L1, epsilon: 2.0, units: "pp P(clear act)"}
+  L2:             {quantity: "P(win)", level: L2, epsilon: 1.0, units: "pp P(win)", allowed_when: "pi_ref >= 10% wins and V_run passes Brier skill"}
+
+verdict_rules:          # spireline/api.py classify_verdict
+  DECISIVE: "LCB(gap) > 0 and point gap >= epsilon"
+  CLOSE: "gap CS inside [-epsilon, +epsilon]"
+  UNCERTAIN: "budget exhausted first"
+  UNSUPPORTED: "any uncaptured/divergent/unimplemented content, a converter warning, or a one-step fidelity alarm in this fight"
+
+search:                 # §4.1
+  candidates: {dfs_cap: 5000, prescore_tempo_rollouts: 4, keep: 16, always_keep: [lethal_lines, end_turn_now]}
+  stage1_screening:
+    schedule: ["16x32", "8x64", "4x128", "2x256"]     # candidates x CRN worlds
+    keep_rule: "up to 6 candidates whose UCB reaches the leader's LCB; minimum 3"
+  stage2_estimation: {worlds: "equal and fresh per survivor (cross-fitted)", racing: "paired top-2 difference with a time-uniform CS"}
+
+recall_thresholds:      # §4.1, §7.1
+  candidate_recall: {min: 0.98, dev_positions: 200, reference: "64-candidate run"}
+  screening_recall: {min: 0.98, dev_positions: 200, reference: "Stage 2 on all 16 candidates",
+                     on_fail: "Stage 1 switches to PLAY@16 continuation"}
+
+label_validity:         # §7.1, dev split only
+  label_noise_floor_L0_points: {max: 0.3, method: "re-label every position on fresh worlds"}
+  budget_x4_stability: {max_argmax_change_among_decisive: 0.05}
+  within_family_continuation: ["PLAY@60", "PLAY@300", "PLAY@1500"]
+  cross_family_continuation: {reference: B8, positions: 200, on_disagree: "tag continuation_sensitive, exclude from top-1"}
+  currency_stability: {compare: [V_run_bot, HP_only_L0, vrun_human], on_disagree: "tag currency_sensitive"}
+  currency_sensitive_tag: "potions_held >= 2 or a potion among the candidates"
+
+statistics:
+  alpha: 0.05
+  ci_method_paired_differences: "empirical-Bernstein CS, Howard et al. 2021 (stitched, eta=2, s=1.4), range [-1, 1]"
+  ci_method_unit_interval: "hedged betting CS, Waudby-Smith & Ramdas, predictable plug-in, trunc 1/2"
+  coverage_requirement: ">= 0.95 under optional stopping, by simulation (tests/test_confseq_coverage.py)"
+  regret_bound: "max(0, max_{b != a_hat} UCB(b) - LCB(a_hat)), Bonferroni across survivors, survivors only"
+  cluster_bootstrap_unit: fight
+  open_issue: >-
+    DRAFT. With the a-priori range [-1, 1], both time-uniform CSs need far more worlds than
+    the §4.3 fixed-n estimates (35-246 worlds for h = 1 point at sigma = 3-8 points): measured
+    750-850 (betting) and 2,100-3,700 (EB) worlds. Decide before freezing: see LOG.md 2026-10-10.
+
+metrics:                # §7.2
+  primary: "mean per-decision regret (L0 points) on Track D Tier-A test, cluster bootstrap by fight"
+  secondary:
+    - "blunder rate P(regret > epsilon) and P(regret > 5 epsilon), paired exact McNemar"
+    - "top-1 on decisive, non-continuation-sensitive positions (CLOSE-set actions count as correct)"
+    - "p90 and p99 regret"
+  breakdowns: [decision_type, act, encounter]
+  target_effect_L0_points: {min: 0.5, max: 1.0}     # never 0.2
+  assumed_paired_sigma_L0_points: [3, 5]            # until the week-3 pilot measures it
+  mde_at_n400_L0_points: [0.42, 0.70]
+
+baselines: [B0, B1, B2_track_I_only, B3, B7_user, B8]     # B4/B5 (LLM) removed by D7
+
+cost_cut_rule:          # §4.3, pre-registered
+  pilot: "week-3 Tier-A pilot, 100 positions: measures sigma, survivors/position, cost, noise floor"
+  central_estimates: {silver_core_min: 8, gold_core_min: 45, tier_b_gold_core_h: "1.8-7.2"}
+  trigger: "pilot central cost > 2x the estimate"
+  action: {tier_a_silver: "1000 -> 600 (Track D)", tier_b_gold: "80 -> 50"}
+
+phase1_gate:            # §8, all relative and pre-registered
+  - "label-noise floor < 0.3 L0 points"
+  - "budget x4 stability >= 95%"
+  - "screening and candidate recall >= 98%"
+  - "Gumbel@n regret <= PUCT at matched wall-clock"
+  - "F1 passes on Defect A10 tapes (>= 50, 100% match, in every act the tapes reach)"
+  - "F5 >= 98% exact on deterministic actions, per act (Acts 1-3)"
+  - "P1a `spireline review` shipped by week 5"

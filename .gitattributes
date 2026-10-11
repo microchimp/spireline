@@ -1,0 +1,2 @@
+# LF everywhere, so pc-setup/SHA256SUMS and the shell scripts survive a Windows checkout.
+* text=auto eol=lf

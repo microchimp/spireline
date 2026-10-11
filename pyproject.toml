@@ -1,0 +1,35 @@
+[project]
+name = "spireline"
+version = "0.0.1"
+description = "Honest search for the best play in Slay the Spire 2 at Ascension 10 (v0.107.1): information-set firewall, CRN search, anytime-valid statistics."
+readme = "README.md"
+requires-python = ">=3.12,<3.13"
+license = { text = "MIT" }
+authors = [{ name = "microchimp", email = "64133043+microchimp@users.noreply.github.com" }]
+dependencies = [
+    "numpy>=2.0",
+    "scipy>=1.13",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+]
+
+[build-system]
+requires = ["hatchling>=1.25"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["spireline"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra --strict-markers"
+markers = [
+    "slow: simulation tests (still < 20 s in total)",
+]
+
+[tool.uv]
+# The environment lives outside the repo: ~/.venvs/spireline (never the base Anaconda python).
+# Install:  uv pip install --python ~/.venvs/spireline/bin/python -e '.[dev]'
