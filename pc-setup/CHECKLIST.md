@@ -1,5 +1,7 @@
 # Spireline gaming PC setup: checklist
 
+> **On native Windows (no WSL)?** Follow [WINDOWS.md](WINDOWS.md) instead of this checklist.
+
 Do these steps in order. Total time is about 4 to 5 hours of your attention, plus about 2 hours of unattended benchmark time (part F). Steps E and F wait for your security-review decision. Everything here is done by you at the PC. Nothing in this kit has been run yet.
 
 Placeholders: `<you>` is your Windows user name. `<ubuntu-user>` is the Linux user you create in B2.
