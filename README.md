@@ -127,5 +127,5 @@ inside WSL2 Ubuntu, with Claude Code sandboxed there and reachable through Remot
 Follow `pc-setup/CHECKLIST.md`, parts A to F, in order. `pc-setup/README.md` explains each file
 and the sandbox settings. The kit ships inside this repo, so cloning it (CHECKLIST D0) is
 enough to bring the kit over. The security review that gates the emulator build (part E) is
-private and is not in this repo. If you are not the maintainer, review the pinned commits
-yourself before building them.
+in [docs/SECURITY_REVIEW.md](docs/SECURITY_REVIEW.md). It covers only the pinned commits; review
+any other commit yourself before building it.

@@ -26,16 +26,16 @@ Current target (D11, D12): **Ascension 10, all ten modifiers on, Acts 1-3, Defec
 
 ## D3 · 2026-10-10 · Reuse the emulator and mod only after review
 
-- No third-party code is built, installed, imported or run before a private review records a
+- No third-party code is built, installed, imported or run before a review records a
   go decision (§3.6).
 - Build from source only; artefact hashes go in `versions.lock`.
 - Fallback if the review fails: evangambit/sts2 + cicero225/STS2MCP with our own converter
   (+15-25 h), spire-coach dropped.
 - Spireline's own code imports none of it. The firewall was written by reading the mod's C#
   at the pinned commit (citations in `spireline/infoset/firewall.py`).
-- Note (2026-10-11): the review is private and is not part of the public repo
-  (`docs/SECURITY_REVIEW.md` is gitignored). `pc-setup/build-emulator.sh` still asks for a
-  typed GO when the file is absent.
+- Note (2026-10-11): the review was first kept private.
+- Note (2026-10-12): a scrubbed copy is now published as `docs/SECURITY_REVIEW.md` so agents on
+  the PC can read it. `pc-setup/build-emulator.sh` shows its verdict and still asks for a typed GO.
 
 ## D4 · 2026-10-10 · Combat-local L0 value first
 

@@ -71,6 +71,8 @@ Refuse to build if either check fails. (For the live-game day later: r33hab/STS2
 
 ## 5. Never run these from the emulator repo
 
+These come from the security review, [docs/SECURITY_REVIEW.md](../docs/SECURITY_REVIEW.md) (conditions E2 and M8). Read its verdict before section 6.
+
 - `scripts/desktop_setup.sh`, `desktop_fight_job.sh`, `night_train.sh`, `fight_loop_rounds.sh`, `lint-and-test.sh`, `scripts/ralph/ralph.sh`
 - `decompile.sh`, `patch_update.sh`, `patch_refresh.py --apply`
 - any `capture_*`, `trace_real_game*`, `validate_real_game_*`, `combat_sweep`, `start_real_game_run` or `compare_draw_pile` script against a live game

@@ -4,7 +4,7 @@ This folder turns the always-on Windows gaming PC (RTX 3080 Ti) into the Spireli
 
 None of these scripts has been run on the PC yet. They were syntax-checked on the Mac (`bash -n`), and only the review gate of `build-emulator.sh` (its step 1) was exercised there, in a scratch home folder.
 
-The kit ships inside the public Spireline repo (CHECKLIST D0), so `git clone https://github.com/microchimp/spireline` brings it along. The security review it refers to does not: that review is private and stays on the Mac.
+The kit ships inside the public Spireline repo (CHECKLIST D0), so `git clone https://github.com/microchimp/spireline` brings it along. The security review it refers to is in the same repo, at `docs/SECURITY_REVIEW.md`.
 
 ## The files
 
@@ -14,7 +14,7 @@ The kit ships inside the public Spireline repo (CHECKLIST D0), so `git clone htt
 | `spec-check.ps1` | Windows PowerShell | Reports the PC's CPU, RAM, GPU, VRAM, driver, Windows build, free disk, power and update settings, WSL state, and the Slay the Spire 2 install. That includes the Steam `buildid` from `appmanifest_2868840.acf` and the `sts2.dll` sha256. It prints a `.wslconfig` sized to the machine. **It changes nothing.** |
 | `wsl-bootstrap.sh` | Ubuntu (WSL2) | One-time setup, safe to re-run. It installs the apt packages needed by .NET NativeAOT, the .NET SDK and the Claude Code sandbox. It installs the .NET 9 SDK in `~/.dotnet`, but only after checking Microsoft's GPG signature on `dotnet-install.sh`. It installs uv and Python 3.12. It checks the GPU, the sandbox prerequisites and WSL interop, then prints a summary. It uses `sudo` for `apt` only. |
 | `clone-pinned.sh` | Ubuntu | Downloads the two reviewed third-party repos at their exact pinned commits into `~/src`. It refuses if the commit or tree hash differs, and it builds nothing. |
-| `build-emulator.sh` | Ubuntu, in your own terminal | Shows the verdict line from `SECURITY_REVIEW.md` if the file is on the PC (the default path or a path you pass). If it isn't, it prints a note that the private review lives on the Mac. Either way it waits for you to type `GO`. It then builds the emulator with the repo's own script, runs both test suites, and writes the test counts and the library's sha256 to `~/src/versions.lock`. |
+| `build-emulator.sh` | Ubuntu, in your own terminal | Shows the verdict line from `SECURITY_REVIEW.md` if the file is on the PC (the default path or a path you pass). If it isn't, it prints a note asking you to read the review first. Either way it waits for you to type `GO`. It then builds the emulator with the repo's own script, runs both test suites, and writes the test counts and the library's sha256 to `~/src/versions.lock`. |
 | `rc-launch.sh` | Ubuntu | Keeps `claude remote-control --name gaming-pc` running in `~/code` inside a tmux session (`spireline-rc`). It restarts with backoff, resumes the same phone session with `--continue` when it can, and logs to `~/logs/rc.log`. Also has `status`, `attach`, `stop`, `restart`, `fresh` and `env`. |
 | `claude-settings.json` | Copied to `~/.claude/settings.json` in Ubuntu | Claude Code's user settings for the PC. It turns the sandbox on in strict mode, blocks destructive and data-leaking commands, asks before network and push actions, and blocks bypass mode. |
 | `README.md` | You read it | This file. |

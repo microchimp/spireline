@@ -3,8 +3,8 @@
 #
 # What it does, in order:
 #   1. Security-review gate. With a review file (passed as the first argument, or found at the
-#      default path) it prints the review's verdict line(s). Without one it prints a note that
-#      the review is private and lives on the Mac. Either way it waits for you to type GO.
+#      default path) it prints the review's verdict line(s). Without one it prints a note asking
+#      you to read the review first. Either way it waits for you to type GO.
 #   2. Re-checks that ~/src/sts2 is still the pinned, clean checkout (commit + tree hash).
 #   3. Builds the NativeAOT library with the repo's own script:  bash scripts/build.sh linux-x64
 #      (scripts/build.sh:10-28 -> dotnet publish src/Sts2Emulator/Sts2Emulator.csproj -c Release
@@ -23,8 +23,8 @@
 # than HANDOFF.md reports (it was written on a machine that had decompiled/).
 #
 # Usage:  bash ~/pc-setup/build-emulator.sh [path/to/SECURITY_REVIEW.md]
-#         default review path: ~/code/spireline/docs/SECURITY_REVIEW.md (gitignored: the review is
-#         private and is NOT in the public repo, so on a fresh clone it is normally absent)
+#         default review path: ~/code/spireline/docs/SECURITY_REVIEW.md (published in the
+#         Spireline repo, so a fresh clone has it)
 # Environment (optional): EMU_DIR=~/src/sts2  MOD_DIR=~/src/STS2MCP  VERSIONS_LOCK=~/src/versions.lock
 # Run it yourself, in a terminal. It refuses to run without one, so an agent cannot type GO for you.
 set -euo pipefail
@@ -83,10 +83,9 @@ else
   verdict_line="not shown: no review file on this PC"
   cat <<NOTE
 NOTE: there is no SECURITY_REVIEW.md on this PC (looked for $REVIEW).
-      That is expected. The security review of the pinned third-party code is private: it
-      lives on the Mac and is not in the public Spireline repo. Read its verdict there
-      before you go on. This script cannot show or check that verdict for you.
-      To show the verdict line here, copy the review over yourself and pass its path:
+      The review of the pinned third-party code is published in the Spireline repo at
+      docs/SECURITY_REVIEW.md. Read its verdict before you go on.
+      To show the verdict line here, pass the review's path:
         bash ~/pc-setup/build-emulator.sh /path/to/SECURITY_REVIEW.md
       If the verdict is no-go or fallback, stop now (CHECKLIST E1).
 NOTE
@@ -95,7 +94,7 @@ echo
 if [ "$have_review" = 1 ]; then
   prompt="Type ${need} to build and test the emulator (anything else stops): "
 else
-  prompt="Type ${need} only if you have read the review's verdict on the Mac and it allows this build (anything else stops): "
+  prompt="Type ${need} only if you have read the review's verdict and it allows this build (anything else stops): "
 fi
 read -r -p "$prompt" answer
 [ "$answer" = "$need" ] || die "not confirmed; nothing was built"
@@ -227,7 +226,7 @@ mod_commit: $MOD_COMMIT
 mod_tree: $MOD_TREE
 mod_checkout_on_this_pc: $mod_state
 
-security_review: $([ "$have_review" = 1 ] && echo "$REVIEW" || echo "not on this PC (private review kept on the Mac)")
+security_review: $([ "$have_review" = 1 ] && echo "$REVIEW" || echo "not found on this PC")
 security_review_sha256: $review_sha
 security_verdict_line: "$verdict_line"
 confirmed_with: "$need"

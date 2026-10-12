@@ -13,8 +13,6 @@ decompiled/
 *.dylib
 *.so
 
-# Private: the third-party security review stays outside the public repo.
-docs/SECURITY_REVIEW.md
 # Community run data (Spire Codex exports) and other raw data are never committed.
 data/
 *.jsonl.gz

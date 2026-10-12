@@ -109,3 +109,7 @@ fixed-n width, valid as t grows; (c) accept the cost and cut volumes. Nothing ch
    same summary line.
 3. Record CPU/RAM and the WSL2 kernel in `versions.lock` (from the template).
 4. `bench/` (separate workstream) has its own README for the day-4 measurements.
+
+## 2026-10-12
+
+Published a scrubbed copy of the third-party security review as `docs/SECURITY_REVIEW.md`, so agents on the PC can read it, and updated the README, DECISIONS (D3), the checklist and `build-emulator.sh` to point to it. It adds a note that on native Windows the offline first build in `pc-setup/WINDOWS.md` section 6 replaces the WSL2 containment.
