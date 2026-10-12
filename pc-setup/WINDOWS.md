@@ -76,19 +76,32 @@ Refuse to build if either check fails. (For the live-game day later: r33hab/STS2
 - any `capture_*`, `trace_real_game*`, `validate_real_game_*`, `combat_sweep`, `start_real_game_run` or `compare_draw_pile` script against a live game
 - `bun install`, or anything under the mod repo's `mcp/` or `.claude/`
 
-## 6. Build and test (Git Bash, from `D:\spireline\src\sts2`)
+## 6. Build and test, offline the first time (Git Bash, from `D:\spireline\src\sts2`)
+
+On native Windows there is no sandbox around the build and tests, so the first build and both test suites run with the network off. Fetch everything first, then disconnect, then build and test. Keep GitHub tokens, SSH keys and other credentials off this PC until this step has passed. For stronger isolation, do the work in a separate standard (non-admin) Windows user.
+
+**a. Online: fetch only.** Downloads packages without running project code.
 
 ```bash
 export DOTNET_CLI_TELEMETRY_OPTOUT=1 DOTNET_NOLOGO=1
-bash scripts/build.sh win-x64                 # produces out/Sts2Emulator.dll
-dotnet test src/Sts2Emulator.Tests/           # upstream reports 3,650 pass + 1 skipped; takes several minutes
+dotnet restore src/Sts2Emulator/Sts2Emulator.csproj -r win-x64
+dotnet restore src/Sts2Emulator.Tests/
+uv sync --frozen --no-build        # into the checkout's own .venv; about 2.7 GB of PyTorch CUDA wheels
 ```
 
-Python, into the checkout's own `.venv` only:
+Before that `uv sync`, check the pins in `uv.lock` against osv.dev for known vulnerabilities. `--no-build` installs wheels only, so no package code runs during the install.
 
-1. Before the first sync, check the pins in `uv.lock` against osv.dev for known vulnerabilities.
-2. `uv sync --frozen --no-build`. The first run downloads about 2.7 GB of PyTorch CUDA wheels.
-3. `uv run python -m unittest discover -s tests/python`. Upstream reports 492 pass + 6 skipped; expect more skips here, because `decompiled/` is absent.
+**b. Disconnect the network.** Turn off Wi-Fi and unplug Ethernet, or disable the adapter.
+
+**c. Offline: build and test.** This is the same command `scripts/build.sh win-x64` runs, plus `--no-restore`.
+
+```bash
+dotnet publish src/Sts2Emulator/Sts2Emulator.csproj -c Release -r win-x64 --self-contained --no-restore -o out/
+dotnet test src/Sts2Emulator.Tests/ --no-restore              # upstream reports 3,650 pass + 1 skipped; several minutes
+uv run --frozen --offline python -m unittest discover -s tests/python   # upstream: 492 pass + 6 skipped; expect more skips here (no decompiled/)
+```
+
+If a step complains about a missing package, reconnect, re-run step a, and disconnect again. Reconnect the network once the results below are recorded.
 
 Don't play games on the PC while the tests run; a few tests are timing-sensitive.
 
