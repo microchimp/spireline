@@ -4,7 +4,8 @@ Each entry: date, decision, why, and what it supersedes. Design references are t
 `spireline-design-v1.1.md` (2026-10-10), which is kept outside this repo. A decision is
 changed only by a new dated entry that names the one it replaces.
 
-Current target (D11, D12): **Ascension 10, all ten modifiers on, Acts 1-3, Defect first.**
+Current target (D11, D15): **Ascension 10, all ten modifiers on, Acts 1-3, Ironclad first, then
+every character.**
 
 ## D1 · 2026-10-10 · Pin StS2 v0.107.1, Steam build 23811903
 
@@ -146,3 +147,38 @@ Current target (D11, D12): **Ascension 10, all ten modifiers on, Acts 1-3, Defec
 - Adding one needs a new dated entry here and a demonstrated benefit: a paired,
   pre-registered win on a fresh E-block under the same gates as any other component (D5).
   `CONTRIBUTING.md` says the same.
+
+## D15 · 2026-10-13 · Ironclad first; the goal is any character at A10
+
+- Start with the character the emulator is closest to A10 wins on, which is the Ironclad: it is
+  the only character the emulator can play whole runs with at `b745217` (`native.run_reset` takes
+  no character; `RunEngine` starts every run with the Ironclad's HP, deck and Burning Blood), and
+  upstream's real-A10 run work (double boss, act-scaled reward upgrades) and all its full-run
+  traces are Ironclad. No character has an A10 win in the emulator yet.
+- The goal is to show the method works for **any** character at A10. Each further character
+  follows once the emulator plays its whole runs and it passes the same fidelity gates.
+- Why D12's reason no longer decides it: D12 picked the Defect for its 88/88 captured cards, but
+  upstream now reports all five card pools captured, and whole runs, not card pools, are what
+  limit A10 runs.
+- Supersedes: D12 ("Defect is the primary character", "other characters wait until Defect
+  passes"). The DRAFT `eval/prereg/phase1.yaml` still says Defect (`primary_track`, E00, F1) and
+  is retargeted when it is next revised.
+
+## D16 · 2026-10-13 · Our own simulator fork, refereed by the game's own code
+
+- The goal now is a **high-fidelity simulator with complete coverage**: every character, act,
+  ascension and piece of content, verified against the game. Search and agent work wait for it.
+- Spireline no longer depends on upstream. Its simulator is our fork of r33hab/sts2, starting at
+  the reviewed `b745217`. Upstream keeps changing outside our control, so it is watched
+  (`scripts/upstream_watch.py`), and a change is taken only if it helps fidelity or coverage,
+  after its diff has been read (security review §7.1).
+- Fork patches are pushed to the fork automatically once its tests pass. Fixes that would help
+  upstream or other projects are offered to them as PRs.
+- The fidelity reference is the game's own code: `sts2.dll` from the archived build, run
+  headless, compared with the emulator after every action, every RNG stream included. It runs
+  only after `docs/SECURITY_REVIEW_ADDENDUM_1.md` records the owner's GO (D3).
+- The referee harness is published so others can run it on their own copy of the game. No game
+  files, assets or decompiled source are ever published (`CONTRIBUTING.md` rule 2, review R1).
+- Supersedes: "wait for upstream ports" in D1 (the fork ports changes itself). The emulator pin in
+  D1 and `spireline/__init__.py` stays `b745217` until the fork's first tested build. D3's review
+  covers the fork's base; every later upstream pick is read before it is taken.

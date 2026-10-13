@@ -1,7 +1,7 @@
 # Spireline
 
 Spireline tries to certify the best play in Slay the Spire 2 at **Ascension 10** (all ten
-modifiers on), **Acts 1-3**, starting with **the Defect**. It is pinned to game
+modifiers on), **Acts 1-3**, starting with **the Ironclad** and then every character (D15). It is pinned to game
 **v0.107.1 (Steam build 23811903)** and uses only what the player can know. "Best" means the
 action with the highest estimated value over the player's information set. That value comes
 from honest search on the r33hab/sts2 emulator, with hidden information resampled. Each answer
@@ -12,11 +12,13 @@ later, and only when the ledger calls for them. There are no LLM components and 
 end-to-end RL. The decisions so far are in `docs/DECISIONS.md`. The design document
 (`spireline-design-v1.1.md`) is kept outside this repo.
 
-**Status (2026-10-11): early scaffold. Nothing has been run against the real game or the
-emulator yet.** The interfaces, the information-set firewall, canary audits, the statistics
-and the DRAFT Phase-1 pre-registration exist and are tested. There is no emulator adapter,
-mod adapter or search code yet. No third-party code has been built or run (D3). The PC setup
-kit and the benchmark scripts are written but untested.
+**Status (2026-10-13): building the simulator first (D16).** The emulator (r33hab/sts2 @
+`b745217`) is built natively on Windows after the security review's GO (D3), its upstream test
+suites have run, and the day-4 benchmarks have run (`bench/`). Spireline's simulator is now its
+own fork of that emulator, to be refereed by the game's own code run headless. Nothing has been
+run against the real game yet. The interfaces, the information-set firewall, canary audits, the
+statistics and the DRAFT Phase-1 pre-registration exist and are tested; there is no search code
+yet.
 
 ## Disclaimer
 
@@ -59,7 +61,7 @@ kit and the benchmark scripts are written but untested.
 
 ```
 spireline/
-  __init__.py          pins (game build, emulator and mod commits) and the target: A10, Acts 1-3, Defect
+  __init__.py          pins (game build, emulator and mod commits) and the target: A10, Acts 1-3, Ironclad first
   api.py               §2.2 protocols (Engine, AiBelief, Prior, RunValue, Searcher), SemAction,
                        Handle, StepResult, Budget, the §1.4 Decision contract, verdict rules,
                        the units ladder and the ε table

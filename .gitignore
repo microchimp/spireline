@@ -22,3 +22,6 @@ bench/results/
 .cache/
 versions.lock
 versions.pc.lock
+
+# Claude Code per-user settings.
+.claude/settings.local.json
