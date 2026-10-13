@@ -1,7 +1,7 @@
 # Security review addendum 1: our fork, and the game's own code as referee
 
-> **Decision: PENDING.** Nothing in section 3 runs until the owner records GO at the end of this
-> file (decision D3). Sections 1 and 2 extend conditions the review already set.
+> **Decision: section 1 GO (2026-10-13); sections 3 and 4 PENDING.** Nothing in section 3 runs until the
+> owner records GO at the end of this file (decision D3). Sections 1 and 2 extend conditions the review already set.
 
 - **Date:** 2026-10-13, on the Windows PC.
 - **Basis:** `docs/SECURITY_REVIEW.md` (the review of r33hab/sts2 @ `b745217` and r33hab/STS2MCP @
@@ -79,7 +79,7 @@ might touch while doing so.
 
 | Item | Decision | Date | By |
 |---|---|---|---|
-| Section 1 (fork builds: who runs them, F3) | PENDING | | |
-| Section 1 (repository visibility, F5) | PENDING | | |
+| Section 1 (fork builds: who runs them, F3) | GO: Claude builds and tests the fork (Option A), offline from the recorded package cache | 2026-10-13 | owner, in chat |
+| Section 1 (repository visibility, F5) | Private repository `microchimp/spireline-sim`; read access on request (issue template), and for upstream (r33hab) | 2026-10-13 | owner, in chat |
 | Section 3 (referee, stages H1-H8) | PENDING | | |
 | Section 4 (publishing the harness) | PENDING | | |

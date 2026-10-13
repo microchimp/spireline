@@ -9,8 +9,10 @@ is reported with its unit, a time-uniform confidence sequence, a survivor-scoped
 and a verdict (DECISIVE / CLOSE / UNCERTAIN / UNSUPPORTED). Phase 1 values are combat-local
 **L0 points**, never P(win). Learned parts (a Gumbel ExIt prior and a DMC run value) come
 later, and only when the ledger calls for them. There are no LLM components and no
-end-to-end RL. The decisions so far are in `docs/DECISIONS.md`. The design document
-(`spireline-design-v1.1.md`) is kept outside this repo.
+end-to-end RL. The decisions so far are in `docs/DECISIONS.md`; the design is `docs/DESIGN.md`, and the
+current simulator plan is `docs/SIMULATOR.md`. The simulator itself is a private repository
+(`microchimp/spireline-sim`); to get read access, open an issue with the "Request access to the
+simulator" template.
 
 **Status (2026-10-13): building the simulator first (D16).** The emulator (r33hab/sts2 @
 `b745217`) is built natively on Windows after the security review's GO (D3), its upstream test

@@ -2,6 +2,8 @@
 
 This file lists ideas for making Spireline cheaper, faster or more trustworthy. Seven independent research lenses produced them in October 2026: online resources, local game files, fidelity verification, search, learning, compute and process. The raw list had 59 ideas. Here, near-duplicates are merged (52 remain), each idea gets a rough priority, and ideas are grouped by the pipeline stage they act on.
 
+**Written before D15 and D16 (2026-10-13).** Ideas that assume Defect first, the sts2-cli fork as referee, or patches offered to an upstream dependency are superseded: the simulator is now our own fork, refereed by the game's own `sts2.dll` run headless, Ironclad first. [SIMULATOR.md](../SIMULATOR.md) says which simulator ideas the plan takes up.
+
 **Every idea here is UNVERIFIED.** Nobody has checked the claims, the line references or the gain estimates. Before building anything, answer the idea's **Check first** question, record the answer in `LOG.md`, and only then decide. If the answer changes a decision, add a dated entry to `docs/DECISIONS.md`.
 
 **How to read an entry**

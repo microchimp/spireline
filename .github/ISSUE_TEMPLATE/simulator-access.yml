@@ -1,0 +1,34 @@
+name: Request access to the simulator
+description: Ask for read access to Spireline's private simulator repository (microchimp/spireline-sim).
+title: "Access request: <your GitHub username>"
+labels: ["access-request"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Spireline's simulator is a fork of r33hab/sts2, kept private for now while the licence
+        status of its generated game data is settled. Access is read-only to start with.
+        It contains no game files: running it against the real game needs your own copy of
+        Slay the Spire 2. Never use it on Daily runs or leaderboards.
+  - type: input
+    id: username
+    attributes:
+      label: GitHub username
+    validations:
+      required: true
+  - type: textarea
+    id: why
+    attributes:
+      label: What would you like to work on or check?
+      description: For example fidelity checks, a character's whole runs, coverage, speed.
+    validations:
+      required: true
+  - type: checkboxes
+    id: terms
+    attributes:
+      label: Ground rules
+      options:
+        - label: I will not redistribute game files, assets or decompiled source.
+          required: true
+        - label: I own a copy of Slay the Spire 2 for anything I run against the game.
+          required: true

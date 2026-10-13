@@ -2,7 +2,8 @@
 
 > **Status (2026-10-12).** This is design v1.1 from 10 October 2026, published unchanged apart from removing personal details. Several decisions have changed since. Where this document disagrees with [DECISIONS.md](DECISIONS.md), DECISIONS.md wins.
 >
-> - **Target: Ascension 10 only, Acts 1–3, Defect first** (D11, D12). Where this document says A0, Track D at A0, or "Act 1 first", read A10 and Acts 1–3.
+> - **Simulator first (D16, 2026-10-13).** The goal now is a high-fidelity simulator with complete coverage, built as Spireline's own fork of r33hab/sts2 and refereed by the game's own `sts2.dll` run headless. Where this document rejects our own simulator or fork, waits for upstream ports, or plans the sts2-cli fork as referee, read [SIMULATOR.md](SIMULATOR.md) instead. F4 (map rows) is already met at `b745217`.
+> - **Target: Ascension 10 only, Acts 1–3, Ironclad first, then every character** (D11, D15; D15 replaces D12's Defect first). Where this document says A0, Track D at A0, or "Act 1 first", read A10 and Acts 1–3.
 > - **No LLM components** (D14). Section 6 (LLM roles, Jev, Haiku, experiment E1) and the LLM baselines B4/B5 are void. Jev stays relevant only as part of the landscape critique.
 > - **The always-on worker is a native Windows PC**, not WSL2. See [pc-setup/WINDOWS.md](../pc-setup/WINDOWS.md). Throughput figures for the owner's machines here are estimates, not measurements.
 > - **The security review is done and published** as [SECURITY_REVIEW.md](SECURITY_REVIEW.md): GO WITH CONDITIONS. It replaces §3.6's "this is not a security review" note. It confirmed the run-level resampling leak (resampled run clones keep the pre-rolled encounters, events and relic order), so run-level labels stay gated (its condition E13; leak tests L2 and L3 here).
