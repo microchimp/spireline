@@ -1,0 +1,60 @@
+{
+ "Gennadiyev/STS2MCP": {
+  "copilot/implement-automatic-packaging": "bc2d947ec4806b9859f6bbb1529c92760c36664c",
+  "feat/run-control": "95ee9bd2cf1ab61a18836e2ef9a30288fb43f5a5",
+  "main": "55e064850a68f3b4cde7e5fd525bf9b2dec4e885",
+  "patch/rest-site-index-fix": "b7c0f0e54fd98a9dfba2f7f9eab8629d95ff945e"
+ },
+ "Zamiell/slay-the-spire-2-emulator": {
+  "main": "04cfe6df800156e5339d565e03236302363c829c"
+ },
+ "evangambit/sts2": {
+  "act1-event-tests": "d41d852fab70c91899869599d5280a0284cdb417",
+  "main": "37e4264115546b6ac640d54aab3d7e2ac6983d2d"
+ },
+ "favet/divine-sts2": {
+  "main": "7cb715916fc9abfb0281c0adf4939c74468e05a4"
+ },
+ "r33hab/STS2MCP": {
+  "autofix": "13dd679df339b4ef4c948bd53544973d002085c8",
+  "autokill": "6c7da4849f18831b7513b6130e8161d55817db5d",
+  "m1-capture": "65e05f4cfb6d4957799d5ea439c60b68f92e8fa3",
+  "m2-runs": "4026ec4b5d37cb76ba775a37c06cf04fb2c74079",
+  "main": "ed0f3db35f64e7842f5d2833142ba32f016e8c0d",
+  "spire-coach": "5a63f924f7e9dcbde4a1f70664e6d301c72e47c4"
+ },
+ "r33hab/sts2": {
+  "act1-event-tests": "d41d852fab70c91899869599d5280a0284cdb417",
+  "bosscheck": "0230072ff4325ffbbe24e40f8136a1af86f18d2f",
+  "e2": "34c67bb5ec5c8353906e2a205ad910f0d92ff8a5",
+  "full-runs": "ccb88b550fcccc209e18db14ffb948ba285a2560",
+  "gaps2": "13c1b206167781f055550ce918ab0ab30df83d09",
+  "m1-capture": "77163939640272a95957b143836e0d37e922b8b0",
+  "m1-scoreboard": "643bf4de8e24d8f057634190a7e7bac0c339a4a8",
+  "m1-simbugs": "dbf6ca181fed086911eb6a5f091fe3d447cacafb",
+  "m2-asc": "f963f7628e9b73ce9bc4e438353e0cfa748084f5",
+  "m2-content": "8da0feb20fc732adff33fd4e5aec97eeb28dcc90",
+  "m2-runs": "6c02bb9343cca465d9a838eee2174e810add0ddf",
+  "main": "cd93393cd1182b1f388b17c0d61581dd820aadf4",
+  "simbugs": "788df592c38c0a9151f71e60b8793014677b0c4f",
+  "simbugs2": "53a12cf20cba37fceda9e817fcc85098797a4626",
+  "spire-coach": "b7452170ce1df91de29d3c94acb11d87c7efc708",
+  "spire-coach-convert": "088ad7ab6fa79bc6595fbf32e73a6cc36a9b4456",
+  "spire-coach-debug": "f7a894b00a45b8b02deb43257f0c1ec4d064d4b6",
+  "spire-coach-fidelity": "fcdcdc33ba5731b0ee92aeaf17ff96cc2966a7c6",
+  "spire-coach-gaps": "c9173ada772dfd5615a62e8d6da64aeda7f1c573",
+  "spire-coach-loader": "cc320daae1904d58688b744b9baa95eaf714be22",
+  "spire-coach-potions": "5c301a4c4a614d9955614a6ece64604ec5ec8e4c",
+  "spire-coach-search": "157a54e3da1a8a1098903e3a277c5ba4fe20d770",
+  "spire-coach-service": "ee9250308e0e624171e5d036ffc9d8d3811323c4",
+  "spire-coach-training": "29d4a94ab8e82201ebacd91120752f167389950d",
+  "stage3-prior": "2656dbee5b96f159c0a9fd887b2d0695883f6359"
+ },
+ "wuhao21/sts2-cli": {
+  "main": "084d1aa3d8e118ca7ce8d8774ad16d6be9c92367",
+  "update/sts2-v0.111.0": "bf4336dea1389ecae12df74a9f5d9df6a502fb39"
+ },
+ "zhiyue/sts2-rl-agent": {
+  "main": "1b7e7ce35e608722650763938c153ea8bc370333"
+ }
+}
