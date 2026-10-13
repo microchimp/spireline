@@ -76,7 +76,7 @@ def _emu():
 def _loadavg() -> list[float]:
     try:
         return [round(x, 2) for x in os.getloadavg()]
-    except OSError:
+    except (OSError, AttributeError):  # Windows has no getloadavg
         return []
 
 
@@ -87,7 +87,7 @@ def _machine() -> dict:
         "cpu_count": os.cpu_count(),
         "python": sys.version.split()[0],
         "loadavg": _loadavg(),
-        "emu": os.environ.get(EMU_ENV, ""),
+        "emu": Path(os.environ.get(EMU_ENV, "")).name,  # no absolute paths in results
     }
 
 
@@ -334,15 +334,10 @@ def _scale_worker(index, barrier, results, cfg, fights, sims, nice) -> None:
         np, cm, _native, _names = _emu()
         _warm(np, cm, fights[0], cfg)
         barrier.wait(timeout=300)
-        start = time.monotonic()  # CLOCK_MONOTONIC on Linux: comparable across processes
+        start = _clock()
         recs = [play_fight(np, cm, s, e, sims, cfg) for s, e in fights]
-        end = time.monotonic()
-        try:
-            import resource  # noqa: PLC0415
-
-            maxrss = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
-        except Exception:  # noqa: BLE001
-            maxrss = -1
+        end = _clock()
+        maxrss = _maxrss_kb()
         results.put(
             {
                 "index": index,
@@ -362,6 +357,38 @@ def _scale_worker(index, barrier, results, cfg, fights, sims, nice) -> None:
         except Exception:  # noqa: BLE001
             pass
         results.put({"index": index, "ok": False, "error": repr(exc)})
+
+
+# CLOCK_MONOTONIC on Linux, QueryPerformanceCounter on Windows: both comparable across processes.
+_clock = time.perf_counter if sys.platform == "win32" else time.monotonic
+
+
+def _maxrss_kb() -> int:
+    if sys.platform == "win32":
+        try:
+            import ctypes  # noqa: PLC0415
+            from ctypes import wintypes  # noqa: PLC0415
+
+            class PMC(ctypes.Structure):
+                _fields_ = [("cb", wintypes.DWORD), ("faults", wintypes.DWORD),
+                            ("peak_ws", ctypes.c_size_t)] + [(f"f{i}", ctypes.c_size_t) for i in range(7)]
+
+            k32 = ctypes.WinDLL("kernel32")
+            k32.GetCurrentProcess.restype = wintypes.HANDLE
+            k32.K32GetProcessMemoryInfo.argtypes = (wintypes.HANDLE, ctypes.POINTER(PMC), wintypes.DWORD)
+            pmc = PMC()
+            pmc.cb = ctypes.sizeof(PMC)
+            if k32.K32GetProcessMemoryInfo(k32.GetCurrentProcess(), ctypes.byref(pmc), pmc.cb):
+                return pmc.peak_ws // 1024
+        except Exception:  # noqa: BLE001
+            pass
+        return -1
+    try:
+        import resource  # noqa: PLC0415
+
+        return resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
+    except Exception:  # noqa: BLE001
+        return -1
 
 
 def _run_level(ctx, workers: int, cfg: dict, fights: list, sims: int, nice: int, timeout: float) -> dict:

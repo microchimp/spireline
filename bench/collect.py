@@ -530,7 +530,7 @@ def main() -> int:
         print(f"no such directory: {d}", file=sys.stderr)
         return 2
     s = {
-        "results_dir": str(d.resolve()),
+        "results_dir": d.resolve().name,  # no absolute paths in results
         "env": read_env(d),
         "steps": read_steps(d),
         "verify": verify(d),
@@ -549,6 +549,7 @@ def main() -> int:
         "published_c_sweep": {str(k): v for k, v in PUBLISHED_C.items()},
     }
     s["checks"] = checks(s)
+    s["checks"]["winshim_sha256"] = s["env"].get("winshim_sha256")  # run_all.py (Windows) only
     rows = build_rows(s)
     s["table"] = [dict(zip(("quantity", "measured", "design", "m4_max", "note"), r)) for r in rows]
     env = s["env"]
