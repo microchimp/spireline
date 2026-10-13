@@ -1,0 +1,291 @@
+{
+ "key": "game",
+ "area": "Slay the Spire 2 game internals, rules and constraints relevant to building a best-play AI (as of 2026-10-10)",
+ "summary": "Versions: as of 2026-10-10 the main branch is v0.107.1 (\"Major Update #2\", 19 Jun 2026, Steam build 23811903). That is the build installed on the owner's Mac, and it reports engine 4.5.1.m.12. The public-beta branch is v0.111.0 (14 Aug 2026, build 24724944, commit 41cef1ea). Nothing has shipped since. Mega Crit skipped the 27 Aug patch for a team break. In August they said they were dropping the bi-weekly beta cadence to work on an alternate Act 2 and a sixth character. The 25 Sep newsletter gives no date for the next patch. When it lands it will probably bring a new character and act, which will break simulators and make older data stale. Five characters are playable. Ironclad, Silent and Defect return (Defect gains Glass orbs). Regent is new and uses Stars, a resource that carries over between turns, plus Forge and Sovereign Blade. Necrobinder is new and uses the Osty minion, Summon, Doom (an enemy dies at end of turn when Doom ≥ HP) and Souls. Systems new since STS1:\n- Enchantments: about 24, and they don't stack.\n- Afflictions on cards: Hexed, Tainted, Bound, Entangled and others.\n- Ancients: 8 named NPCs (Neow, Tezcatara, Pael, Vakuu, Nonupeipe, Tanx, Orobas, Darv), one at the start of each act. They heal you and offer relics.\n- Alternate acts: Act 1 is a 50/50 roll between Overgrowth and Underdocks, then Hive, then Glory. Alternate Acts 2 and 3 are stubbed in the timeline.\n- Co-op for up to 4 players, with multiplayer-only cards.\n- Badges and score, friends-only leaderboards, Daily and Custom modes, 16 run modifiers.\n- Ascension 0–10, where A10 is a double Act-3 boss. The devs say A10 is close to the intended top difficulty.\n- Epoch timeline unlocks that gate characters, Ascension, cards, potions, events, Ancients and modes. The content pool therefore depends on profile progress.\n\nInformation: the player sees the act map, enemy intents (attack intents show exact damage × hits; other intents show only a category, and an \"Unknown\" intent exists), and the contents of the draw, discard and exhaust piles. The draw pile UI says \"Cards shown are sorted by rarity\", so draw order is hidden. Also hidden: RNG outcomes for card-reward rarity, \"?\" rooms, potion drops and random monster moves. Each run has one run seed: 10 characters on main, 12 characters from beta v0.109.0 on. Every subsystem gets its own PRNG seeded from it: UpFront, Shuffle, UnknownMapPoint, CombatCardGeneration, CombatPotionGeneration, CombatCardSelection, CombatEnergyCosts, CombatTargets, MonsterAi, Niche, CombatOrbs, TreasureRoomRelics, plus per-player Rewards, Shops and Transformations, plus one RNG per event. This is the same design as STS1. Saves store how many times each RNG has been called and replay that count on load. Before v0.107.1 the game used .NET System.Random, whose streams were correlated and exploitable. v0.107.1 replaced it with xoshiro256**. The seed is shown in run info. Custom runs with seed entry unlock via the \"Seeds\" epoch, earned by beating Act 3 three times. Multiplayer is lockstep (patch notes keep fixing \"state divergence\"), and sts2-agent measured same seed → byte-identical states 31 decisions deep. So the simulation is deterministic given a seed and an action sequence. That is powerful for evaluation, and it also means a careless harness can leak the future.\n\nEngine and modding: the game runs on MegaDot, Mega Crit's Godot 4.5.1 fork. All game logic is C# in a single sts2.dll (net9.0, bundled runtime 9.0.7, native arm64 build on Mac). Harmony and MonoMod ship with the game. Mega Crit says it has had an integrated mod loader since launch. Workshop support arrived in v0.107.1, and they publish an uploader on GitHub plus STS2.dll XML docs (since v0.108.0). They also link community docs that teach decompiling with Rider, ILSpy or dnSpy. The shipped DLL includes test and replay hooks: RunState.CreateForTest, RunManager.SetUpTest and SetUpReplay, TestRngInjector shuffle and card-generation overrides, and Rng.FastForwardCounter. wuhao21/sts2-cli (MIT) already runs the real sts2.dll headless. It swaps GodotSharp.dll for stubs and applies 2 IL patches, then speaks JSON over stdin/stdout. It covers all 5 characters and A0–10, was tested on v0.111.0 on macOS arm64, and passed 25/25 completed runs. That makes a separate simulator rewrite unnecessary.\n\nData: Spire Codex publishes a daily bulk export of 2,076,205 human .run files (7.18 GB gzipped, per-version files, 630,765 runs on v0.107.1) as of 2026-10-08. Each file includes the card choices offered and picked, plus the paths taken. It also hosts 14,859 per-action NDJSON replays.\n\nRun length: a winning run is about 48 floors (51 at A10), about 23 combats, about 5–6 player turns per combat, about 440–570 card plays and about 800 total decisions. Losses end around floor 17.\n\nLegal: Mega Crit's Content Policy permits non-monetised mods. No STS2-specific EULA was found. The Steam Subscriber Agreement §2.G bars decompiling and reverse engineering without Valve's consent, with an applicable-law carve-out. §4.C bars bots that fake stats or earn rewards. The practical rule: never redistribute game DLLs or images, keep bots away from Daily and leaderboard submission, and use a modded or headless profile.",
+ "methods": [
+  {
+   "name": "wuhao21/sts2-cli (headless real engine)",
+   "what_it_is": "MIT C# + Python wrapper that copies sts2.dll and about 9 other DLLs from the owner's own Steam install. It IL-patches 2 methods with Mono.Cecil (YieldAwaiter.IsCompleted becomes true, and WaitUntilQueueIsEmptyOrWaitingOnNonPlayerDrivenAction returns a completed task), replaces GodotSharp.dll with no-op stubs, and runs the real game logic in a terminal with a JSON stdin/stdout protocol.",
+   "how_it_decides": "Environment, not a policy. It exposes decision points: map_select, combat_play, card_reward, rest_site, event_choice, shop, card_select, game_over. Ships a trivial first-playable-card test agent.",
+   "reported_results": "docs/compatibility-v0.111.0.md: tested 2026-09-07 on macOS ARM64 against beta build 24724944 (commit 41cef1ea). 25/25 runs (5 per character) reached normal game over with 0 crashes. The test agent won 0/25 and mostly died in Act 1. 57 pytest tests passed. No throughput benchmark published.",
+   "strengths": [
+    "Real engine, so damage, AI, relics and RNG match the game exactly",
+    "Seedable and deterministic: sts2-agent confirmed byte-identical states 31 decisions deep across processes",
+    "Runs Steam-free; sts2-agent ran it on a Linux VPS",
+    "Has save/load from SerializableRun JSON, plus SetDrawOrder and a deck-override debug command",
+    "All characters, A0–10, everything unlocked"
+   ],
+   "weaknesses": [
+    "Must be rebuilt and re-verified after every game patch; adapter code breaks",
+    "Action handlers poll with Thread.Sleep(5–200 ms), so throughput is probably tens of actions/sec per process (my inference, UNVERIFIED)",
+    "No native state-clone API for tree search; save/restore goes through JSON serialization",
+    "Unlocks everything, which may not match the owner's real card, relic and event pools",
+    "Repo ships extracted game localization text, a redistribution grey area",
+    "Debug commands such as SetDrawOrder can leak hidden information if exposed to the policy"
+   ],
+   "relevance_to_best_play": "Core substrate. It is the fastest legitimate route to a rules-exact simulator for RL rollouts, search, paired-seed evaluation and counterfactual replay of the owner's own seeds.",
+   "url": "https://github.com/wuhao21/sts2-cli",
+   "cost_and_speed": "Free; needs .NET 9 SDK and a Steam copy. Speed not published; parallelise with one process per core (sts2-agent HeadlessEnvPool).",
+   "verified": true
+  },
+  {
+   "name": "Official mod loader + Steam Workshop + BaseLib/Harmony",
+   "what_it_is": "Mod loader built into the game since launch. A mod is a manifest .json plus a .dll and/or .pck in a mods/ folder (on Mac: SlayTheSpire2.app/Contents/MacOS/mods) or from the Workshop. Workshop support arrived in v0.107.1. Mega Crit ships 0Harmony.dll and MonoMod. The community BaseLib (Workshop id 3737335127) and Alchyr's templates, which Mega Crit links to, target MegaDot/Godot.NET.Sdk 4.5.1 and .NET 9.",
+   "how_it_decides": "Infrastructure. Harmony patches can read state, inject actions, or record replays inside the live game.",
+   "reported_results": "none reported (infrastructure)",
+   "strengths": [
+    "Officially supported and documented; STS2.dll XML docs have been published since v0.108.0",
+    "A dev console opens when mods are enabled and can spawn cards, relics and encounters for building scenarios",
+    "The affects_gameplay=false flag lets observer mods coexist in co-op",
+    "Modded saves are separate from vanilla, which keeps bots off the main profile"
+   ],
+   "weaknesses": [
+    "Runs at human and animation speed in the full Godot client",
+    "Early Access patches frequently break mods",
+    "Leaderboard and Daily submission from a modded or bot-driven client risks Steam Subscriber Agreement §4.C"
+   ],
+   "relevance_to_best_play": "Best channel for a live 'advisor' that reads the real game state, including the owner's actual unlock state, and suggests the best play. It is also how replay journals such as SpireCodex's get recorded.",
+   "url": "https://github.com/Alchyr/ModTemplate-StS2/wiki",
+   "cost_and_speed": "Free; human-speed",
+   "verified": true
+  },
+  {
+   "name": "Spire Codex (data API, bulk run export, replay-recording mod)",
+   "what_it_is": "Community site and FastAPI backend built from GDRE Tools PCK extraction and ILSpy decompilation of sts2.dll. It parses about 3,300 decompiled C# files into JSON (cards, monsters with move patterns, events, mechanics constants). It also collects player .run uploads and per-action NDJSON replays recorded by its Workshop mod.",
+   "how_it_decides": "Data source. The constants and data can feed a model, and the runs support imitation and value learning.",
+   "reported_results": "/api/runs/stats on 2026-10-10: 2,078,353 runs, 25.6% win rate, A10 571,264 runs at 19.5%. Export manifest 2026-10-08: 2,076,205 runs, 7.18 GB gzipped, including v0.107.1 = 630,765 and v0.111.0 = 220,029. 14,859 replays (Ironclad 3,946, Silent 3,311, Defect 2,370, Necrobinder 2,386, Regent 2,323).",
+   "strengths": [
+    "Largest public StS2 human dataset; per-version files allow patch-pinned training",
+    "Each .run file records offered vs picked cards (was_picked), the path, HP and gold per floor, events, rests and shops",
+    "Replays log every play, intent, draw, shuffle and decision with option lists",
+    "mechanics_constants.json gives decompile-derived odds: card rarity 60/37/3, offset −5% growing 1% per roll to a 40% cap, A7 Scarcity halves rare odds; potion reward base 0.4; '?' room base odds monster 0.10, shop 0.03, treasure 0.02"
+   ],
+   "weaknesses": [
+    "Self-selected uploaders, biased toward enthusiasts: 25.6% win rate vs the 16% developer-reported human win rate cited by AgenticSTS",
+    "Repo license is NOASSERTION and data terms are unclear (UNVERIFIED)",
+    "Replays include draw_order and rng_state, i.e. hidden information; leakage risk if used naively",
+    "Spans v0.96–v0.111 with large balance changes; the RNG change in v0.107.1 alters reward distributions",
+    "README says '.NET 8', which is wrong for the current build (net9.0)"
+   ],
+   "relevance_to_best_play": "Bootstraps a card-reward and path value model from about 2M labelled human runs, and a combat policy from about 15k action-level replays. Also a cheap baseline for checking learned evaluations.",
+   "url": "https://github.com/ptrlrd/spire-codex",
+   "cost_and_speed": "Free download; about 2.1 GB gzipped for v0.107.1 alone",
+   "verified": true
+  },
+  {
+   "name": "Spirebird engine (jorbs)",
+   "what_it_is": "Community stats and replay site by a long-time StS content creator, who also trains a non-LLM 'chess-engine-style' StS2 agent and publishes training-cohort aggregates.",
+   "how_it_decides": "Learned engine (neural network). Its value annotations are 'total score points (+1 per floor, +100 for victory)', not win probabilities. Training settings string: 'hp=0,aoe=0,mf=200'. Architecture not published.",
+   "reported_results": "Engine-stats snapshot 2026-09-23: latest 10,000 training runs (run ids around 1.98M–1.995M) had 0 wins and a mean floor of 13.0 (Defect 16.1, Silent 11.1). Earlier milestone: one A10 Defect victory (seed MGJOE6K8PDF7, 51 floors) annotated from a checkpoint at 1,960,459 games.",
+   "strengths": [
+    "Evidence that large-scale self-play on StS2 is technically feasible (about 2M games)",
+    "Public per-floor aggregates and a downloadable JSON"
+   ],
+   "weaknesses": [
+    "About 2M games still yields roughly a 0% cohort win rate: sample efficiency is terrible",
+    "Simulator, model and code are not public (UNVERIFIED how they simulate)",
+    "The training cohort's ascension and settings are unclear"
+   ],
+   "relevance_to_best_play": "The most important cautionary benchmark. Pure model-free RL from scratch is very expensive. Use priors (human data, LLM or heuristics) plus search, not tabula-rasa RL.",
+   "url": "https://spirebird.com/engine-stats.html",
+   "cost_and_speed": "Unknown compute; about 2M games over roughly 6 months",
+   "verified": true
+  },
+  {
+   "name": "mingxuan-he/sts2-agent (GRPO track + self-improving harness)",
+   "what_it_is": "Research repo built on a vendored sts2-cli fork. It replaces IL sync stubs with a real frame pump and adds headless combat hooks plus HeadlessEnvPool for parallel rollouts. Track 1 plans GRPO on Qwen3.6-35B-A3B via Tinker with per-combat episodes. Track 2 is a frozen-weights agent that edits its own notes, skills and harness.",
+   "how_it_decides": "LLM policy over a serialized state. Dense per-combat reward shaping: damage dealt +0.01/HP, HP lost −0.02/HP, kill +0.2, combat win/loss ±1, illegal action −0.3.",
+   "reported_results": "No win rates reported. Infrastructure verified 2026-08-22: Steam-free on a VPS, deterministic. Cost model: about 800 decisions/run (569 card plays per jorbs tapes), about $1.2/run with Qwen3.6-35B-A3B and about $16/run with Opus 5. GRPO estimate about $1.2k for 16k rollouts.",
+   "strengths": [
+    "Careful hidden-information hygiene: draw pile returned SORTED, seeds issued server-side, held-out eval seed pool (200 train / 40 eval)",
+    "Concrete cost and decision-count estimates"
+   ],
+   "weaknesses": [
+    "Training loop not yet run; no results",
+    "GRPO on LLMs is expensive relative to a hobby budget"
+   ],
+   "relevance_to_best_play": "Reference design for the environment wrapper, seed pools and anti-leak rules. Its numbers ground LLM-per-decision cost estimates.",
+   "url": "https://github.com/mingxuan-he/sts2-agent",
+   "cost_and_speed": "About $1–2 per full run with LLM inference at 2026-08 prices",
+   "verified": true
+  },
+  {
+   "name": "Gennadiyev/STS2MCP (live-game bridge)",
+   "what_it_is": "MIT mod (STS2_MCP.dll) that serves live game state and actions over HTTP on localhost:15526, with an optional MCP server. Covers single-player and co-op, menus and lobbies, and optional seed entry.",
+   "how_it_decides": "Interface only; an external LLM or agent decides.",
+   "reported_results": "README says tested against v0.103.2 (older than the current main v0.107.1). 510 stars; last push 2026-07-29.",
+   "strengths": [
+    "Works with the real client and real unlock state",
+    "An MCP-native fit for Claude-driven advisors"
+   ],
+   "weaknesses": [
+    "Human and animation speed; unusable for RL rollouts",
+    "May lag game patches (last tested v0.103.2)"
+   ],
+   "relevance_to_best_play": "Front end for 'tell me the best play now' in the owner's real game. The engine behind it should be the headless simulator plus search.",
+   "url": "https://github.com/Gennadiyev/STS2MCP",
+   "cost_and_speed": "Free; human-speed",
+   "verified": true
+  }
+ ],
+ "key_facts": [
+  {
+   "fact": "Main branch = v0.107.1 'Major Update #2' (19 Jun 2026; includes Steam Workshop and the RNG rework). the owner's installed copy: Steam buildid 23811903, BetaKey public, release_info commit 59260271, built 2026-06-18. sts2-agent confirmed 23811903 was still the latest public build on 2026-08-22.",
+   "confidence": "high",
+   "source_url": "https://store.steampowered.com/news/app/2868840"
+  },
+  {
+   "fact": "Latest beta = v0.111.0 (14 Aug 2026; build 24724944, commit 41cef1ea per sts2-cli). A v0.110.1 hotfix also exists in Spire Codex data (61,985 runs) but was not announced in the Steam news feed.",
+   "confidence": "high",
+   "source_url": "https://github.com/wuhao21/sts2-cli/blob/main/docs/compatibility-v0.111.0.md"
+  },
+  {
+   "fact": "Patch cadence:\n- EA launched 5 Mar 2026; hotfixes v0.98.1–v0.98.3 followed.\n- Public-beta branch introduced 13 Mar (v0.99).\n- Weekly beta patches through April, bi-weekly from May.\n- Main-branch merges: v0.99.1 (17 Mar), v0.103.2 (17 Apr), v0.107.1 (19 Jun).\n- Betas v0.108–v0.111 shipped 3 Jul–14 Aug.\n- No patch since. The August newsletter says updates will be further apart while the team builds an alternate Act 2 and a new character. The 25 Sep newsletter: 'can't give a specific timeline'.",
+   "confidence": "high",
+   "source_url": "https://store.steampowered.com/news/app/2868840"
+  },
+  {
+   "fact": "Steam FAQ: Early Access expected to last about 1–2 years. The full version adds a true ending, game modes and more content, and the price rises after EA. Steam Achievements are planned for v1.0.",
+   "confidence": "high",
+   "source_url": "https://store.steampowered.com/app/2868840/"
+  },
+  {
+   "fact": "Five playable characters:\n- Ironclad, Silent, Defect (returning). Defect adds Glass orbs; orbs are Lightning, Frost, Dark, Plasma, Glass.\n- Regent (new): Stars resource; Forge adds Sovereign Blade and increases its damage.\n- Necrobinder (new): Summon Osty, a minion with HP; Doom kills at end of turn if Doom ≥ HP; Soul cards draw.\n\nWatcher is absent. A sixth character is in development.",
+   "confidence": "high",
+   "source_url": "https://github.com/wuhao21/sts2-cli/tree/main/localization_eng"
+  },
+  {
+   "fact": "New systems vs STS1:\n- About 24 enchantments, which explicitly don't stack (Casey, Aug 2026).\n- About 7 real card afflictions: Hexed, Tainted, Bound, Entangled, Galvanized, Ringing, Smog.\n- 8 named Ancients (Neow, Tezcatara, Pael, Vakuu, Nonupeipe, Tanx, Orobas, Darv) at the start of each act. They heal you; A2 cuts the heal to 80% of missing HP.\n- Act 1 is a 50/50 roll between Overgrowth and Underdocks, then Hive and Glory; ACT2_B and ACT3_B epochs are stubs.\n- 4-player co-op.\n- Badges/score, Daily and Custom modes, 16 custom modifiers.",
+   "confidence": "high",
+   "source_url": "https://store.steampowered.com/news/app/2868840/view/1835871199305790"
+  },
+  {
+   "fact": "Ascension runs 0–10 (11 levels): A1 more elites, A2 Ancients heal 80%, A3 −25% gold, A4 one fewer potion slot, A5 Ascender's Bane, A6 pricier removal, A7 Scarcity, A8 tougher enemies, A9 deadlier attacks, A10 double boss at the end of Act 3. Casey says A10 is 'close to the highest difficulty we'll have'.",
+   "confidence": "high",
+   "source_url": "https://store.steampowered.com/news/app/2868840/view/1840944183781031"
+  },
+  {
+   "fact": "Epoch timeline unlocks gate playable characters, Ascension per character, potions, events, Ancients (e.g. Darv), and the Daily and Custom/Seeds modes. The available content pool therefore depends on profile progress. Epochs and achievements can't be earned in Daily or Custom runs (since v0.100.0).",
+   "confidence": "high",
+   "source_url": "https://github.com/wuhao21/sts2-cli/blob/main/localization_eng/epochs.json"
+  },
+  {
+   "fact": "Visible vs hidden: the draw pile shows its contents but the UI says 'Cards shown are sorted by rarity', so order is hidden. Discard and exhaust piles are visible. Attack intents show exact damage and repeat count. Buff, Debuff, Defend, Status and similar intents show only a category, and an 'Unknown' intent exists. The act map, including the boss, is visible from the start of the act.",
+   "confidence": "high",
+   "source_url": "https://github.com/wuhao21/sts2-cli/blob/main/localization_eng/gameplay_ui.json"
+  },
+  {
+   "fact": "RNG: one run seed feeds multiple PRNGs, each seeded with seed + deterministic hash of a name. Named streams: UpFront, Shuffle, UnknownMapPoint, CombatCardGeneration, CombatPotionGeneration, CombatCardSelection, CombatEnergyCosts, CombatTargets, MonsterAi, Niche, CombatOrbs, TreasureRoomRelics, plus per-player Rewards, Shops and Transformations. Each event has its own RNG. Save/load replays each RNG's call count.",
+   "confidence": "high",
+   "source_url": "https://tck.mn/blog/correlated-randomness-sts2/"
+  },
+  {
+   "fact": "Before v0.107.1 the PRNG was .NET System.Random, which is linear in the seed. Streams were correlated: in Underdocks, Neow's Bones gave Debt about 54% of the time. v0.107.1 replaced it with xoshiro256**. Kept from the old scheme: deterministic seeding, call-count replay, and multiplayer event RNG offset by Steam ID.",
+   "confidence": "high",
+   "source_url": "https://store.steampowered.com/news/app/2868840/view/1835871199305790"
+  },
+  {
+   "fact": "Determinism: multiplayer is lockstep, and patch notes repeatedly fix 'state divergence' and Daily runs 'diverging based on player net ID'. sts2-agent measured same seed → byte-identical states 31 decisions deep across separate engine processes.",
+   "confidence": "high",
+   "source_url": "https://github.com/mingxuan-he/sts2-agent/blob/main/docs/track2-pod-design.md"
+  },
+  {
+   "fact": "Decompile-derived constants via Spire Codex (I did not check them against code):\n- Card rarity, regular fights: 60% common / 37% uncommon / 3% rare.\n- Elites: 50/40/10. Bosses: 100% rare. Shops: 54/37/9.\n- Rarity offset starts at −5%, grows 1% per roll, capped at 40%.\n- A7 Scarcity: regular rare 1.49%, elite rare 5%, growth 0.5%.\n- Potion reward base odds 0.4; elite bonus 0.25.\n- '?' room base odds: monster 0.10, shop 0.03, treasure 0.02.\n- Gold rewards: monster 10–20, elite 35–45, boss 100.",
+   "confidence": "medium",
+   "source_url": "https://github.com/ptrlrd/spire-codex/blob/main/data/mechanics_constants.json"
+  },
+  {
+   "fact": "Engine: the binary on the owner's Mac reports '4.5.1.m.12.mono.custom_build'. That is MegaDot, Mega Crit's Godot fork; its download API lists 4.4.1-m.1 through 4.5.1-m.14 (30 Jun 2026). The .pck is format v3, Godot 4.5.1, 1.9 GB.",
+   "confidence": "high",
+   "source_url": "https://megadot.megacrit.com/api/"
+  },
+  {
+   "fact": "All gameplay logic is in sts2.dll (9.36 MB, target net9.0, bundled Microsoft.NETCore.App 9.0.7, native data_sts2_macos_arm64 build). It ships with sts2.xml docs (19,636 members), 0Harmony.dll and MonoMod. It contains test and replay hooks: RunState.CreateForTest, RunManager.SetUpTest and SetUpReplay, TestSupport.TestRngInjector (Set/ConsumeInitialShuffleOverride, CombatCardGenerationOverride), Rng.FastForwardCounter, and a 'combat replay writer'.",
+   "confidence": "high",
+   "source_url": "https://github.com/wuhao21/sts2-cli/blob/main/src/Sts2Headless/RunSimulator.cs"
+  },
+  {
+   "fact": "Headless operation is solved without Godot: sts2-cli loads sts2.dll in a plain net9.0 process, using GodotStubs for GodotSharp.dll and 2 Cecil IL patches. It was tested on v0.111.0 macOS arm64 with all 5 characters and 25/25 runs completed. sts2-agent runs it on a Linux VPS with no Steam client.",
+   "confidence": "high",
+   "source_url": "https://github.com/wuhao21/sts2-cli"
+  },
+  {
+   "fact": "Modding stance:\n- 'We built STS2 with modding in mind… integrated mod loader from day one'; Steam Workshop and an official uploader arrived in v0.107.1.\n- Mega Crit links to Alchyr's community wiki, which teaches decompiling sts2.dll with Rider, ILSpy or dnSpy, and publishes STS2.dll XML docs (since v0.108.0).\n- Casey: 'Since the game code can be decompiled, I don't think there are too many undiscovered game logic secrets.'",
+   "confidence": "high",
+   "source_url": "https://store.steampowered.com/news/app/2868840/view/1835871199305790"
+  },
+  {
+   "fact": "Legal: Mega Crit's Content Policy allows mods that aren't plagiarised or offensive and follow platform terms. Mods may not claim affiliation or be monetised (donations OK). No STS2-specific EULA appears on the Steam listing. The Steam Subscriber Agreement §2.G bars reverse engineering and decompiling without Valve's written consent, 'or under applicable law notwithstanding'. §4.C bars bots or scripts that fake gameplay stats or earn rewards without genuine input. Not legal advice.",
+   "confidence": "high",
+   "source_url": "https://www.megacrit.com/content-policy/"
+  },
+  {
+   "fact": "Platforms: Windows, macOS 12+ (recommended Apple Silicon M1 or quad-core Intel i5; native arm64 data folder) and Linux x86_64 / SteamOS. EA is Steam-only. Mobile and touchscreen ports are planned.",
+   "confidence": "high",
+   "source_url": "https://store.steampowered.com/api/appdetails?appids=2868840"
+  },
+  {
+   "fact": "Run history: <saves>/history/<unix_ts>.run is JSON (schema_version 8–9). It holds seed, build_id, ascension, acts, players (character, deck, relics, potions, badges), win, run_time, and map_point_history. Each map point records rooms (with model_id, monster_ids, turns_taken) and player_stats: card_choices with was_picked, relic, potion and ancient choices, event_choices, rest_site_choices, gold, HP and damage. No per-turn combat actions. Paths: Mac ~/Library/Application Support/SlayTheSpire2/steam/<SteamID>/profileN/saves/history; Windows %APPDATA%/SlayTheSpire2/... Modded profiles are stored separately.",
+   "confidence": "high",
+   "source_url": "https://ststracker.app/about"
+  },
+  {
+   "fact": "The game also writes profileN/replays/latest.mcr. It is binary, about 9 KB, and its header contains the game version and build commit. sts2.xml mentions a 'combat replay writer' and RunManager.SetUpReplay. The format is undocumented; I could not confirm it is a full replay of the run.",
+   "confidence": "low"
+  },
+  {
+   "fact": "Action-level counts from one v0.111.0 A0 Silent winning replay (Spire Codex): 48 floors, 22 combats, 130 player turns, 440 manual card plays (470 including auto-plays), 12 potions, 89 logged non-combat decisions (24 card rewards, 22 map nodes, 16 event pages, 7 rests, 6 relic rewards, 10 deck selections, 4 treasure), and 11 shop buys. Total is roughly 700 decisions. sts2-agent estimates about 800 decisions per run from jorbs' tapes.",
+   "confidence": "high",
+   "source_url": "https://spire-codex.com/api/replays"
+  },
+  {
+   "fact": "Public human datasets:\n- Spire Codex bulk export: 2,076,205 runs (7.18 GB gzipped JSONL, per-version files, pseudonymous player_token) plus 14,859 action-level replays.\n- STS Tracker: 628,292 runs from 3,880 players; no export documented.\n- Spirebird: replays and aggregate engine stats.\n- AgenticSTS: 298 agent trajectories (arXiv 2607.02255).\n\nMega Crit reported more than 25M runs attempted in week 1 (secondary sources); its own telemetry is not public.",
+   "confidence": "high",
+   "source_url": "https://spire-codex.com/api/exports/runs/manifest"
+  },
+  {
+   "fact": "Community win rates in Spire Codex uploads (2026-10-10): 25.6% overall; by character, Silent 27.1%, Regent 26.6%, Necrobinder 25.6%, Ironclad 24.9%, Defect 23.8%; A0 22.0%, A9 12.0%, A10 19.5%. These come from self-selected uploaders and are probably inflated relative to the general population.",
+   "confidence": "high",
+   "source_url": "https://spire-codex.com/api/runs/stats"
+  },
+  {
+   "fact": "Spirebird's non-LLM engine: the latest 10,000 training recordings (around run 1.98M) had 0 wins and a mean floor of 13.0. It had one A10 Defect win annotated from a checkpoint at 1,960,459 games (23 Sep 2026).",
+   "confidence": "high",
+   "source_url": "https://spirebird.com/engine-stats/latest-10000-20260923.json"
+  },
+  {
+   "fact": "Leaderboards are friends-only and Mega Crit avoids invasive anti-cheat. Score is ordered by win, then badges, then speed. Modded and vanilla saves are separate. The dev console works only with mods enabled. Launch flags include -nomods and -fastmp host_standard/join for local co-op testing, and putting steam_appid.txt (2868840) in the game folder lets it launch without Steam.",
+   "confidence": "high",
+   "source_url": "https://github.com/Alchyr/ModTemplate-StS2/wiki/Testing-and-Debugging"
+  },
+  {
+   "fact": "STS1 per-subsystem seeded RNG design and the '77 million runs' STS1 dataset: I could not verify the dataset claim in this session.",
+   "confidence": "low"
+  }
+ ],
+ "implications_for_design": [
+  "Build on the real engine, not a rewrite. Use sts2-cli, or a fork of it, built from the owner's own Steam install as the simulator. Pin one game version: v0.107.1 (installed, and 630k human runs) or v0.111.0 (the version sts2-cli was tested on). Gate every rebuild with a regression battery, e.g. 5 seeded runs per character, and re-baseline all models whenever Mega Crit ships the coming alt-Act-2 / new-character patch.",
+  "Enforce the player's information set at the API boundary. Return draw piles sorted, never expose rng_state, seeds or SetDrawOrder to the policy, and issue seeds server-side, with train and held-out eval pools as sts2-agent does. For search, use determinization: resample the hidden draw order and the RNG streams before each rollout. TestRngInjector shuffle overrides or SetDrawOrder make this possible. The tree then averages over hidden states instead of exploiting the true seed.",
+  "Use determinism for evaluation, not for play. Compare candidate policies on identical seed batteries (common random numbers, paired tests), which sharply cuts the number of runs needed to detect a win-rate difference. Divergent choices change RNG consumption, so the counterfactual is still a fresh sample.",
+  "Factor the problem by decision type. A winning run has about 700–800 decisions: about 440–570 card plays and about 130 end-turns over about 23 combats, plus about 26 card rewards, about 48 path choices, about 9 rest sites, about 3–4 shops, about 8 events and 3 Ancients. Combat decisions dominate in count. Run-level choices (card reward, path, shop, rest, Ancient) dominate in impact. Use per-turn search in combat and value models for run-level choices.",
+  "Don't plan tabula-rasa RL. Spirebird's engine is around 2M games in and its latest 10k-run cohort still has 0 wins. Start from priors: imitation and value models on the Spire Codex export (2.08M runs, with was_picked card choices and win labels, filtered to the pinned version and A-level), cheap LLM or heuristic policies, and search. Then do RL fine-tuning or expert iteration on top.",
+  "Scrub the hidden-information fields from Spire Codex replays before imitation learning. The draw_order events and the rng_state counters on combat_start leak information the player doesn't have.",
+  "Model what the player can actually know. Bake in decompile-derived constants, cross-checked against the code: card-rarity odds and offset, potion drop odds, '?' room odds, gold rewards. Also bake in monster move patterns (Spire Codex parsed 112) as a belief model for unknown or random intents. This mirrors what expert players know.",
+  "Match the content pool to the owner's profile. Epoch unlocks gate cards, potions, events and Ancients, while sts2-cli unlocks everything. Either restrict pools to the owner's unlocks, readable from progress.save, or accept that the advice assumes the full pool.",
+  "Use two front ends. (a) An offline research loop on the headless engine, run on Mac arm64 locally or on Linux cloud boxes built from his own DLLs, never published. (b) A live advisor mod with affects_gameplay=false, in the STS2MCP style, that reads the real game state. Don't let any bot play Daily or leaderboard runs or the vanilla profile (Steam Subscriber Agreement §4.C). Keep the decompiled code and DLLs private, and keep monetisation out (Mega Crit Content Policy).",
+  "Scope v1 to single-player at a fixed Ascension. A10 is the practical top. Defer co-op, which has 4-player state and multiplayer-only cards.",
+  "Budget compute around engine throughput. sts2-cli polls with Thread.Sleep in its action handlers, so profile first, then remove the sleeps or pump frames (sts2-agent did) and parallelise processes before choosing between search-heavy and LLM-heavy designs. The jev 'single-call factored decision' idea fits run-level choices; per-card LLM calls cost about $1–16 per run."
+ ],
+ "open_questions": [
+  "Actual sts2-cli throughput on an M-series Mac (actions/sec, runs/hour) once Thread.Sleep polling is removed; whether a fast in-memory state clone exists, or whether save/load through SerializableRun JSON is the only snapshot mechanism and how slow it is.",
+  "How Spirebird simulates about 2M games: its own reimplementation, or a headless real engine? What ascension and reward the training cohort uses.",
+  "The format and scope of profile/replays/latest.mcr: last combat or whole run? Can it be decoded with RunManager.SetUpReplay into action-level training data for the owner's own play?",
+  "Whether the Spire Codex constants (rarity offset, '?' room growth increments, potion odds) match the v0.107.1 and v0.111.0 code. I didn't check them against code, and they may change in the next patch.",
+  "Legal grey zone: Mega Crit tolerates decompilation, but no written permission exists and the Steam Subscriber Agreement §2.G nominally bars it. Licence and terms for the Spire Codex run export and replays (repo licence is NOASSERTION). The sts2-cli repo redistributes extracted localization text.",
+  "Whether to target main v0.107.1 (the owner's install, most human data) or beta v0.111.0 (sts2-cli's tested version, Ironclad/Defect reworks), and when the next patch lands, given the new character and alternate Act 2 are in testing.",
+  "Which information appears at run start: Act 1 roll, Ancient offers, the act boss. Are any monster intents hidden beyond 'Unknown', and do any relics reveal draw order (no Frozen Eye equivalent found in the localization search)?",
+  "Exact seed-length history: the v0.107.1 post says 12 characters but local v0.107.1 runs show 10; v0.109.0 lists the change to 12.",
+  "Developer-reported human win rate: AgenticSTS cites 16%, and I haven't found the primary Mega Crit source.",
+  "Whether the STS1 '77 million runs' dataset exists and is obtainable for pretraining analogies. I couldn't verify it."
+ ]
+}

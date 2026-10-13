@@ -1,0 +1,308 @@
+{
+ "source": "https://spire-codex.com/exports/runs-v0.107.1.jsonl.gz",
+ "manifest_sha256": "55557226ec1023d49d99c88555a2a102706c07281784a5edab038172fea6d9e2",
+ "downloaded": "2026-10-10",
+ "step1_a10_standard_single": {
+  "read": 638919,
+  "kept": 57275,
+  "rejected_by": {
+   "ascension": 492302,
+   "abandoned": 30637,
+   "multiplayer": 53121,
+   "game_mode": 4279,
+   "modifiers": 1305
+  },
+  "top_killers_all_characters_incl_modded": [
+   [
+    "ENCOUNTER.AEONGLASS_BOSS",
+    2664
+   ],
+   [
+    "ENCOUNTER.DECIMILLIPEDE_ELITE",
+    2453
+   ],
+   [
+    "ENCOUNTER.INFESTED_PRISMS_ELITE",
+    2243
+   ],
+   [
+    "ENCOUNTER.TERROR_EEL_ELITE",
+    2111
+   ],
+   [
+    "ENCOUNTER.KAISER_CRAB_BOSS",
+    2085
+   ],
+   [
+    "ENCOUNTER.TEST_SUBJECT_BOSS",
+    2072
+   ],
+   [
+    "ENCOUNTER.KNOWLEDGE_DEMON_BOSS",
+    2031
+   ],
+   [
+    "ENCOUNTER.WATERFALL_GIANT_BOSS",
+    1961
+   ],
+   [
+    "ENCOUNTER.BYGONE_EFFIGY_ELITE",
+    1887
+   ],
+   [
+    "ENCOUNTER.QUEEN_BOSS",
+    1865
+   ],
+   [
+    "ENCOUNTER.THE_KIN_BOSS",
+    1837
+   ],
+   [
+    "ENCOUNTER.VANTOM_BOSS",
+    1834
+   ],
+   [
+    "ENCOUNTER.PHROG_PARASITE_ELITE",
+    1807
+   ],
+   [
+    "ENCOUNTER.PHANTASMAL_GARDENERS_ELITE",
+    1768
+   ],
+   [
+    "ENCOUNTER.LAGAVULIN_MATRIARCH_BOSS",
+    1617
+   ],
+   [
+    "ENCOUNTER.SKULKING_COLONY_ELITE",
+    1576
+   ],
+   [
+    "ENCOUNTER.ENTOMANCER_ELITE",
+    1540
+   ],
+   [
+    "ENCOUNTER.BYRDONIS_ELITE",
+    1469
+   ],
+   [
+    "ENCOUNTER.CEREMONIAL_BEAST_BOSS",
+    1460
+   ],
+   [
+    "ENCOUNTER.THE_INSATIABLE_BOSS",
+    1446
+   ],
+   [
+    "ENCOUNTER.SOUL_FYSH_BOSS",
+    1258
+   ],
+   [
+    "ENCOUNTER.HUNTER_KILLER_NORMAL",
+    640
+   ],
+   [
+    "ENCOUNTER.SLUMBERING_BEETLE_NORMAL",
+    605
+   ],
+   [
+    "ENCOUNTER.OVICOPTER_NORMAL",
+    441
+   ],
+   [
+    "ENCOUNTER.THE_OBSCURA_NORMAL",
+    432
+   ]
+  ]
+ },
+ "step2_vanilla": {
+  "kept_by_character": {
+   "CHARACTER.DEFECT": {
+    "runs": 11350,
+    "wins": 1269
+   },
+   "CHARACTER.IRONCLAD": {
+    "runs": 14448,
+    "wins": 1630
+   },
+   "CHARACTER.NECROBINDER": {
+    "runs": 8853,
+    "wins": 928
+   },
+   "CHARACTER.REGENT": {
+    "runs": 7960,
+    "wins": 1277
+   },
+   "CHARACTER.SILENT": {
+    "runs": 13526,
+    "wins": 1538
+   }
+  },
+  "dropped": {
+   "modded character": 321,
+   "modded or unknown content": 817
+  },
+  "top_unknown_ids": [
+   [
+    "RELIC.ARCHIPELAGO_RELIC_RELIC_COUPONS",
+    131
+   ],
+   [
+    "RELIC.PERMAPROG-PP_RELIC",
+    68
+   ],
+   [
+    "CARD.GUIDASEXPAND-SILENT_POISON_TESTING",
+    39
+   ],
+   [
+    "RELIC.ABILITY_TRACKER_RELIC",
+    27
+   ],
+   [
+    "RELIC.TACTICAL_TRACKER_RELIC",
+    27
+   ],
+   [
+    "RELIC.SAPPHIRE_KEY",
+    22
+   ],
+   [
+    "RELIC.EMERALD_KEY",
+    22
+   ],
+   [
+    "RELIC.ENCHANTERS_TABLE",
+    20
+   ],
+   [
+    "CARD.GUIDASEXPAND-SILENT_BLADE_OF_SEED",
+    19
+   ],
+   [
+    "CARD.GUIDASEXPAND-SILENT_BURNISH",
+    18
+   ],
+   [
+    "CARD.GUIDASEXPAND-SILENT_SMOKE_OUT",
+    17
+   ],
+   [
+    "CARD.GUIDASEXPAND-IRONCLAD_BURNING_ARMOR",
+    17
+   ],
+   [
+    "RELIC.KEEPERS_GIFT",
+    17
+   ],
+   [
+    "CARD.GUIDASEXPAND-SILENT_QUICK_SLASH",
+    15
+   ],
+   [
+    "CARD.GUIDASEXPAND-SILENT_TRIPWIRE",
+    14
+   ],
+   [
+    "RELIC.CORE_ANALYSIS",
+    14
+   ],
+   [
+    "RELIC.RUBY_KEY",
+    14
+   ],
+   [
+    "RELIC.CURSED_KEY",
+    14
+   ],
+   [
+    "RELIC.SUPPORT",
+    13
+   ],
+   [
+    "POTION.YUI_SPIRE_EXPANSION_POTION_LEMONADE",
+    13
+   ],
+   [
+    "RELIC.SACRED_BARK",
+    13
+   ],
+   [
+    "RELIC.BUSTED_CROWN",
+    13
+   ],
+   [
+    "CARD.GUIDASEXPAND-SILENT_ALLEY_HUNTER",
+    12
+   ],
+   [
+    "RELIC.RUNIC_DOME",
+    12
+   ],
+   [
+    "CARD.GUIDASEXPAND-SILENT_QUICK_FLURRY",
+    11
+   ],
+   [
+    "CARD.GUIDASEXPAND-SILENT_MASTERSTROKE",
+    11
+   ],
+   [
+    "RELIC.SMALLTENT-SMALL_TENT",
+    11
+   ],
+   [
+    "CARD.HEAVY_BLADE",
+    11
+   ],
+   [
+    "RELIC.FUSION_HAMMER",
+    11
+   ],
+   [
+    "CARD.GUIDASEXPAND-SILENT_DESPERADO",
+    10
+   ],
+   [
+    "CARD.GUIDASEXPAND-SILENT_SUDDEN_TWIST",
+    10
+   ],
+   [
+    "RELIC.ANCIENT_AFFECTION_RELIC_NEOW_AID_RELIC",
+    10
+   ],
+   [
+    "RELIC.AUTOTHESPIRE-BLUE_TAPE",
+    10
+   ],
+   [
+    "RELIC.AUTOTHESPIRE-LEFT_SOCK",
+    10
+   ],
+   [
+    "RELIC.AUTOTHESPIRE-RIGHT_SOCK",
+    10
+   ],
+   [
+    "RELIC.AUTOTHESPIRE-LAZY_RING",
+    10
+   ],
+   [
+    "CARD.GUIDASEXPAND-IRONCLAD_WEAKPOINT_STRIKE",
+    10
+   ],
+   [
+    "CARD.GUIDASEXPAND-IRONCLAD_EROSION",
+    10
+   ],
+   [
+    "RELIC.COFFEE_DRIPPER",
+    10
+   ],
+   [
+    "CARD.GUIDASEXPAND-SILENT_ALLEY_CAT",
+    9
+   ]
+  ]
+ }
+}

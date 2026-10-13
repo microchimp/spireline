@@ -129,3 +129,10 @@ and the sandbox settings. The kit ships inside this repo, so cloning it (CHECKLI
 enough to bring the kit over. The security review that gates the emulator build (part E) is
 in [docs/SECURITY_REVIEW.md](docs/SECURITY_REVIEW.md). It covers only the pinned commits; review
 any other commit yourself before building it.
+
+## Docs
+
+- [docs/DESIGN.md](docs/DESIGN.md): the full design (v1.1), with a note on what has changed since.
+- [docs/DECISIONS.md](docs/DECISIONS.md): the decision log; it wins where the design disagrees.
+- [docs/SECURITY_REVIEW.md](docs/SECURITY_REVIEW.md): the review of the pinned emulator and mod commits.
+- [docs/research/](docs/research/): the landscape critique, the upstream project map, the Spire Codex corpus, enemy AI notes, compute budget, ideas and raw dossiers.

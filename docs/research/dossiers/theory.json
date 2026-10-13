@@ -1,0 +1,627 @@
+{
+ "key": "theory",
+ "area": "Game-AI theory for finding best play in a stochastic, partially observable, long-horizon single-player deckbuilder (Slay the Spire 2)",
+ "summary": "Slay the Spire 2 is a single-player game against nature, so \"best play\" is a POMDP problem. There is no opponent to exploit, so the CFR and equilibrium machinery used for poker and Hanabi partners is not needed. The hidden information is mostly chance: draw-pile order, RNG-driven enemy moves, and random effects and rewards, all with distributions you can derive from the game rules. The belief state can therefore be sampled exactly: shuffle the known draw-pile cards and reseed the RNG streams. There is a catch. The game shows the run seed, and the engine is deterministic: about 12 System.Random streams, each seeded as runSeed + hash(streamName) (github.com/ing-gom/sts2-rng-fix; Mega Crit's v0.107.1 RNG rework notes on SteamDB). A seed-aware search can therefore be clairvoyant. sts_lightspeed's STS1 \"tree search (best result, knowing the state of the game's rng)\" is exactly that kind of search. Best play has to be defined against a nominal-RNG information model that deliberately leaves out the seed and RNG state. The theory then gives a clear picture. Determinization (PIMC) is a strong, cheap baseline in games that reveal information quickly. Bridge's GIB played at expert level with it. Long et al. 2010 measured skat at leaf correlation 0.8–1.0 and disambiguation factor about 0.6, where PIMC loses only about 0.1 points per game against equilibrium. PIMC still suffers strategy fusion (Frank & Basin 1998). In StS that shows up as indifference to playing draw cards before committing energy. Information-set MCTS (Cowling et al. 2012) fixes this by sharing statistics across determinizations and branching on observations. Within a turn, StS combat is mostly deterministic and fully observable. The natural structure is therefore exhaustive turn search plus chance nodes between turns plus a learned leaf value. That mirrors 2048, where n-tuple TD values plus expectimax score about 609k–625k on average (arXiv 1604.05085, 2212.11087). It also mirrors Bottled AI on STS1, which simulates every hand ordering and scores outcomes on about 40 hand-weighted values, reaching 52% with Watcher at A0 over 50 runs.\n\nThe domain record consistently favours search plus a learned or hand-built value over pure learning or pure LLM play. NetHack 2021: symbolic bots beat deep RL by about 3x in median score, the best neural entry was a hybrid, and nobody ascended (arXiv 2203.11889). LLMs reach about 1.5% NetHack progression (BALROG). Hanabi: search over a blueprint policy took the score from 24.08 to 24.61 out of 25, with a no-worse guarantee (SPARTA). Hearthstone: value networks inside MCTS raised win rate and cut compute. DouDizhu: plain Deep Monte Carlo with action encoding ranked first on Botzone after days on 4 GPUs. Mahjong (Suphx) and DouDizhu (PerfectDou) show a principled way to use \"peeking\" in training only: oracle guiding, or a critic that sees perfect information. Suphx's global reward predictor is the template for turning combat outcomes into run-level value. In StS itself, a depth-3 backtracking search beat GPT-3.5 on arithmetic-heavy fights. The LLM did better on cards whose payoff is delayed (Bateni & Whitehead 2024, MiniStS). Specialised RL with action masking works in simplified simulators, for example 95.8% win rate in STS1 Act-1 elite fights (STS-RL) and about 92% in STS2 Act-1 Ironclad combats (zhiyue). Those are self-reported numbers on reimplemented engines. For tiny simulation budgets, Gumbel AlphaZero/MuZero guarantees policy improvement, learning reliably with as few as 2 simulations in 9x9 Go. That matters if the real engine is slow. Stochastic MuZero's afterstate/chance-node search maps cleanly onto StS. Its learned model is unnecessary here because real-engine and emulator simulators exist (wuhao21/sts2-cli, Zamiell's emulator, zhiyue's Python sim at about 28k steps/s with random actions).\n\nCheap LLM calls are best kept out of the inner loop. Jev costs about $0.00046 per decision at 315 ms p50. One call per decision costs roughly $0.1–0.3 per run, but calling it at every search node multiplies that by the simulation count. Jev's own README says its 27/30 vs 29/30 fixture result is inside a noise floor of about ±3. The grader measures first-action errors, \"not optimality or win probability\". The fork records 0 wins in 9 runs. The sound uses of an LLM are root-level priors over the legal candidates, cached card-text features, and candidate pruning for macro decisions. Each should feed a search that can override it: Gumbel or Sequential Halving over the top-m candidates, epsilon-mixed priors, and SPARTA-style deviation thresholds. LLM-MCTS, MC-DML and DeepMind's MAV-MCTS all use the LLM as a prior inside search, not as the final decider. MAV gained +68 Elo at 100 simulations and +340 at 2,000. RL fine-tuning of LLMs (GRPO/StarPO) is fragile in multi-turn stochastic settings: RAGEN documents an \"Echo Trap\" collapse, and sts2-agent's GRPO track had not run its first training loop according to its README. It should come after an oracle exists that can supply verifiable per-decision rewards. Ground truth for a benchmark should be the information-set Q-value under a declared strong continuation policy. It should be estimated with paired common-random-number determinizations, sequential racing (at least 100 rollouts per action, prune anything more than 2 SD below the best), regret-based scoring with confidence intervals, and control variates in the style of AIVAT, which cut standard deviation by 85% in poker. Expect about 2,400 rollouts for ±2pp and 9,600 for ±1pp at p=0.5. Run-level labels are expensive, so most labels should be combat-local values expressed in run-value units.",
+ "methods": [
+  {
+   "name": "Expectimax / chance-node search with a learned leaf value (incl. sparse sampling)",
+   "what_it_is": "Depth-limited search with max nodes for player actions and expectation nodes for chance (draws, random effects, enemy move rolls), evaluated at the leaves by a heuristic or learned value. Sparse sampling (Kearns, Mansour & Ng) samples a fixed number of chance outcomes per node, so per-state cost does not depend on the size of the state space.",
+   "how_it_decides": "Exhaustive or sampled lookahead. At chance nodes, average over enumerated or sampled outcomes; pick the argmax action at the root.",
+   "reported_results": "2048: an n-tuple TD afterstate value plus expectimax scores 609,104 on average (Jaśkowski, arXiv 1604.05085); optimistic TD reaches 625,377 with 72% of games hitting the 32768 tile (arXiv 2212.11087). Earlier 3-stage n-tuple plus depth-5 expectimax scored 328,946. STS1 Bottled AI (turn-level exhaustive simulation scored on about 40 hand-weighted features) wins 52% with Watcher A0, 40% Silent, 33% Defect, 20% Ironclad, each over about 50 runs (bottled_ai docs/winrates.md, Oct 2024).",
+   "strengths": [
+    "Exact for the deterministic within-turn part of StS combat (card order, targets, energy)",
+    "No training needed if a decent heuristic exists; the learned value can be added later",
+    "Chance nodes model draws and intents correctly, without seed peeking",
+    "Afterstate formulation fits deckbuilding choices (value of the deck after the pick)"
+   ],
+   "weaknesses": [
+    "Branching explodes on draw effects and random targets unless sampled or bucketed",
+    "Quality is capped by the leaf evaluator; hand-tuned weights encode combat-local proxies",
+    "Depth-limited: misses delayed payoffs such as scaling powers (Bateni & Whitehead's Bomb and Tolerate cases)"
+   ],
+   "relevance_to_best_play": "Core of the combat engine: DFS with transpositions over a turn's deterministic play sequences, chance nodes at draws and end of turn, and V(state) at the leaves. It is also the cheapest way to produce combat-local oracle labels.",
+   "url": "https://arxiv.org/abs/1604.05085",
+   "verified": true,
+   "cost_and_speed": "Microseconds per node in a native simulator. Turn-level enumeration is usually tractable (Bottled AI runs live inside a human-speed mod); for draw-heavy turns it needs sampling or bucketing."
+  },
+  {
+   "name": "Perfect Information Monte Carlo (PIMC) / determinization",
+   "what_it_is": "Sample complete hidden states (draw order, RNG outcomes) consistent with what has been observed, solve each sample as a perfect-information problem, and average the root action values across samples.",
+   "how_it_decides": "Argmax of action value averaged over N determinized worlds.",
+   "reported_results": "GIB (bridge, PIMC plus double-dummy solver) was rated about expert level and the strongest bridge program of its time (Ginsberg, JAIR 2001). Long et al. 2010: PIMC is weakest when leaf correlation is low. Skat measured lc 0.8–1.0 and df about 0.6, where PIMC loses about 0.1 points per game (payoffs −1..1) against a Nash player. In poker-like games (df=0) PIMC is weak and exploitable. MTG: ensemble determinization MCTS significantly improves playing strength (Cowling, Ward & Powley 2012).",
+   "strengths": [
+    "Simple to implement on any simulator that can set the draw order and reseed RNG (sts2-cli exposes set_draw_order)",
+    "Embarrassingly parallel",
+    "Works well in games that reveal information fast; StS reveals a card with every draw",
+    "Single-player, so the poker-style exploitability problem does not arise"
+   ],
+   "weaknesses": [
+    "Strategy fusion: assumes it can act differently in worlds the player cannot tell apart. In StS it does not value drawing before committing energy, or keeping options open.",
+    "Non-locality (Frank & Basin 1998)",
+    "Overestimates values, because it is a clairvoyant upper bound per world",
+    "If determinizations reuse the true RNG state, it silently becomes seed peeking"
+   ],
+   "relevance_to_best_play": "Strong cheap baseline and an upper bound on the value of perfect information. The difference between PIMC and ISMCTS on the same positions measures how much strategy fusion matters in StS2 (an open empirical question).",
+   "url": "https://ojs.aaai.org/index.php/AAAI/article/view/7562",
+   "verified": true,
+   "cost_and_speed": "N determinizations × perfect-information solve. With turn-level solves, N=32–256 is feasible per decision in a fast simulator."
+  },
+  {
+   "name": "Information Set MCTS (SO-ISMCTS and variants)",
+   "what_it_is": "MCTS whose nodes are information sets, not states. Each iteration samples a fresh determinization consistent with the current information set, and statistics are shared across determinizations. Chance outcomes the player observes (a drawn card) create branches.",
+   "how_it_decides": "UCT over information-set nodes; the final choice is the most-visited root action.",
+   "reported_results": "Cowling, Powley & Whitehouse (IEEE TCIAIG 2012): three ISMCTS algorithms outperform existing determinization approaches in three test domains (the abstract does not name them). An anyspace variant shipped in a commercial Spades app with more than 6M downloads (Memory Bounded MCTS, AIIDE).",
+   "strengths": [
+    "Addresses strategy fusion and wasted per-world budget",
+    "Anytime, needs no training",
+    "Natural fit for single-player games with chance (a single observer suffices)"
+   ],
+   "weaknesses": [
+    "Slower convergence than per-world solving; needs many iterations",
+    "Needs a fast simulator with cloning or replay. sts2-cli has no mid-combat snapshot command (code read), so restoring a node means replaying from room start",
+    "Rollout policy quality still dominates long combats"
+   ],
+   "relevance_to_best_play": "The theoretically right search for combat decisions involving draw effects, scry, random targets or multi-turn setup. Use it for oracle labels where PIMC and ISMCTS disagree.",
+   "url": "https://eprints.whiterose.ac.uk/id/eprint/75048/",
+   "verified": true,
+   "cost_and_speed": "Thousands to tens of thousands of iterations per decision for oracle quality; affordable only in a native or emulated simulator, not via the live game mod."
+  },
+  {
+   "name": "Open-loop MCTS",
+   "what_it_is": "MCTS that stores statistics for action sequences rather than states, re-simulating the stochastic environment on each iteration (Perez Liebana et al., GECCO 2015).",
+   "how_it_decides": "UCT over action-sequence trees, with outcomes averaged implicitly.",
+   "reported_results": "Introduced three open-loop techniques for stochastic general video game playing (GVGAI); no StS numbers. Not checked in detail beyond the abstract.",
+   "strengths": [
+    "Trivial to implement with a simulator that can only be reset and replayed",
+    "Handles small-effect stochasticity (random targets, damage rolls) gracefully"
+   ],
+   "weaknesses": [
+    "Conflates different observed outcomes, so it cannot condition later actions on which card was drawn",
+    "Weaker than closed-loop or ISMCTS when information is revealed mid-turn"
+   ],
+   "relevance_to_best_play": "A pragmatic first search over the real engine via replay. It should be replaced by observation-branching ISMCTS for draw-dependent turns.",
+   "url": "https://dl.acm.org/doi/10.1145/2739480.2754811",
+   "verified": false,
+   "cost_and_speed": "Same per-iteration cost as MCTS; no state hashing needed."
+  },
+  {
+   "name": "Hearthstone-style MCTS enhancements: chance-node bucketing plus value/policy networks",
+   "what_it_is": "Determinized MCTS with chance outcomes grouped into buckets of similar effect, pre-sampled per bucket (Zhang & Buro 2017), plus supervised value networks evaluating leaves (Świechowski et al. 2018).",
+   "how_it_decides": "MCTS with reduced chance branching and NN leaf values or rollout policies.",
+   "reported_results": "Zhang & Buro (CIG 2017) reduced chance branching factors and improved over a state-of-the-art bot (Silverfish lineage). Świechowski et al. (CIG 2018): even simple NN value functions plus guidance substantially improve win rate while reducing computation; the first player won 70.6% vs 29.4% in their time-limit tests.",
+   "strengths": [
+    "Directly transferable: bucket StS draw outcomes by energy, damage and block profile",
+    "A value network cuts rollout cost"
+   ],
+   "weaknesses": [
+    "Bucketing heuristics are hand-designed",
+    "Two-player adversarial setting; partial transfer only"
+   ],
+   "relevance_to_best_play": "Practical recipe to make combat ISMCTS affordable.",
+   "url": "https://arxiv.org/abs/1808.04794",
+   "verified": true,
+   "cost_and_speed": "Lower than plain MCTS at equal strength (authors report reduced computation)."
+  },
+  {
+   "name": "Rollout-based policy improvement over a blueprint (SPARTA single-agent search)",
+   "what_it_is": "At each decision, estimate Q^blueprint(belief, a) for every legal action by Monte Carlo rollouts from sampled hidden states, with the blueprint policy playing the rest of the game. Choose the best action, deviating from the blueprint only if the gain exceeds a threshold.",
+   "how_it_decides": "One-step lookahead with blueprint continuation, UCB-style pruning and a deviation threshold.",
+   "reported_results": "Hanabi: 24.61/25 vs previous best 24.08 (Lerer et al., AAAI 2020). Implementation: at least 100 rollouts per action, then skip any action more than 2 SD below the best; deviation threshold 0.05; together these cut rollouts per turn by 10x. Single-agent search costs about 10^5 rollouts per game. Proven not to lose to the blueprint beyond an error that decays with the number of rollouts.",
+   "strengths": [
+    "Guaranteed improvement over whatever policy you already have (rules bot, PPO, LLM)",
+    "Exact fit: StS is single-agent, so no partner-belief corruption",
+    "Statistically disciplined (CIs, pruning, thresholds), which is exactly what benchmark labelling needs"
+   ],
+   "weaknesses": [
+    "One-step improvement only; quality bounded by the blueprint continuation",
+    "Rollouts are expensive for run-level values"
+   ],
+   "relevance_to_best_play": "The recommended operational definition of ground truth (Q under a declared reference policy) and the first live search to build on top of a rules or LLM blueprint.",
+   "url": "https://arxiv.org/abs/1912.02318",
+   "verified": true,
+   "cost_and_speed": "|A| × N rollouts per decision; with N≥100 and pruning, roughly 10^3–10^4 rollouts per decision."
+  },
+  {
+   "name": "Expert Iteration / AlphaZero-style self-play with a simulator",
+   "what_it_is": "Alternate between (a) tree search guided by a policy and value network and (b) training the network to imitate search visit distributions and predict outcomes (ExIt, Anthony et al. 2017; AlphaZero).",
+   "how_it_decides": "PUCT MCTS with network priors and values; the network distils the search.",
+   "reported_results": "ExIt beat REINFORCE on Hex, and its tabula-rasa agent defeated MoHex 1.0, the most recent publicly released Olympiad champion player (arXiv 1705.08439). AlphaZero and MuZero results are standard (not re-verified here).",
+   "strengths": [
+    "Turns compute into a progressively better policy and value",
+    "Search labels act as built-in DAgger: states come from the learner's own distribution",
+    "Policy prior prunes the large StS action space (cards × targets × potions)"
+   ],
+   "weaknesses": [
+    "Needs a fast simulator (millions of simulated decisions)",
+    "PUCT can fail to improve when not all root actions are visited (motivates Gumbel)",
+    "Chance nodes needed for stochastic dynamics"
+   ],
+   "relevance_to_best_play": "Medium-term engine for combat: search over turn sequences, distilled into a policy and value that make later search cheaper.",
+   "url": "https://arxiv.org/abs/1705.08439",
+   "verified": true,
+   "cost_and_speed": "GPU or CPU training plus many simulator-hours. Feasible on a hobby budget only with a native emulator, not the live game."
+  },
+  {
+   "name": "MuZero / Stochastic MuZero",
+   "what_it_is": "Search with a learned latent model. Stochastic MuZero adds afterstates and discrete chance codes (VQ-VAE-style) so the tree has explicit chance nodes.",
+   "how_it_decides": "MCTS over learned latent dynamics with decision and chance nodes.",
+   "reported_results": "Matched or exceeded the state of the art on 2048 and backgammon while matching MuZero on Go. On backgammon it beat GNUbg Grandmaster with a much smaller search budget (GNUbg searches several million positions with 3-ply lookahead), and the learned chance distribution recovered the 21 distinct dice outcomes (ICLR 2022; Schrittwieser blog). A third-party table puts 2048 averages at about 500k (Stochastic MuZero) vs about 300k (MuZero); this figure is not confirmed from the paper.",
+   "strengths": [
+    "The afterstate/chance-node formalism maps onto StS (afterstate after the card play, chance at the draw)",
+    "Avoids hand-modelling chance distributions"
+   ],
+   "weaknesses": [
+    "The learned model adds error when an exact simulator already exists",
+    "Heavy training compute (DeepMind-scale)"
+   ],
+   "relevance_to_best_play": "Borrow the tree structure, not the learned model. Use the real engine or an emulator as the model; consider a learned model only if the simulator is far too slow.",
+   "url": "https://www.julian.ac/blog/2022/05/15/planning-in-stochastic-environments-with-a-learned-model",
+   "verified": true,
+   "cost_and_speed": "Very high training cost; not a first-phase hobby option."
+  },
+  {
+   "name": "Gumbel AlphaZero / Gumbel MuZero",
+   "what_it_is": "Root action selection by Gumbel-Top-k sampling without replacement plus Sequential Halving, with a policy-improvement target computed from completed Q-values.",
+   "how_it_decides": "Sample m=min(n,16) candidate actions by Gumbel + logits, halve them over log2(m) phases, and pick argmax of g + logits + σ(q̂).",
+   "reported_results": "9x9 Go: MuZero fails to learn with 16 or fewer simulations, while Gumbel MuZero learns reliably with 2. Atari ms_pacman: learns with n=2 where MuZero fails at 4 or fewer. Training speed relative to n=200 is 24.3x at n=4 (Danihelka et al., ICLR 2022).",
+   "strengths": [
+    "Guaranteed policy improvement with tiny budgets, which suits slow real-engine search",
+    "Clean way to combine an LLM or NN prior with a few true simulations: the prior proposes, the simulations decide"
+   ],
+   "weaknesses": [
+    "Gains shrink at large budgets",
+    "Still needs a value estimate at the leaves"
+   ],
+   "relevance_to_best_play": "Best fit when each simulation is expensive (real engine via replay). Pair a Jev or LLM prior over candidates with 8–32 engine rollouts per decision.",
+   "url": "https://iclr.cc/virtual/2022/poster/6418",
+   "verified": true,
+   "cost_and_speed": "n simulations per decision with n as low as 2–32."
+  },
+  {
+   "name": "PPO with invalid-action masking",
+   "what_it_is": "Policy-gradient RL in which illegal actions are masked out of the softmax; MaskablePPO in sb3-contrib.",
+   "how_it_decides": "Learned stochastic policy, no lookahead.",
+   "reported_results": "Huang & Ontañón: the masked gradient is a valid policy gradient and scales as the invalid-action space grows. StS projects (all self-reported): STS-RL (STS1, BC then MaskablePPO) reports a 95.8% Act-1 elite-combat win rate, and Act-1 clear rates of Defect 83.7% vs heuristic 82.3%, Ironclad 41.3% vs 33.3%, Silent 68.7% vs 99.0%. zhiyue/sts2-rl-agent reports about 92% Act-1 Ironclad combat win rate in a Python reimplementation running about 1,200 combats/s.",
+   "strengths": [
+    "Simple, well tooled; fast inference",
+    "Good blueprint or rollout policy for search"
+   ],
+   "weaknesses": [
+    "Sample hungry; needs a fast reimplemented simulator, which brings sim-to-real fidelity risk",
+    "Reward shaping (e.g. sts2-agent's +0.01 per damage dealt, −0.02 per HP lost) hard-codes combat-local proxies that can disagree with run value",
+    "Weak at combinatorial or long combos without search; results are Act-1 only"
+   ],
+   "relevance_to_best_play": "Use as the fast blueprint or rollout policy inside SPARTA or ISMCTS, not as the final decider or the oracle.",
+   "url": "https://arxiv.org/abs/2006.14171",
+   "verified": true,
+   "cost_and_speed": "Millions of steps; zhiyue reports about 28k random-action steps/s on one CPU. Real-engine speed is unknown."
+  },
+  {
+   "name": "Deep Monte Carlo with action encoding (DouZero)",
+   "what_it_is": "Learn Q(s, a) directly from Monte Carlo returns, with actions encoded as features, so huge and variable action sets are scored one candidate at a time; many parallel actors.",
+   "how_it_decides": "Argmax over encoded legal candidates of the learned Q(s, a).",
+   "reported_results": "Trained from scratch on one server with 4 GPUs over days, it outperformed all existing DouDizhu AIs and ranked first of 344 agents on Botzone (ICML 2021). An alphaXiv summary says 30 days on 4×1080Ti.",
+   "strengths": [
+    "Natural for StS card-pick, shop and event options: score each candidate afterstate",
+    "No bootstrapping instability; very simple"
+   ],
+   "weaknesses": [
+    "High-variance returns over long runs; needs many episodes",
+    "Still needs a decent combat policy to generate returns"
+   ],
+   "relevance_to_best_play": "Recommended learner for the run-value and afterstate value V_run(deck, relics, HP, gold, potions, floor) that ranks deckbuilding choices and supplies combat terminal rewards.",
+   "url": "https://arxiv.org/abs/2106.06135",
+   "verified": true,
+   "cost_and_speed": "Moderate (single machine, days) given a fast simulator."
+  },
+  {
+   "name": "Oracle guiding / perfect-information distillation (Suphx, PerfectDou) and global reward prediction",
+   "what_it_is": "Use privileged hidden information during training only. Suphx trains an oracle agent with perfect information, then gradually drops it. PerfectDou gives perfect information to the critic and never to the actor. Suphx's global reward predictor maps round-level states to final game reward.",
+   "how_it_decides": "The test-time policy uses only observable inputs.",
+   "reported_results": "Suphx is rated above 99.99% of ranked human players on Tenhou. PerfectDou reports state of the art over all prior DouDizhu AIs (arXiv 2203.16406).",
+   "strengths": [
+    "Legitimate use of seed and RNG knowledge: an asymmetric critic lowers variance without peeking at test time",
+    "The global reward predictor is the template for converting combat-local outcomes into run win probability"
+   ],
+   "weaknesses": [
+    "Oracle-guided actors can learn information-dependent habits if the information is not fully dropped",
+    "Engineering complexity"
+   ],
+   "relevance_to_best_play": "Lets you exploit the deterministic, seedable engine for training signal while keeping the deployed and oracle decision rule seed-free.",
+   "url": "https://arxiv.org/abs/2003.13590",
+   "verified": true,
+   "cost_and_speed": "Large-scale in the originals; a scaled-down asymmetric critic is cheap."
+  },
+  {
+   "name": "Behaviour cloning, offline RL and DAgger from logs",
+   "what_it_is": "Learn priors from recorded trajectories: AgenticSTS's 298 released runs; community .run files (Spire Codex lists 1,917,699 analysed runs, sts2.fun 370k); STS1's 77M-run metrics dump. Offline RL methods (CQL, IQL) attempt policy improvement from fixed data. DAgger relabels states the learner actually visits using an expert (here, search).",
+   "how_it_decides": "Supervised imitation, or conservative value learning on fixed data.",
+   "reported_results": "Spire Codex: 25.7% overall win rate across submitted runs; A0 has 330,004 runs at 22.1% (live site, self-selected players). AgenticSTS released 298 trajectories. DAgger: no-regret guarantee under the learner's own state distribution (Ross et al. 2011). Offline RL numbers were not verified for this domain.",
+   "strengths": [
+    "Cheap priors for card picks and pathing; human data covers patch-current content",
+    "DAgger plus search labels avoids compounding error when distilling"
+   ],
+   "weaknesses": [
+    "Run files record macro choices only, not combat actions",
+    "Pick-rate and win-rate correlations are confounded: strong players and good runs pick certain cards, so they are not causal values",
+    "Early Access patches shift the data distribution (v0.107.1 RNG rework; constant balance changes)",
+    "Data terms and ownership need checking (Spire Codex is third-party)"
+   ],
+   "relevance_to_best_play": "A prior for candidate ordering and a cold-start value; never ground truth.",
+   "url": "https://arxiv.org/abs/1011.0686",
+   "verified": true,
+   "cost_and_speed": "Cheap (supervised training on CPU or GPU)."
+  },
+  {
+   "name": "Symbolic / rule-based agents (AutoAscend, Bottled AI)",
+   "what_it_is": "Hand-coded strategy modules plus local simulation.",
+   "how_it_decides": "Priority lists and conditions for macro choices; exhaustive turn simulation scored by weighted features for combat.",
+   "reported_results": "NetHack 2021: 483 entrants and 631 submissions over 144 days. The top 3 overall were symbolic; the best symbolic median was nearly 3x the best neural. The winner's median score was 5,300, barely above Beginner. The best neural entry (RAPH) was a hybrid; no agent ascended. Bottled AI: 52% with Watcher A0 (50 runs). Its docs say Ironclad's 20% has a 95% CI of 8.9–31.1%, and that ±3% would need about 1,000 games.",
+   "strengths": [
+    "Strongest per hour of hobbyist effort; interpretable",
+    "Encodes domain knowledge that RL takes millions of games to rediscover"
+   ],
+   "weaknesses": [
+    "Brittle to patches and new content; ceiling set by the author's skill"
+   ],
+   "relevance_to_best_play": "Day-one blueprint and leaf heuristic; the baseline any learned method must beat on a paired seed battery.",
+   "url": "https://github.com/xaved88/bottled_ai",
+   "verified": true,
+   "cost_and_speed": "Very cheap at runtime."
+  },
+  {
+   "name": "Clairvoyant / seed-aware search (sts_lightspeed 'scum' search)",
+   "what_it_is": "Tree search over a fully cloned game state including RNG state, so future draws and rolls are known.",
+   "how_it_decides": "UCT (BattleScumSearcher2) over exact future trajectories.",
+   "reported_results": "sts_lightspeed (STS1 C++): 1M random playouts in 5 s on 16 threads. Its tree search finds the 'best result, knowing the state of the game's rng'. STS1 combat RNG streams (ai, monsterHp, shuffle, cardRandom) are all seeded with seed+floorNum at battle start (code read).",
+   "strengths": [
+    "Upper bound on achievable outcome (value of perfect information)",
+    "Useful for debugging the simulator and as a training-only critic input"
+   ],
+   "weaknesses": [
+    "Not best play under player information; any benchmark labelled this way rewards seed peeking"
+   ],
+   "relevance_to_best_play": "Report it only as an upper bound. The gap between the clairvoyant value and the information-set value tells you how much a position depends on luck versus decision.",
+   "url": "https://github.com/gamerpuppy/sts_lightspeed",
+   "verified": true,
+   "cost_and_speed": "Very fast in native code."
+  },
+  {
+   "name": "LLM as a prior or heuristic inside tree search (LLM-MCTS, MC-DML, MAV external MCTS)",
+   "what_it_is": "The LLM supplies the PUCT prior, candidate actions, a world-model belief or leaf values; search does the selection.",
+   "how_it_decides": "MCTS or PUCT with LLM-derived priors; tree statistics override the LLM.",
+   "reported_results": "LLM-MCTS beats both plain MCTS and LLM policies (GPT-2/3.5) on large task planning; removing the LLM heuristic dropped success to 0%. MDL principle: use the LLM as a world model when the model is simpler to describe than the policy (NeurIPS 2023). MC-DML: LLM as PUCT prior plus memory, better or comparable on 8 of 9 Jericho games (ICLR 2025). MAV (a domain-pretrained LM) with MCTS: +68 internal Elo at 100 simulations and +340 at 2,000; reached Grandmaster-level chess (ICML 2025).",
+   "strengths": [
+    "Brings card-text understanding and long-horizon intuition to otherwise blind search",
+    "Search corrects LLM arithmetic and hallucination errors"
+   ],
+   "weaknesses": [
+    "LLM calls per node are prohibitively expensive and slow",
+    "A miscalibrated prior can starve the correct action under PUCT (fix with Gumbel and epsilon mixing)",
+    "The strongest results (MAV) used models trained on domain data, not general chat models"
+   ],
+   "relevance_to_best_play": "The right role for Jev-style cheap calls: one batched call per decision giving a root prior or candidate shortlist, plus cached card embeddings.",
+   "url": "https://arxiv.org/abs/2412.12119",
+   "verified": true,
+   "cost_and_speed": "One LLM call per decision at the root is affordable; per-node calls are not."
+  },
+  {
+   "name": "LLM-internal search (Tree of Thoughts, LATS, RAP)",
+   "what_it_is": "The LLM generates and evaluates branches of reasoning or action itself (BFS/DFS in ToT; MCTS with LLM value and self-reflection in LATS).",
+   "how_it_decides": "LLM-scored tree over thoughts or actions.",
+   "reported_results": "ToT on Game of 24 with GPT-4: 74% vs 4% for chain-of-thought (arXiv 2305.10601). LATS unifies reasoning, acting and planning (arXiv 2310.04406).",
+   "strengths": [
+    "No simulator needed; useful for novel or unmodelled mechanics"
+   ],
+   "weaknesses": [
+    "Many LLM calls per decision; the LLM is a poor arithmetic simulator for exact damage, block and lethal checks",
+    "A real simulator exists for StS, which makes LLM-simulated transitions redundant"
+   ],
+   "relevance_to_best_play": "Low for combat. Possibly useful for rare events or untested mechanics where the simulator lacks coverage.",
+   "url": "https://arxiv.org/abs/2305.10601",
+   "verified": true,
+   "cost_and_speed": "Tens to hundreds of calls per decision."
+  },
+  {
+   "name": "RL fine-tuning of LLMs for game decisions (GRPO / StarPO / RLVR; sts2-agent plan)",
+   "what_it_is": "Policy-gradient fine-tuning of an LLM on game rewards, with group-relative advantages (GRPO) or trajectory-level variants.",
+   "how_it_decides": "The fine-tuned LLM samples actions; no lookahead unless added.",
+   "reported_results": "RAGEN (Sokoban, FrozenLake, Bandit): all StarPO runs initially improve but eventually collapse in multi-turn settings ('Echo Trap'), needing the stabilised StarPO-S. SPIRAL: Kuhn-poker self-play on Qwen3-4B-Base gave +8.6% on math and +8.4% on general reasoning, beating SFT on 25k expert trajectories; that is transfer to reasoning, not game strength. sts2-agent plans GRPO for Qwen3-30B-A3B on Tinker with per-combat episodes; its README says the first training loop had not yet run.",
+   "strengths": [
+    "Can internalise game knowledge into a small, fast, local model",
+    "Verifiable rewards are available from the simulator"
+   ],
+   "weaknesses": [
+    "Expensive, unstable, sparse rewards over long runs",
+    "Without search it inherits LLM tactical weakness",
+    "Dense shaped rewards bake in combat-local proxies"
+   ],
+   "relevance_to_best_play": "Late-phase option. Most promising when trained on oracle-labelled decisions (reward = negative regret against search labels) rather than raw win or loss.",
+   "url": "https://arxiv.org/abs/2504.20073",
+   "verified": true,
+   "cost_and_speed": "GPU-hours to GPU-days plus API or Tinker costs; not a first-phase tool."
+  },
+  {
+   "name": "LLM-feedback rewards (Motif)",
+   "what_it_is": "Elicit LLM preferences over pairs of event captions, fit a reward model, and train an RL agent on it.",
+   "how_it_decides": "An RL policy optimises an LLM-derived intrinsic reward.",
+   "reported_results": "On NetHack, an agent maximising only Motif's intrinsic reward achieved a higher game score than one trained directly on score (ICLR 2024).",
+   "strengths": [
+    "Uses the LLM offline, once, cheaply",
+    "Densifies sparse long-horizon rewards"
+   ],
+   "weaknesses": [
+    "Reward hacking risk; preferences need not track win probability"
+   ],
+   "relevance_to_best_play": "Possible shaping signal for macro decisions early on; should be replaced by a learned V_run once enough simulated runs exist.",
+   "url": "https://arxiv.org/abs/2310.00166",
+   "verified": true,
+   "cost_and_speed": "One-off LLM labelling of a caption dataset."
+  },
+  {
+   "name": "Factored typed-question LLM policy (Jev The Spire 2)",
+   "what_it_is": "One request per decision: a 'move' distribution over up to 64 candidates plus per-candidate yes/no 'safe', 'progress' and 'waste' questions, recombined with fixed weights (move, safe and progress 0.25 each; waste 1 as a veto; deadband 0.15) into an argmax.",
+   "how_it_decides": "Weighted combination of TypeSafe Jev's reported probabilities, behind a code-level lethal gate.",
+   "reported_results": "p50 315 ms and $0.00046 per decision with the opt-in single-call policy. Fixture benchmark 27/30 vs 29/30 for Opus 5.5, Kimi-K3, Fable and Grok on 30 decisions; the README says the noise floor is about ±3, the grader is 'not optimality or win probability', and the fork's own regression set is 10 fixtures repeated 10 times. Measured win rate: 0 wins in 9 recorded runs. The upstream jev-the-spire's first Ironclad A0 victory came on archived run #182.",
+   "strengths": [
+    "Very cheap and fast; batching 160 questions costs the same latency as 31",
+    "Calibrated-probability outputs (as claimed) map directly onto search priors"
+   ],
+   "weaknesses": [
+    "No lookahead; quality unproven in win rate",
+    "Calibration not independently verified",
+    "Benchmark labels are hand-graded first-action errors, not ground truth"
+   ],
+   "relevance_to_best_play": "Use as a root prior and candidate pruner feeding Gumbel or SPARTA search; audit its calibration against oracle Q-values.",
+   "url": "https://github.com/shoemoney/jev-the-spire2",
+   "verified": true,
+   "cost_and_speed": "About $0.00046 and 315 ms per call. Per-node use inside MCTS multiplies cost by the simulation count."
+  },
+  {
+   "name": "Variance-reduced evaluation: common random numbers / PEGASUS and AIVAT control variates",
+   "what_it_is": "CRN/PEGASUS fixes start states and random-number sequences so candidate policies or actions are compared on identical luck. AIVAT subtracts value-function-based control variates for chance events and known-policy actions, keeping the estimate unbiased.",
+   "how_it_decides": "Evaluation only: paired differences, then statistical tests.",
+   "reported_results": "AIVAT cut the standard deviation of a heads-up no-limit hold'em man-machine match by 85%, needing 44x fewer games, and raised DeepStack's result from 4-sigma to 20-sigma significance (AAAI 2018). Strens & Moore (JMLR 2002) show paired comparisons with fixed seeds make policy evaluation deterministic, but warn that optimisation can exploit the particular seed set.",
+   "strengths": [
+    "Large sample savings for comparing actions and agents",
+    "StS2's separate per-system RNG streams make CRN natural on a shared seed battery"
+   ],
+   "weaknesses": [
+    "Correlation decays once trajectories diverge (shuffle-stream consumption differs between decks)",
+    "Overfitting to fixed seeds: use fresh held-out seeds for final claims"
+   ],
+   "relevance_to_best_play": "Essential for benchmark ground truth and for agent win-rate comparisons on a hobby budget.",
+   "url": "https://arxiv.org/abs/1612.06915",
+   "verified": true,
+   "cost_and_speed": "Near-free given a value function and seed control."
+  },
+  {
+   "name": "Two-player CCG learners: end-to-end policy plus Optimistic Smooth Fictitious Play (LoCM, Hearthstone)",
+   "what_it_is": "A single network handles both deck building and battle, trained by deep RL as a smooth best response inside fictitious play.",
+   "how_it_decides": "Learned policy, Nash-seeking.",
+   "reported_results": "Won both COG2022 Legends of Code and Magic tracks (arXiv 2303.04096). The Hearthstone follow-up beat a streamer whose best rank was top-10 in China in every best-of-5 full game, deck building included (arXiv 2303.05197). No Legends of Runeterra AI research was found (not verified that none exists).",
+   "strengths": [
+    "Shows deck building and battle can be learned jointly at scale"
+   ],
+   "weaknesses": [
+    "The equilibrium machinery is unnecessary for single-player StS; industrial compute"
+   ],
+   "relevance_to_best_play": "Mainly architectural inspiration: one shared state encoder for macro and combat heads.",
+   "url": "https://arxiv.org/abs/2303.04096",
+   "verified": true,
+   "cost_and_speed": "Industrial scale."
+  },
+  {
+   "name": "Deckbuilding analogues: Dominion (Provincial, RL baseline) and MTG card selection",
+   "what_it_is": "Simulation-based optimisation of buy strategies (Provincial evolves buy menus evaluated by simulated games) and RL bots; Monte Carlo search for card selection in MTG.",
+   "how_it_decides": "Simulate many games per candidate strategy or card, then select.",
+   "reported_results": "Dominion: an RL baseline beats common heuristic bots and is competitive with Provincial; a 2M-game Dominion Online dataset was released (arXiv 2405.06846). MTG: Ward & Cowling (CIG 2009) Monte Carlo card selection; ensemble-determinization MCTS (TCIAIG 2012). Forge's MTG AI internals were not verified.",
+   "strengths": [
+    "Directly analogous to StS deck-quality evaluation through simulated consistency"
+   ],
+   "weaknesses": [
+    "Dominion's shared supply and short games differ from StS's long single-player run"
+   ],
+   "relevance_to_best_play": "Supports evaluating card picks by simulated downstream play (rollouts or V_run), not by local heuristics.",
+   "url": "https://arxiv.org/abs/2405.06846",
+   "verified": true,
+   "cost_and_speed": "Thousands of simulated games per evaluated strategy."
+  },
+  {
+   "name": "LLM vs search on StS combat (MiniStS, Bateni & Whitehead 2024)",
+   "what_it_is": "A simplified StS implementation comparing a random agent, an n-step backtracking search (depth 3) and GPT-3.5 with and without chain-of-thought.",
+   "how_it_decides": "Mean final HP over 50 simulations per agent and scenario.",
+   "reported_results": "Mean final HP, backtrack vs LLM-CoT: starter deck 25.94 vs 23.36; Batter-Stimulate 56.8 vs 25.68; Bomb 17.2 vs 34.74; Tolerate 18.6 vs 39.5. Search wins on arithmetic and synergy lines; the LLM wins where the payoff lies beyond the search horizon.",
+   "strengths": [
+    "Clean, controlled evidence of the respective strengths of search and LLMs in StS mechanics"
+   ],
+   "weaknesses": [
+    "Single enemy, GPT-3.5, 50 sims each, toy engine"
+   ],
+   "relevance_to_best_play": "Supports a hybrid: exact search for tactics, with LLM or learned value covering long-horizon effects.",
+   "url": "https://dl.acm.org/doi/fullHtml/10.1145/3649921.3650013",
+   "verified": true,
+   "cost_and_speed": "Not reported in detail."
+  }
+ ],
+ "key_facts": [
+  {
+   "fact": "StS2 builds about 12 separate RNG streams per run (map, shuffle, card generation, rewards, 'niche', and others), each seeded as runSeed + hash(streamName) using .NET System.Random. Determinism is preserved: the same seed always gives the same run.",
+   "confidence": "high",
+   "source_url": "https://github.com/ing-gom/sts2-rng-fix"
+  },
+  {
+   "fact": "Mega Crit's Major Update #2 (v0.107.1, 19 June 2026) included an 'RNG Rework' after correlated-randomness bugs. A run has multiple PRNGs seeded from one run seed. Seed batteries and RNG-accurate simulators must be version-pinned.",
+   "confidence": "high",
+   "source_url": "https://steamdb.info/patchnotes/23811903"
+  },
+  {
+   "fact": "Decompiled-source notes list RunRngSet streams including act_N_map, UpFront, UnknownMapPoint, CombatTargets, TreasureRoomRelics, Niche and CombatPotionGeneration, plus per-player Rewards and Shops streams.",
+   "confidence": "medium",
+   "source_url": "https://github.com/zhiyue/sts2-rl-agent/blob/main/docs/GAME_SYSTEMS_REFERENCE.md"
+  },
+  {
+   "fact": "A community mod 'Real Draw Pile Order' exists to show the actual draw order, which implies the base game does not reveal it. Benchmarks and agents must not run with such mods.",
+   "confidence": "medium",
+   "source_url": "https://sts2.gg/mods/mod-414"
+  },
+  {
+   "fact": "sts2-agent says StS2 seeds are visible and deterministic, and treats an agent that discovers this and plans around perfect information as a 'hidden flag'. Best play must be defined with the seed and RNG state explicitly excluded, even though the seed is shown in-game.",
+   "confidence": "high",
+   "source_url": "https://github.com/mingxuan-he/sts2-agent"
+  },
+  {
+   "fact": "wuhao21/sts2-cli runs the real StS2 engine headless (IL-patched sts2.dll, Godot stubs) over a JSON stdin/stdout protocol and was tested on v0.111.0. Commands include start_run, action, load_save, set_draw_order, set_player, enter_room and write_continue_save. A code read found no mid-combat state clone or snapshot command, so restoring a search node means replaying from room start or adding a patch.",
+   "confidence": "high",
+   "source_url": "https://github.com/wuhao21/sts2-cli"
+  },
+  {
+   "fact": "zhiyue/sts2-rl-agent is a Python StS2 reimplementation (577 cards, 121 monsters, 5 characters) claiming about 1,276 combats/s and about 28,000 steps/s with random actions, and about 92% PPO combat win rate in Act 1 with Ironclad (self-reported; fidelity to the real engine unverified).",
+   "confidence": "medium",
+   "source_url": "https://github.com/zhiyue/sts2-rl-agent"
+  },
+  {
+   "fact": "Zamiell/slay-the-spire-2-emulator is a NativeAOT C# emulator covering a subset of StS2 (Ironclad-focused, Act 1 pools, partial relics) with seeded per-instance RNG and Gymnasium wrappers. It explicitly says it is not yet a full game emulator.",
+   "confidence": "high",
+   "source_url": "https://github.com/Zamiell/slay-the-spire-2-emulator"
+  },
+  {
+   "fact": "STS1 sts_lightspeed: '1M random playouts in 5s with 16 threads'. Its tree search assumes knowledge of the RNG state. Combat RNG streams (ai, monsterHp, shuffle, cardRandom) are seeded with seed+floorNum at battle start (BattleContext.cpp, code read).",
+   "confidence": "high",
+   "source_url": "https://github.com/gamerpuppy/sts_lightspeed"
+  },
+  {
+   "fact": "Bottled AI (STS1, rule-based plus turn simulation scored on about 40 weighted values; claims no access to hidden information) reports 52% Watcher, 40% Silent, 33% Defect and 20% Ironclad at A0, about 50 runs each. Its docs note Ironclad's 95% CI is 8.9–31.1% and that ±3% needs about 1,000 games.",
+   "confidence": "high",
+   "source_url": "https://github.com/xaved88/bottled_ai/blob/main/docs/winrates.md"
+  },
+  {
+   "fact": "AgenticSTS (arXiv 2607.02255): at A0 the no-store baseline won 3/10 and the skill layer 6/10 (Fisher p≈0.37). Memory-updating streams climbed to A6–A8. An external benchmark reported 0 frontier-LLM wins at A0 across 5 configurations; the developer-reported human A0 win rate is 16%; 298 trajectories released.",
+   "confidence": "high",
+   "source_url": "https://arxiv.org/abs/2607.02255"
+  },
+  {
+   "fact": "Spire Codex community stats: 1,917,699 submitted StS2 runs with a 25.7% win rate; A0 has 330,004 runs at 22.1%. This is a self-selected, skill-biased sample with confounded card win-rate statistics.",
+   "confidence": "medium",
+   "source_url": "https://spire-codex.com/leaderboards/stats"
+  },
+  {
+   "fact": "Jev The Spire 2: one-call factored policy at p50 315 ms and $0.00046 per decision. On the 30-decision fixture benchmark Jev scores 27/30 vs 29/30 for the top frontier models, which the README calls inseparable (noise about ±3). The grader is a first-action error check, 'not optimality or win probability'. Measured win rate: 0 wins in 9 runs.",
+   "confidence": "high",
+   "source_url": "https://github.com/shoemoney/jev-the-spire2"
+  },
+  {
+   "fact": "NeurIPS 2021 NetHack Challenge: 483 entrants, 631 submissions, 144 days. The top 3 overall were symbolic. The best symbolic median score was nearly 3x the best neural (5x for top episodes). The winner's median was 5,300; the best neural agent (RAPH) was a hybrid; no agent came close to ascending.",
+   "confidence": "high",
+   "source_url": "https://arxiv.org/abs/2203.11889"
+  },
+  {
+   "fact": "BALROG: all evaluated LLMs flat-line on NetHack; the best (o1-preview) reaches about 1.5% average progression.",
+   "confidence": "high",
+   "source_url": "https://arxiv.org/abs/2411.13543"
+  },
+  {
+   "fact": "Gumbel MuZero learns reliably in 9x9 Go with only 2 simulations per move, while MuZero fails with 16 or fewer. Root selection uses Gumbel-Top-k with m=min(n,16) and Sequential Halving.",
+   "confidence": "high",
+   "source_url": "https://iclr.cc/virtual/2022/poster/6418"
+  },
+  {
+   "fact": "Stochastic MuZero (afterstates plus chance codes) matched or exceeded the state of the art on 2048 and backgammon and beat GNUbg Grandmaster with a much smaller search budget; it learned the 21 distinct backgammon dice outcomes.",
+   "confidence": "high",
+   "source_url": "https://www.julian.ac/blog/2022/05/15/planning-in-stochastic-environments-with-a-learned-model"
+  },
+  {
+   "fact": "2048: TD-learned n-tuple afterstate values plus expectimax average 609,104 (Jaśkowski) and 625,377 with 72% reaching the 32768 tile (Guei).",
+   "confidence": "high",
+   "source_url": "https://arxiv.org/abs/2212.11087"
+  },
+  {
+   "fact": "PIMC suffers strategy fusion and non-locality (Frank & Basin 1998). Long et al. 2010: PIMC is weakest at low leaf correlation. Skat (lc 0.8–1.0, df≈0.6) puts PIMC about 0.1 points per game behind equilibrium; in poker-like games PIMC is weak and exploitable.",
+   "confidence": "high",
+   "source_url": "https://ojs.aaai.org/index.php/AAAI/article/view/7562"
+  },
+  {
+   "fact": "GIB (Monte Carlo sampling plus double-dummy search) was rated about expert caliber and the strongest bridge program of its time.",
+   "confidence": "high",
+   "source_url": "https://www.jair.org/index.php/jair/article/view/10279"
+  },
+  {
+   "fact": "SPARTA single-agent search raised Hanabi from 24.08 to 24.61/25. It uses at least 100 rollouts per action, prunes actions more than 2 SD below the best, deviates from the blueprint only when the gain exceeds 0.05 (10x fewer rollouts combined), costs about 10^5 rollouts per game, and is provably no worse than the blueprint up to an error that decays with the rollout count.",
+   "confidence": "high",
+   "source_url": "https://arxiv.org/abs/1912.02318"
+  },
+  {
+   "fact": "AIVAT control variates cut evaluation standard deviation by 85% (44x fewer games) in no-limit hold'em, turning DeepStack's 4-sigma result into 20-sigma.",
+   "confidence": "high",
+   "source_url": "https://arxiv.org/abs/1612.06915"
+  },
+  {
+   "fact": "DouZero (Deep Monte Carlo with action encoding) outperformed all DouDizhu AIs and ranked 1st of 344 on Botzone, trained from scratch on one 4-GPU server in days.",
+   "confidence": "high",
+   "source_url": "https://arxiv.org/abs/2106.06135"
+  },
+  {
+   "fact": "Suphx uses global reward prediction (predict final game reward from round-level state) and oracle guiding (train with perfect information, then drop it) and is rated above 99.99% of ranked Tenhou players. PerfectDou instead feeds perfect information to the critic only.",
+   "confidence": "high",
+   "source_url": "https://arxiv.org/abs/2003.13590"
+  },
+  {
+   "fact": "MAV-MCTS (a language model pretrained on game data, used as world model, value and policy) gains +68 internal Elo at 100 simulations and +340 at 2,000, reaching Grandmaster-level chess.",
+   "confidence": "high",
+   "source_url": "https://arxiv.org/abs/2412.12119"
+  },
+  {
+   "fact": "In MiniStS, a depth-3 backtracking search beat GPT-3.5 with chain-of-thought on mean final HP (25.94 vs 23.36 starter deck; 56.8 vs 25.68 Batter-Stimulate). The LLM won on delayed-payoff cards (34.74 vs 17.2 Bomb; 39.5 vs 18.6 Tolerate), 50 simulations each.",
+   "confidence": "high",
+   "source_url": "https://dl.acm.org/doi/fullHtml/10.1145/3649921.3650013"
+  },
+  {
+   "fact": "RAGEN finds multi-turn LLM agent RL (PPO and GRPO under StarPO) initially improves and then collapses ('Echo Trap'), requiring trajectory filtering, a critic and decoupled clipping (StarPO-S).",
+   "confidence": "high",
+   "source_url": "https://arxiv.org/abs/2504.20073"
+  },
+  {
+   "fact": "sts2-agent's GRPO track (Qwen3-30B-A3B on Tinker, per-combat episodes, shaped rewards) lists 'run the first loop' as remaining work, so no published training results exist yet.",
+   "confidence": "high",
+   "source_url": "https://github.com/mingxuan-he/sts2-agent"
+  },
+  {
+   "fact": "Hearthstone: an E2E policy plus OSFP agent beat a top-10 China-region streamer in every best-of-5 full game, deck building included. The same framework won both COG2022 Legends of Code and Magic tracks.",
+   "confidence": "high",
+   "source_url": "https://arxiv.org/abs/2303.05197"
+  },
+  {
+   "fact": "Binomial sample sizes (95% CI, p=0.5): ±10pp needs n≈96, ±5pp n≈384, ±2pp n≈2,401, ±1pp n≈9,604. Detecting a 2pp difference unpaired at 80% power needs about 9,800 runs per arm. Pairing with CRN at outcome correlation ρ multiplies the required n by about (1−ρ). These are standard statistics computed for this report, consistent with Bottled AI's own CI note.",
+   "confidence": "high",
+   "source_url": "https://github.com/xaved88/bottled_ai/blob/main/docs/winrates.md"
+  }
+ ],
+ "implications_for_design": [
+  "Define best play formally as argmax_a Q*(h, a) = P(win | observation history h, take a, then play optimally), where RNG outputs are random variables from their nominal distributions and the run seed and RNG counters are excluded by construction, even though the game displays the seed. Operationally, label positions with Q^{π_ref}(h, a) under a declared strong reference continuation policy (SPARTA-style one-step improvement). Treat actions within ε of the best as tied, and score agents by regret in win-probability points (or run-value units) with confidence intervals, not by exact-match accuracy.",
+  "Build two value scales. V_run(post-combat state) is the run-level win-probability estimate, learned DouZero/Suphx-style from many simulated full runs. Combat search maximises E[V_run(state at combat end)], not raw HP lost. Bootstrap V_run with a hand-weighted proxy (HP, max HP, potions, deck features, like Bottled AI's about 40 values), then refit by regression on Monte Carlo run outcomes.",
+  "Seed-peeking firewall. (1) The agent and the oracle never receive the seed or RNG state. (2) Each oracle determinization reshuffles the unseen draw pile (sts2-cli set_draw_order) and reseeds every RNG stream not yet observed, while keeping observed facts fixed (current intents, map, seen shop or reward contents); stream reseeding needs an engine patch, which is not yet confirmed feasible. (3) Run a leakage test: oracle labels must not shift when the true seed is swapped for a random seed consistent with observations. (4) Disable mods such as Real Draw Pile Order. (5) Allow seed knowledge only in a training-time critic (PerfectDou-style), never in the actor.",
+  "Combat algorithm: exhaustive DFS with transpositions over each turn's deterministic play sequences (cards, targets, potions); chance nodes at draws and random effects, using sparse sampling or Hearthstone-style outcome bucketing; observation-branching ISMCTS for draw, scry and multi-turn setup turns to avoid strategy fusion; learned or heuristic leaf value at turn boundaries. Add Expert Iteration (search, then distil to policy and value, then better search) once a fast simulator exists. Use Gumbel root selection when only 2–32 real-engine simulations are affordable.",
+  "Deckbuilding (card reward or skip, shop, events, rest, boss relic, Neow): rank candidate afterstates by V_run, learned with DouZero-style Deep Monte Carlo action encoding. For high-stakes or close calls, add CRN-paired rollouts of the remaining act or run from each afterstate. Use community .run data and LLM card-text embeddings only as priors and cold-start features, never as ground truth, since pick and win correlations are confounded.",
+  "Pathing: route sets per act are small and fully visible, so enumerate routes. Evaluate them with a learned encounter-outcome model (distribution of HP and potion loss for a given deck, relics and encounter class, fitted from simulated combats) plus V_run, using chance nodes over ? rooms with the known odds tables. This is hierarchical planning with a cheap macro model and the expensive combat simulator kept out of the macro loop.",
+  "Simulator strategy: use the real engine (sts2-cli) for oracle labels and final win-rate claims; use a fast emulator or reimplementation (zhiyue Python sim, Zamiell C# subset) for RL and Expert Iteration volume; gate every reimplementation with trace-replay parity tests against the real engine and pin the game version (the v0.107.1 RNG rework changed seed-to-run mapping; sts2-cli was tested on v0.111.0). Since sts2-cli lacks mid-combat cloning, implement node restore as 'reload room-start save plus replay action prefix', or add a snapshot patch.",
+  "Benchmark construction: sample positions from realistic play (agent runs plus human .run reconstructions). For each, label every legal (or top-k) action with paired CRN determinizations (same sampled worlds across actions) and racing (at least 100 rollouts per action, drop actions more than 2 SD below the best, stop when the top-2 CIs separate or a budget is hit). Report the clairvoyant value as an upper bound (value of perfect information) and the blueprint value as a lower bound. Tier A: thousands of combat-local positions labelled in V_run units (cheap). Tier B: a few hundred macro positions labelled by full-run rollouts (about 2,400 paired rollouts per action for ±2pp before variance reduction). Keep only 'decisive' positions (gap ≥ δ) for accuracy-style metrics.",
+  "Agent evaluation: a fixed, version-pinned seed battery played by both agents (paired), McNemar or paired tests on wins, about 1,000 runs per character for ±3pp, and V_run-based control variates (AIVAT/MIVAT-style) to cut variance. Validate final claims on fresh held-out seeds, because optimising on fixed seeds can overfit (Strens & Moore).",
+  "Cheap-LLM integration rules: (a) at most one batched call per real decision, at the root; (b) use the output as a prior or shortlist feeding Gumbel or Sequential Halving or SPARTA, mixed with a uniform prior (ε) so search can always overrule it; (c) never call the LLM inside node expansion (at about $0.00046 and 315 ms per call this multiplies cost by the simulation count); (d) cache card-text embeddings and per-card judgments once per patch; (e) audit calibration against oracle Q-values with reliability curves before trusting the 'calibrated probabilities' claim; (f) consider distilling LLM priors into a small local model, subject to the provider's terms (not checked).",
+  "Order of work for a solo hobbyist: (1) rules plus turn-search blueprint (Bottled-style) on the real engine; (2) SPARTA-style rollout improvement and a first V_run fit; (3) the oracle labeller and Tier-A benchmark; (4) a fast emulator plus Expert Iteration for combat and DMC for V_run; (5) LLM priors via Gumbel at the root; (6) only then consider GRPO on a small LLM, rewarded by negative oracle regret per decision (dense, verifiable) rather than sparse run wins.",
+  "Use PPO with action masking only to train fast blueprint or rollout policies; shaped dense rewards (damage dealt, HP lost) should come from V_run differences rather than arbitrary constants, to avoid baking in combat-local bias."
+ ],
+ "open_questions": [
+  "What is the real-engine throughput of sts2-cli (decisions/s, combats/s) on a Mac, and can mid-combat snapshot/restore be added cheaply? This determines whether oracle labelling can use the real engine or must use an emulator. Not verified.",
+  "Can all StS2 RNG streams be reseeded mid-run through IL patches or Harmony while preserving observed information (current intents, seen rewards)? sts2-cli exposes set_draw_order but no RNG reseeding.",
+  "How large is strategy fusion in StS2 combat in practice? Measure Long et al.'s leaf correlation and disambiguation factor on StS2 combats and compare PIMC with ISMCTS labels on the same positions.",
+  "Does the StS2 base UI reveal draw order or any future RNG outcomes (e.g. relic or card effects similar to Frozen Eye in STS1)? The information model must list exactly what the player can see.",
+  "How accurate are the Python and C# reimplementations against the real engine (parity on trace replays), and how fast do they go stale under Early Access patches?",
+  "How well can V_run be learned from simulated runs given about 50 combats per run and sparse wins? How many simulated runs are needed for a usable value at A0 vs A10?",
+  "Is Jev's 'calibrated probability' output actually calibrated against oracle Q-values for StS2 decisions, and does it improve Gumbel/SPARTA search beyond a uniform or learned-NN prior?",
+  "Does TypeSafe's service terms allow distilling Jev outputs into a local model? Not checked.",
+  "What is the right reference continuation policy for labels? Labels depend on it; do benchmark rankings stay stable when π_ref is swapped (rules bot vs search agent)?",
+  "What is the true human baseline? The developer-reported 16% A0 win rate (via AgenticSTS) and Spire Codex's 22.1% A0 (self-selected) disagree; a proper human comparison set is needed.",
+  "Is mid-combat information (enemy internal counters, move-pattern state) fully deducible from rules plus observations, or is some enemy state hidden and in need of belief tracking?",
+  "Multiplayer co-op StS2 would bring back partner-belief issues (Hanabi-style); should it be scoped out explicitly?"
+ ]
+}

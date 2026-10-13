@@ -1,0 +1,458 @@
+{
+ "key": "llm_agents",
+ "area": "LLM-agent approaches to Slay the Spire 2 (and LLM-on-STS1 prior work), and how they are evaluated",
+ "summary": "Only one LLM agent has documented wins on StS2. AgenticSTS (AlayaLab/SJTU, arXiv 2607.02255, 2 Jul 2026) runs Gemini 3.1 Pro as The Silent at A0, on game builds v0.103.1 and v0.103.3. Each decision gets a fresh prompt of about 5k tokens, built from five typed slots: protocol, state schema, game rules, episodic summaries, and triggered skills. No-store baseline: 3/10 wins (Wilson 95% CI 11–60%). Adding triggered skills: 6/10 (31–83%). Fisher p≈0.37, so the gain is not significant. My pooled count over the whole released archive (all conditions mixed) is 44/93 Silent-A0 wins (47%, CI 37–57%). The ladder reaches A7 with 3/4 wins, then A8 with 0/18. Every other system that reports outcomes has 0 wins: AGI-Eval's five frontier configs (GPT-5.4, Opus 4.6, Opus 4.7, Doubao, DeepSeek-V4-Flash; Ironclad, one fixed seed, best floor 33), TokenSpire2's Opus 4.6 (0/10, Ironclad A0, mean floor 17.2), STS2MCP and CharTyr re-run under Gemini 3.1 Pro (0/5 each, mean floors 17.6 and 5.6), Qwen 3.6-27B and DeepSeek V4-Pro inside AgenticSTS (0/5 each), and jev (0/9). STS1 work is weaker still. Orak (ICLR'26) used 3 runs on a fixed seed with only combat and card rewards handed to the LLM; Gemini-2.5-pro scored 51.9±31.9. A vision-and-mouse GPT-4o agent reached 13 floors. A fixed-deck boss study found GPT-4+CoT ahead of a rules bot on HP remaining (36.7 vs 32.4).\n\nThe documented failure modes repeat across projects:\n- **Combat:** deaths cluster at act bosses. In my count of AgenticSTS's archive, 136/202 defeats (67%) happen on floors 17, 33 and 48.\n- **Planning:** agents over-weight the current turn, have no attrition plan when they can't kill within about 3 turns, keep bleeding HP in hallway fights, and miss non-damage loss conditions (Sandpit timer deaths are about 53% of Insatiable deaths).\n- **Self-discipline:** agents write correct rules and then break them (DeepSeek-V4-Flash's card picks and rest rule). Reflections often just restate the system prompt. In AGI-Eval, memory grew faster than skill did.\n- **Interface:** CharTyr's invalid_action/HTTP 409 errors compound into early deaths. AgenticSTS logged 66 agent_abort rows out of 385. Mods break on every game patch (v0.103 to v0.111 within about 5 months).\n- **Context growth:** STS2MCP prompts reach about 527k tokens per call, about 93M raw tokens per run, at about 4x the wall-clock per floor of the bounded design.\n\nJudged against the goal of finding the best play, none of this work measures decision quality against a grounded reference. Outcome metrics (win, floor, a floor-plus-boss-bonus score) come from N=3–10 runs, so CIs are ±25–35 points wide. Detecting 50% vs 55% would need about 1,565 runs per arm. The only per-decision signals are weak:\n- **LLM-judge scores:** AgenticSTS's internal Opus-4.6 rubric on about 12 extracted cases, plus its A/B skill gate, which runs in observation mode only.\n- **Hand-graded fixtures:** jev's first-action error check on 10 fixtures, with the winning config chosen on the same fixtures, no held-out set, and an author-stated noise floor of ±3/30.\n- **Per-enemy HP-loss baselines:** AgenticSTS's skill-usage log.\n\nNobody computes regret, counterfactual rollouts, or agreement with a solver. The well-known STS1 MCTS bot actually peeks at the draw order. The useful takeaways for a best-play finder:\n- **LLMs as strategists, not oracles.** They work as strategic priors and explainers on a small, typed, bounded state.\n- **Code for the arithmetic.** Legal actions, lethal/fatal checks and cost-waste vetoes should be computed in code.\n- **Boss and elite fights first.** They are where search pays.\n- **Grounded scoring.** Evaluation has to be paired, seed-controlled and per-decision, scored by simulator rollouts that re-sample hidden information.\n\nReusable assets: AgenticSTS's CC-BY trajectories (298 paper games plus 14 capped runs on HF, with per-decision logs), its L4 store (3,214 combat episodes, 1,553 events, 397 routes), its skill/trigger schema, prompt and decision-JSON formats, and Wilson/bootstrap scripts; the competitor captures; Orak's score formula; and the headless real-engine sts2-cli, which has known fidelity bugs.",
+ "methods": [
+  {
+   "name": "STS2MCP reference agent (Gennadiyev) as run by AgenticSTS",
+   "url": "https://github.com/AlayaLab/AgenticSTS/blob/main/AgenticSTS/docs/experiments/competitor_comparison/RESULTS.md",
+   "what_it_is": "A mod with a localhost:15526 REST API and an MCP server, plus author-written skill docs (playsts2.md, AGENTS.md, raw-simplified.md) that let a general LLM play. Tested against v0.103.2. It is the bridge used by AGI-Eval, jev, JoeB08 and others.",
+   "how_it_decides": "An LLM tool-calling loop over one growing chat transcript: one LLM call per in-game action, with the author's docs as the system prompt.",
+   "reported_results": "Run by AgenticSTS on Gemini 3.1 Pro, Silent A0, v0.103.3, N=5: 0/5 wins (Wilson 0–43%). Floors 28/11/15/17/17 (mean 17.6); one Act-1 boss cleared across the 5 runs; about 625 decisions per run (about 35 per floor). 464M total tokens over 5 runs (≈93M per run, 90% cached). About 422k fresh tokens per score point; 9.9 min per floor. Per-call prompt grows from about 9k to about 527k tokens by decision ~1,100.",
+   "strengths": [
+    "Most widely used StS2 bridge (510 stars); covers singleplayer and multiplayer, menus and seeds",
+    "Simple 'skill doc' approach any frontier coding agent can follow"
+   ],
+   "weaknesses": [
+    "Context grows without bound, so cost and latency explode late in a run",
+    "No memory or learning across runs, and no evaluation of its own",
+    "Breaks on new game builds (on v0.111+ it needs a fork patch, PR #132, per jev's README)"
+   ],
+   "relevance_to_best_play": "Useful as the bridge for live-game validation and data capture. As a decision-maker it is a weak baseline.",
+   "verified": true,
+   "cost_and_speed": "About 93M raw tokens per run (≈9M fresh). About 9.9 min per floor; a full run would take many hours."
+  },
+  {
+   "name": "CharTyr/STS2-Agent",
+   "url": "https://github.com/CharTyr/STS2-Agent",
+   "what_it_is": "An in-game C# mod with an F8 overlay, OpenAI-compatible auto-play, an MCP endpoint on :8080, and an LLM co-op teammate. Upstream of the AgenticSTS mod; AGPL-3.0.",
+   "how_it_decides": "An LLM over compact text state (vision optional) with an accumulating transcript, plus a session budget guard and a circuit breaker after 3 failures.",
+   "reported_results": "No outcome numbers in its own README. Run by AgenticSTS (Gemini 3.1 Pro, Silent A0, N=5): 0/5 wins; floors 6/5/6/6/5; about 106 decisions per run; 84M tokens over 5 runs (82% cached); about 571k fresh tokens per score point; 8.5 min per floor. Frequent invalid_action/invalid_target (HTTP 409) errors compound into early deaths.",
+   "strengths": [
+    "Polished UX (Workshop install, overlay), co-op teammate, budget guards"
+   ],
+   "weaknesses": [
+    "Interface errors dominate outcomes",
+    "No evaluation of its own"
+   ],
+   "relevance_to_best_play": "Low. Its main lesson: action-validity and recovery bugs can swamp decision quality, so legal actions have to be enumerated by code.",
+   "verified": true,
+   "cost_and_speed": "About 17M tokens per run despite only about 106 decisions (≈158k tokens per decision on average)."
+  },
+  {
+   "name": "AGI-Eval community 'AI-Spire' frontier-LLM evaluation",
+   "url": "https://gitcode.csdn.net/6a01b6b80a2f6a37c5a944ee.html",
+   "what_it_is": "A Chinese community blog post with video, published 2026-05-11, in which five frontier LLMs play StS2 through the STS2MCP mod. Three agents (route, combat, deck-building), each with its own memory that summarises failures and appends rules after every run. Ironclad, a fixed seed VHY0FM7QT8 shared by all models, and a prompt-forced Strike-deck plan. Ascension is not stated. The original CSDN URL now returns 404, so I verified via the gitcode mirror.",
+   "how_it_decides": "LLM prompting with a shared system prompt and per-agent prompts, plus a Reflexion-style rule memory.",
+   "reported_results": "0 wins for all five configs. DeepSeek-V4-Flash: 9 runs, all lost (Wilson 0–30%), mean floor 11.4. Claude Opus 4.6: at least 9 runs, best floor 33 on the 9th restart. Doubao: best floor 27. GPT-5.4 and Opus 4.7: no floors given. No token, cost or time figures.",
+   "strengths": [
+    "Only multi-vendor frontier comparison on StS2",
+    "Rich qualitative failure analysis"
+   ],
+   "weaknesses": [
+    "A single fixed seed reused across runs with memory, so the 'improvement' is partly seed memorisation",
+    "Mixed and unclear denominators; ascension unstated",
+    "AgenticSTS's cached snapshot says '9 runs each' and labels it A0, but the article does not support either uniformly",
+    "No decision-level measurement"
+   ],
+   "relevance_to_best_play": "Mainly documents LLM failure modes: over-weighting the current turn, failing to use potions, too little defence, breaking self-written rules, deck dilution, reflections that restate the prompt, memory growing faster than skill.",
+   "verified": true,
+   "cost_and_speed": "Not reported."
+  },
+  {
+   "name": "TokenSpire2 (collinzrj) — continual-learning LLM eval framework",
+   "url": "https://github.com/collinzrj/TokenSpire2",
+   "what_it_is": "An in-process C# mod that serialises each decision point to text, calls an OpenRouter model (with reasoning/thinking), parses commands such as 'PLAY 3 -> A', 'CHOOSE 2' and 'BUY 5', and auto-restarts runs. After each run the LLM rewrites a session memory file.",
+   "how_it_decides": "LLM prompting plus a full conversation history and a post-run reflection memory (Reflexion-style).",
+   "reported_results": "Ironclad A0, 0 wins in every row. Claude Opus 4.6: 10 runs, mean floor 17.2, max 23; Act 1 boss cleared in 3/10 (Wilson 11–60%). GPT-5.4: 4 runs, mean 17.0. Qwen3.5-Plus with thinking: 7 runs, mean 13.0. Kimi K2.5: 5 runs, mean 12.8. Qwen3.5-Plus without thinking: 5 runs, mean 10.4. Opus 4.6's first session: floors 9/9/9/17, 14.6–24 min per run, decks of 13–16 cards; memory correctly flagged the lack of Strength scaling.",
+   "strengths": [
+    "Multi-model table with per-run detail, deaths and durations",
+    "Shows that thinking or reasoning budget matters (Qwen +2.6 floors)"
+   ],
+   "weaknesses": [
+    "Tiny N, no CIs, Ironclad only, early-2026 build (last push 2026-03-28)",
+    "Measures only floors reached, not decision quality"
+   ],
+   "relevance_to_best_play": "Low to moderate: weak-frontier baselines, and a reminder that LLM self-reflection finds macro weaknesses but not tactical errors.",
+   "verified": true,
+   "cost_and_speed": "About 15–24 min per run for 9–17 floors (Opus 4.6). Token costs not reported."
+  },
+  {
+   "name": "ai-spire (biolbe1230)",
+   "url": "https://github.com/biolbe1230/ai-spire",
+   "what_it_is": "An in-process C# mod (v0.98+ era, last push 2026-03-19) with an in-game overlay. Defaults to DeepSeek through an OpenAI-compatible API. Uses spire-codex data for exact numbers. Ironclad only.",
+   "how_it_decides": "LLM with a multi-turn conversation inside each combat (max_history_messages 40), with a rule engine as fallback on timeout or failure.",
+   "reported_results": "None reported.",
+   "strengths": [
+    "Shows that codex-sourced exact numbers can be injected",
+    "The overlay shows the AI's reasoning live"
+   ],
+   "weaknesses": [
+    "The 15 s default timeout silently falls back to rules, contaminating any 'LLM' result (flagged by AgenticSTS's feasibility review)",
+    "No evaluation; Ironclad only; stale build"
+   ],
+   "relevance_to_best_play": "Minimal. Cautionary: when a fallback policy can fire, logs must record which policy made each decision.",
+   "verified": true,
+   "cost_and_speed": "Not reported."
+  },
+  {
+   "name": "sts2-local-agent-lab (elysianx138)",
+   "url": "https://github.com/elysianx138/sts2-local-agent-lab",
+   "what_it_is": "From search snippets only: a Windows lab on v0.103.2 with a pinned AgenticSTS submodule, version patches, and audited random and LLM runs. The repo now returns 404 (as of 2026-10-10).",
+   "how_it_decides": "A random baseline, or AgenticSTS with DeepSeek.",
+   "reported_results": "UNVERIFIED (snippet, 2026-09-12): random baseline 8 runs, mean floor 8.6; DeepSeek 2 runs, mean floor 18.5 (Wilson for 0/2 wins: 0–66%); about ¥4.4 for 66 calls; no wins.",
+   "strengths": [
+    "Includes a random-policy floor baseline, which is rare"
+   ],
+   "weaknesses": [
+    "N=2; repo unavailable; cannot verify"
+   ],
+   "relevance_to_best_play": "Negligible beyond the idea of always reporting a random baseline.",
+   "verified": false,
+   "cost_and_speed": "About ¥4.4 per 66 DeepSeek calls (unverified)."
+  },
+  {
+   "name": "brekkylab/sts2-llm-coop-mod",
+   "url": "https://github.com/brekkylab/sts2-llm-coop-mod",
+   "what_it_is": "A co-op mod (MIT, macOS, v0.107.1, created 2026-09-23) in which a Claude agent plays as your teammate, shows its plan in a speech bubble, and accepts chat. Rust bridge built on ailoy/cortex.",
+   "how_it_decides": "The model gets the board plus a numbered list of legal actions and answers 'CHOSEN: 1, 3'. If there is no answer within 20 s, a heuristic plays instead. All non-combat decisions are heuristic.",
+   "reported_results": "None reported.",
+   "strengths": [
+    "Clean legal-action-index protocol that guarantees valid moves",
+    "Polls every 0.2 s; the mod never calls out"
+   ],
+   "weaknesses": [
+    "LLM handles combat only; no evaluation"
+   ],
+   "relevance_to_best_play": "Low. The numbered-legal-action interface is a good pattern.",
+   "verified": true,
+   "cost_and_speed": "20 s decision budget; cost not reported."
+  },
+  {
+   "name": "mingxuan-he/sts2-agent — GRPO track plus self-improving 'pod'",
+   "url": "https://github.com/mingxuan-he/sts2-agent",
+   "what_it_is": "Two planned tracks on the headless real-engine sts2-cli (an IL-patched sts2.dll built from your own install; seedable, all 5 characters, parallel). Track 1: GRPO fine-tuning of Qwen3-30B-A3B or Qwen3.6-35B-A3B on Tinker or Prime Intellect, using per-combat episodes. Track 2: frozen weights plus a persistent agent that edits its own notes, skills and harness, with held-out seed batteries and A/B-gated skill merges.",
+   "how_it_decides": "Track 1 is RL on an LLM policy with dense shaped reward: invalid format −0.5, illegal action −0.3, +0.01 per damage dealt, −0.02 per HP lost, +0.2 per kill, ±1 for winning or losing the combat. Track 2 is LLM plus self-edited context.",
+   "reported_results": "No training or win-rate results reported. The GRPO pipeline is 'largely built' and the first loop has not run. Cost model: combat-only GRPO campaign about $1.0–1.4K (pilot $100–150); full-run GRPO about 40x that. Pod inference about $0.30–0.80 per run on commodity endpoints (about 800 decisions per run, about 3k input tokens per decision). Documented engine bug: Kaiser Crab boss initialisation throws a MissingMethodException and the engine awards boss rewards, a false victory.",
+   "strengths": [
+    "Most serious evaluation design: server-side seeds, held-out eval pool, sandboxed engine so the agent cannot edit game state, contamination policy",
+    "Real engine rather than a clone; parallel rollouts",
+    "Careful cost analysis"
+   ],
+   "weaknesses": [
+    "No results yet",
+    "Headless-engine fidelity bugs can inflate scores silently",
+    "HF run dataset is private"
+   ],
+   "relevance_to_best_play": "High as substrate: sts2-cli is the obvious cheap rollout engine for evaluating decisions. Its reward shaping and seed-battery protocol are good templates. The Kaiser Crab bug shows the simulator must be validated against the live game.",
+   "verified": true,
+   "cost_and_speed": "Estimates: $0.3–1.9 per full run with open models, $16–24 per run with Opus 5. Engine speed not quantified in the README."
+  },
+  {
+   "name": "jev-the-spire2 (TypeSafe Jev factored decisions) — viewed as an evaluation method",
+   "url": "https://github.com/shoemoney/jev-the-spire2",
+   "what_it_is": "A fork of alexmeckes/jev-the-spire on STS2MCP. A non-generative 'System One' decision model receives the state plus typed questions per candidate (move choice; safe, progress and waste flags) in one request. Code recombines the answers with weights move 0.25, safe 0.25, progress 0.25, waste 1, a deadband of 0.15, and a 64-candidate cap.",
+   "how_it_decides": "Code enumerates candidates. Jev returns calibrated probabilities for each question. Code normalises, weights and takes the argmax. A lethal gate is computed in code.",
+   "reported_results": "vs-LLM fixture benchmark (30 decisions, byte-identical state): Jev 27/30 (Wilson 74–96%) at p50 315 ms and $0.00046 per decision. Opus 5.5, Fable 5.1, Kimi K3 and Grok 4.7 each 29/30 (83–99%) at $0.011–0.12 per decision. GPT-6 Astra and DeepSeek V4.1 Flash 24/30. The author states the grader is a narrow first-action error check on 10 fixtures, 'not optimality or win probability', with noise of about ±3, so 27 and 29 are not separable. Sweep winner: 45/50 (9/10 fixtures), selected on the same fixtures with no held-out set. Live play: 0 wins in 9 recorded runs (Wilson 0–30%).",
+   "strengths": [
+    "Very cheap and fast; well suited to scoring many candidate actions",
+    "Exemplary self-critique of its own metrics"
+   ],
+   "weaknesses": [
+    "No win-rate evidence; the fixtures are tiny and were overfit",
+    "Its decision-quality label is hand-graded first-action correctness, not EV"
+   ],
+   "relevance_to_best_play": "Medium. It could serve as a cheap leaf or prior evaluator inside search; the decomposition into 'safe/progress/waste' questions is reusable. Its benchmark design shows what not to rely on as an oracle.",
+   "verified": true,
+   "cost_and_speed": "$0.00046 and 315 ms per decision (p50), 1 call per decision with the factored policy."
+  },
+  {
+   "name": "HermesBridge / ClaudePlaysTheSpire",
+   "url": "https://github.com/hiKareeem/ClaudePlaysTheSpire",
+   "what_it_is": "A file-IPC bridge mod (state.json, commands.json, result.json) on BaseLib, plus an autopilot SKILL.md for coding agents. Run records show v0.104.0.",
+   "how_it_decides": "A frontier coding agent (Claude Opus 4.7) reads state and writes typed commands one at a time.",
+   "reported_results": "One documented autonomous Act 1 run with Necrobinder. The README says smaller models 'reliably failed'. No win rates.",
+   "strengths": [
+    "Typed command set; agent-agnostic"
+   ],
+   "weaknesses": [
+    "N=1; no evaluation"
+   ],
+   "relevance_to_best_play": "Low.",
+   "verified": true,
+   "cost_and_speed": "Not reported."
+  },
+  {
+   "name": "SpireMind (optima-xu)",
+   "url": "https://github.com/optima-xu/SpireMind",
+   "what_it_is": "An observable, auditable multi-agent StS2 agent (MIT, v0.111.0, Oct 2026) with a coordinator and specialist agents, SQLite FTS5 retrieval (at most 2 episodes and 3 skills within 600 tokens), and a numeric calculator bound to legal actions.",
+   "how_it_decides": "LLM specialists plus a calculator. A lesson is activated only after observation, reflection, evidence checks and regression across 3 or more training seeds; holdout seeds are kept isolated, and counterexamples deactivate lessons.",
+   "reported_results": "Engineering metrics only: 16 public states × 3 repeats, combat context reduced 6,648→4,272 tokens. The README explicitly says the results do not establish improved win rate.",
+   "strengths": [
+    "Holdout-seed discipline and counterexample deactivation",
+    "Calculator-grounded numbers"
+   ],
+   "weaknesses": [
+    "No outcome or decision-quality results"
+   ],
+   "relevance_to_best_play": "Low to medium: a good template for memory hygiene and seed-split evaluation.",
+   "verified": true,
+   "cost_and_speed": "About 4.3k tokens per combat context."
+  },
+  {
+   "name": "Orak benchmark (KRAFTON; ICLR 2026) — STS1 track",
+   "url": "https://arxiv.org/abs/2506.03610",
+   "what_it_is": "A 12-game LLM benchmark. The Slay the Spire 1 track plays Ironclad with no ascension, a fixed seed and all cards unlocked, via a modified CommunicationMod. The LLM decides only combat card plays and card rewards; map, events and potions are rule-based.",
+   "how_it_decides": "LLM prompting at temperature 0, in zero-shot, reflection, planning and reflection-planning variants.",
+   "reported_results": "3 runs per model, 200-step cap. Score = floors cleared + (50/3) per boss. Gemini-2.5-pro 51.9±31.9 (second boss defeated in 2/3 runs), DeepSeek-R1 24.9±17.1, GPT-4o 23.6±22.1, o3-mini 15.0, Claude-3.7 15.0, small open models ≈0–5. GPT-4o: zero-shot 12.3, reflection 26.2, planning 23.2. Adding vision did not help and often hurt (Gemini 51.9→26.2). Fine-tuning Llama-3.2-3B on expert trajectories: 0.0→10.7 on unseen seeds.",
+   "strengths": [
+    "Standardised score formula (AgenticSTS's 52/3 variant derives from it)",
+    "Shows text-only state works best and that reflection helps mid-tier models"
+   ],
+   "weaknesses": [
+    "n=3 on one seed; LLM handles only part of the decisions; STS1"
+   ],
+   "relevance_to_best_play": "Low to medium: score-formula precedent, and evidence that planning modules help little because enemy intent is only partly observable.",
+   "verified": true,
+   "cost_and_speed": "Not reported for STS."
+  },
+  {
+   "name": "Xiao & Yang — 'LLMs May Not Be Human-Level Players, But They Can Be Testers' (STS1)",
+   "url": "https://arxiv.org/abs/2410.02829",
+   "what_it_is": "Uses LLM agents to measure game difficulty. STS1 Ironclad boss fights in Acts 1–2, with a fixed, deliberately strong deck, through CommunicationMod.",
+   "how_it_decides": "GPT-3.5 and GPT-4, zero-shot or CoT, choosing card and target each step. Baselines: a random agent and the spirecomm rules bot.",
+   "reported_results": "20 trials per agent per boss. Mean HP remaining in Act 1: random 12.7, GPT-3.5 ZS 8.7, GPT-3.5 CoT 19.9, GPT-4 ZS 22.6, GPT-4 CoT 36.7, rule-based 32.4. Act 2: 2.7 / 0.3 / 3.6 / 4.3 / 17.6 / 16.1. Correlation with human per-boss win rates (from 75M runs): GPT-4 CoT r=0.871 vs rules r=0.742. With an average-strength deck the LLMs won fewer than 5% of boss fights; with the strong deck about 65%.",
+   "strengths": [
+    "Scenario-level combat benchmark with a continuous metric (HP remaining) and many trials",
+    "Compares against human aggregate data"
+   ],
+   "weaknesses": [
+    "Old models; contrived decks; STS1"
+   ],
+   "relevance_to_best_play": "Medium. A fixed-scenario, many-trial, HP-remaining design is the right shape for evaluating combat decisions cheaply.",
+   "verified": true,
+   "cost_and_speed": "Not reported."
+  },
+  {
+   "name": "Du et al. 2025 — Bottom-Up Agent (STS1, raw pixels and mouse)",
+   "url": "https://arxiv.org/abs/2505.17673",
+   "what_it_is": "A game-agnostic, vision-only agent that learns skills through exploration and reflection, evaluated on STS1 and Civilization V.",
+   "how_it_decides": "A GPT-4o backbone with a self-built skill library, and no game API.",
+   "reported_results": "STS1 A0, 3 episodes, 1,000-step cap. Bottom-up agent: 13 floors, score 81, 98.6% responsive rate, $7.14. Best baseline (GPT-4o with priors): 8 floors, $9.80. Others (Claude 3.7, UI-TARS-1.5): 1 floor.",
+   "strengths": [
+    "No privileged API"
+   ],
+   "weaknesses": [
+    "Very weak absolute play; visual grounding is brittle; about 12 h per 1,000 steps"
+   ],
+   "relevance_to_best_play": "Negligible. Confirms that structured state is essential.",
+   "verified": true,
+   "cost_and_speed": "$7–12 per 1,000-step episode; about 12 h per 1,000 steps."
+  },
+  {
+   "name": "Bateni & Whitehead, 'Language-Driven Play' (FDG 2024, STS1)",
+   "url": "https://doi.org/10.1145/3649921.3650013",
+   "what_it_is": "Early academic work on LLMs playing a simplified Slay the Spire, inferring card synergies from text and adapting to modified rules.",
+   "how_it_decides": "LLM prompting (CoT), compared with a backtracking or search agent (per a secondary summary).",
+   "reported_results": "UNVERIFIED (ACM page returned 403). A secondary summary says the backtracking agent performed best and the CoT LLM came next. Follow-up work by the same group, 'Rule Synergy Analysis' (arXiv 2508.19484), finds LLMs handle neutral card pairs well but struggle with positive and especially negative synergies (timing, game-state and rule-following errors).",
+   "strengths": [
+    "Directly compares LLMs with a search agent"
+   ],
+   "weaknesses": [
+    "Simplified rules; details unverified"
+   ],
+   "relevance_to_best_play": "Supports the view that search beats an LLM on tactical play, and that LLMs mis-evaluate card synergies, which matters for card-reward decisions.",
+   "verified": false,
+   "cost_and_speed": "Unknown."
+  },
+  {
+   "name": "METR note: Opus 4.6 builds a Slay the Spire CLI clone",
+   "url": "https://evals.alignment.org/notes/2026-03-03-balatro-sts-cli/",
+   "what_it_is": "A METR note (N. Jurkovic, 2026-03-03, updated 2026-07-27) on Opus 4.6 writing simplified STS1 and Balatro game clones in a ReAct harness.",
+   "how_it_decides": "Not a player. It is an LLM software-building task.",
+   "reported_results": "StS clone: 26.0M tokens, about $20. Bugs found: Headbutt and Flame Barrier effects wrong, slime split timing wrong, Time Eater not working, Neow bonuses wrong, shop errors. The July update found 'moderate problems on deeper investigation'.",
+   "strengths": [
+    "Concrete evidence about how faithful LLM-written simulators are"
+   ],
+   "weaknesses": [
+    "STS1; a single run"
+   ],
+   "relevance_to_best_play": "High as a warning. A Claude-Code-written StS2 simulator will look right but contain rule bugs, so prefer the real engine (sts2-cli) and replay-validate against live logs.",
+   "verified": true,
+   "cost_and_speed": "About $20 and 26M tokens for the clone."
+  },
+  {
+   "name": "Anthropic Claude Fable 5 announcement — Slay the Spire memory result",
+   "url": "https://www.anthropic.com/news/claude-fable-5-mythos-5",
+   "what_it_is": "A vendor model-launch claim about Slay the Spire play with persistent file-based memory. The announcement does not say whether this is StS1 or StS2.",
+   "how_it_decides": "LLM plus file memory.",
+   "reported_results": "Memory 'improved its performance three times more than for Opus 4.8', and Fable 5 reached the final act about 3x more often. No N, baseline, win rate or version given (seen via search excerpt of the primary page).",
+   "strengths": [
+    "Frontier lab treats StS as a long-horizon memory eval"
+   ],
+   "weaknesses": [
+    "No numbers that allow statistics; not independent"
+   ],
+   "relevance_to_best_play": "Low. It suggests current frontier models (Fable 5, Opus 5.5) may beat the published StS2 numbers, which date from v0.103-era Gemini 3.1 Pro. Untested.",
+   "verified": true,
+   "cost_and_speed": "Not reported."
+  },
+  {
+   "name": "JoeB08 Silent bot — evaluation-discipline exemplar (rules-based, Claude-coded)",
+   "url": "https://github.com/JoeB08/Slay-the-Spire-2-Automatic-Bot",
+   "what_it_is": "A rules-based Silent bot on STS2MCP, coded by Claude under a human's strategic direction. Included here for its evaluation method, not its policy.",
+   "how_it_decides": "Hand rules per state_type.",
+   "reported_results": "Recorded runs are withheld from the public copy. Method: changes are measured over sets of 15–20 runs with 95% CIs, and overlapping CIs are treated as no difference. Damage taken per floor 'moved first' both times a change made things worse while average depth still looked fine. Changes that measured worse were reverted, and a decision-snapshot replay proves refactors leave behaviour unchanged.",
+   "strengths": [
+    "The same 'human expert directs, Claude codes' workflow the owner would follow",
+    "Damage per floor is a more sensitive metric than depth"
+   ],
+   "weaknesses": [
+    "Still outcome-level and small-N; no oracle"
+   ],
+   "relevance_to_best_play": "Medium: good evaluation hygiene to copy, alongside a proper per-decision oracle.",
+   "verified": true,
+   "cost_and_speed": "No LLM cost (rules)."
+  }
+ ],
+ "key_facts": [
+  {
+   "fact": "AgenticSTS fixed-A0 ablation (Silent, Gemini 3.1 Pro, N=10 per cell): baseline-strict 3/10, prompt-only 4/10, and each of the three L5-skill cells 6/10. Wilson 95% CIs [10.8,60.3] / [16.8,68.7] / [31.3,83.2]. Fisher exact p≈0.37 for 3/10 vs 6/10; pooled 18/30 vs 7/20 gives p≈0.148. I recomputed both.",
+   "confidence": "high",
+   "source_url": "https://arxiv.org/abs/2607.02255"
+  },
+  {
+   "fact": "AgenticSTS ran on StS2 v0.103.1; competitor re-runs were on v0.103.3 (patched 2026-05-30). The live game was at v0.111.x by Oct 2026 (SpireMind targets v0.111.0; the STS2MCP prebuilt DLL fails on v0.111+), so the released data predates several patches.",
+   "confidence": "high",
+   "source_url": "https://github.com/AlayaLab/AgenticSTS/blob/main/AgenticSTS/docs/experiments/competitor_comparison/RESULTS.md"
+  },
+  {
+   "fact": "In my count of the AgenticSTS archive, 136 of 202 defeats (67%, Wilson 61–73%) end on boss floors 17, 33 or 48. Floor 17: 43 deaths, floor 33: 45, floor 48: 48. Act bosses are where the LLM agent fails.",
+   "confidence": "high",
+   "source_url": "https://github.com/AlayaLab/AgenticSTS/blob/main/AgenticSTS-Data/runs/history.jsonl"
+  },
+  {
+   "fact": "AgenticSTS's own design doc reports that about 53% of deaths to the Insatiable boss were Sandpit-timer kills (HP 31, not damage), invisible to its post-run learner until analytics were added. Agents miss loss conditions that are not damage.",
+   "confidence": "high",
+   "source_url": "https://github.com/AlayaLab/AgenticSTS/blob/main/AgenticSTS/docs/2026-04-08-rich-combat-analytics-design.md"
+  },
+  {
+   "fact": "STS2MCP and CharTyr, run under Gemini 3.1 Pro (Silent A0, N=5 each): 0/5 wins each (Wilson 0–43%), mean floors 17.6 and 5.6. 464M and 84M tokens over 5 runs (90% and 82% cached); 9.9 and 8.5 wall-clock min per floor vs 2.3 for AgenticSTS. STS2MCP's per-call prompt reaches about 527k tokens by decision ~1,100.",
+   "confidence": "high",
+   "source_url": "https://github.com/AlayaLab/AgenticSTS/blob/main/AgenticSTS/docs/experiments/competitor_comparison/RESULTS.md"
+  },
+  {
+   "fact": "AGI-Eval's StS2 evaluation used Ironclad, a single fixed seed (VHY0FM7QT8) for all models, the STS2MCP harness, and three agents with failure-summary memory. All five configs (GPT-5.4, Claude Opus 4.6, Opus 4.7, Doubao, DeepSeek-V4-Flash) had 0 wins. Best floor 33 (Opus 4.6, 9th restart). DeepSeek-V4-Flash: 0/9, mean floor 11.4. Ascension is not stated, even though AgenticSTS cites it as an 'A0' anchor.",
+   "confidence": "high",
+   "source_url": "https://gitcode.csdn.net/6a01b6b80a2f6a37c5a944ee.html"
+  },
+  {
+   "fact": "Mega Crit's May 2026 Neowsletter: about 240M runs, 60.5M wins (25% overall); A0 win rate 16% (vs 9% in StS1); A10 about 17%. A10 exceeding A0 shows these are population averages driven by player skill, not a skill-matched human baseline.",
+   "confidence": "high",
+   "source_url": "https://megacrit.com/news/2026-5-22-neowsletter-issue-22/"
+  },
+  {
+   "fact": "TokenSpire2, Ironclad A0, 0 wins in every row: Claude Opus 4.6 10 runs, mean floor 17.2, max 23, Act-1 boss cleared 3/10. GPT-5.4 4 runs, mean 17.0. Qwen3.5-Plus with thinking 7 runs, mean 13.0, without thinking 5 runs, mean 10.4. Kimi K2.5 5 runs, mean 12.8.",
+   "confidence": "high",
+   "source_url": "https://github.com/collinzrj/TokenSpire2"
+  },
+  {
+   "fact": "jev-the-spire2: Jev 27/30 vs Opus 5.5 / Fable 5.1 / Kimi K3 / Grok 4.7 at 29/30 on byte-identical fixture states. The author says the grader is a first-action error check on 10 fixtures, 'not optimality or win probability', with noise of about ±3. The winning config was chosen on the same fixtures with no held-out set. Live record: 0 wins in 9 runs. $0.00046 per decision at p50 315 ms, vs $0.011–0.12 per decision for frontier LLMs.",
+   "confidence": "high",
+   "source_url": "https://github.com/shoemoney/jev-the-spire2/blob/main/SWEEP-FINDINGS.md"
+  },
+  {
+   "fact": "No StS2 LLM project reports per-decision regret, expected value or agreement with a simulator. AgenticSTS's internal decision-quality tool is an LLM judge (claude-opus-4-6 on a 1–5 rubric weighted 0.5 action / 0.3 reasoning / 0.2 conciseness) over about 12 extracted cases. Its skill A/B gate uses an LLM judge over 3×3 sampled decision pairs and runs in observation mode only.",
+   "confidence": "high",
+   "source_url": "https://github.com/AlayaLab/AgenticSTS/blob/main/AgenticSTS/scripts/eval_decision_quality.py"
+  },
+  {
+   "fact": "The AgenticSTS HF dataset (redirects from ShandaAI to AlayaLab/AgenticSTS-trajectories) is public. It holds 312 per-decision trajectory logs (298 paper games + 14 decision-capped) with token usage, latency and cache stats, plus 10 competitor capture archives with full prompts and responses. Licence: CC-BY-4.0 for its own data; competitor archives embed AGPL/MIT docs. The GitHub data README still calls it private.",
+   "confidence": "high",
+   "source_url": "https://huggingface.co/datasets/AlayaLab/AgenticSTS-trajectories"
+  },
+  {
+   "fact": "The AgenticSTS frozen L4 store contains 3,214 combat episodes (per-round HP, intents, cards played, HP delta, deck size, relics), 1,553 event memories, 397 route memories and 556 card-build records. The L5 skill schema has typed triggers (state_types, enemy_names, act range, HP band, deck size, required cards or relics, enemy powers) plus per-enemy loss-ratio baselines in skill_usage.jsonl.",
+   "confidence": "high",
+   "source_url": "https://github.com/AlayaLab/AgenticSTS/tree/main/AgenticSTS-Data"
+  },
+  {
+   "fact": "Orak (ICLR 2026), STS1 track: Ironclad, no ascension, fixed seed, 3 runs, 200-step cap; the LLM handles only combat and card rewards. Score = floors + (50/3)×bosses. Gemini-2.5-pro 51.9±31.9 (beat the second boss in 2/3 runs), DeepSeek-R1 24.9, GPT-4o 23.6, Claude-3.7 15.0. Adding vision input lowered scores.",
+   "confidence": "high",
+   "source_url": "https://arxiv.org/abs/2506.03610"
+  },
+  {
+   "fact": "sts-rl-agent (STS1, sts_lightspeed): a learned non-combat MLP plus simulator MCTS combat reached a 14% win rate (avg floor 42.5) vs 6% (31.2) for stock heuristics on 50 fixed A0 Ironclad seeds. Its author notes the MCTS teacher 'effectively sees the future draw order', so the standard fast-sim search bot is not a fair, information-respecting oracle.",
+   "confidence": "high",
+   "source_url": "https://huggingface.co/Jialeiv/sts-rl-agent"
+  },
+  {
+   "fact": "The headless real-engine sts2-cli (wuhao21, MIT, 272 stars) is seedable, covers all 5 characters and can run in parallel. It has fidelity bugs: a Kaiser Crab boss initialisation exception causes it to award boss rewards without a fight, which would count as a false boss victory in evaluation.",
+   "confidence": "high",
+   "source_url": "https://github.com/mingxuan-he/sts2-agent/blob/main/docs/astra-kaiser-crab-reproduction.md"
+  },
+  {
+   "fact": "METR found that an Opus 4.6-built STS1 CLI clone (26M tokens, about $20) had rule bugs: Headbutt and Flame Barrier effects wrong, slime split timing wrong, Time Eater broken, Neow bonuses wrong, shop errors. LLM-written simulators look right but are wrong in subtle ways.",
+   "confidence": "high",
+   "source_url": "https://evals.alignment.org/notes/2026-03-03-balatro-sts-cli/"
+  },
+  {
+   "fact": "StS2 (beta v0.107.0) RNG streams are correlated because System.Random output is linear in |seed|. Early observations predict later outcomes; for example, the first fight drops a potion about 76% of the time in Underdocks vs about 4% in Overgrowth. A reader comment says v0.107.1 switched to xoshiro256**, but this is UNVERIFIED. Fixed-seed agent comparisons need to control for this.",
+   "confidence": "medium",
+   "source_url": "https://tck.mn/blog/correlated-randomness-sts2/"
+  },
+  {
+   "fact": "Statistical power: at α=0.05 and 80% power, detecting a 30%→60% win-rate difference needs about 42 runs per arm, 50%→60% about 388, and 50%→55% about 1,565 (my calculation). Published StS2 LLM evaluations use 2–10 runs per condition.",
+   "confidence": "high"
+  },
+  {
+   "fact": "Per-run cost estimates for LLM play (about 800 decisions per run, about 3k input tokens per decision): roughly $0.3–0.8 on commodity open-model endpoints, $1.2 for Qwen3.6-35B-A3B on Tinker, $3.3 for Haiku 4.5, and $16–24 for Opus 5. A combat-only GRPO campaign is about $1.0–1.4K. From the 2026-08-22 price check by mingxuan-he.",
+   "confidence": "medium",
+   "source_url": "https://github.com/mingxuan-he/sts2-agent/blob/main/docs/model-selection-2026-08.md"
+  },
+  {
+   "fact": "Anthropic's Fable 5 announcement says persistent file memory improved Slay the Spire performance 3x more than for Opus 4.8, and that Fable reached the final act 3x more often. No N, baseline or game version is given.",
+   "confidence": "medium",
+   "source_url": "https://www.anthropic.com/news/claude-fable-5-mythos-5"
+  },
+  {
+   "fact": "OpenAI's ARC-AGI-3 post reportedly shows GPT-5.6 Sol in Codex completing a StS2 daily challenge, a single run. UNVERIFIED: the page returned 403; known only from a search summary.",
+   "confidence": "low",
+   "source_url": "https://openai.com/index/how-two-settings-tripled-our-arc-agi-3-scores/"
+  },
+  {
+   "fact": "sts2-local-agent-lab reportedly logged a random baseline of 8 runs at mean floor 8.6 and DeepSeek via AgenticSTS at 2 runs, mean floor 18.5, 0 wins, about ¥4.4 for 66 calls, on v0.103.2. UNVERIFIED: the repo returns 404 as of 2026-10-10.",
+   "confidence": "low",
+   "source_url": "https://github.com/elysianx138/sts2-local-agent-lab"
+  },
+  {
+   "fact": "Spirebird (by the streamer Jorbs, about 9,000 h of StS1) is an StS2 stats site. It offers encounter lethality and HP-lost-per-fight distributions, win % by floor type, card pick and win effects, and replays of Jorbs's streamed runs. These could serve as an expert-agreement set and community HP-loss baselines. Data licence and access are unknown.",
+   "confidence": "medium",
+   "source_url": "https://spirebird.com/"
+  }
+ ],
+ "implications_for_design": [
+  "Do not treat any existing LLM agent as the definition of 'best play'. The best one (AgenticSTS, Gemini 3.1 Pro) wins about 47% at Silent A0 pooled and 0/18 at A8, and frontier LLMs without heavy scaffolding win 0%. LLMs can supply priors, candidate proposals, macro strategy and explanations; they cannot be the oracle.",
+  "Make evaluation per-decision and counterfactual: from a logged state, re-sample the hidden information (draw order, future rewards) consistent with what the player can see, run each candidate action forward in a validated simulator, and report regret = V(best) − V(chosen) with CIs. Win-rate A/B needs about 390–1,565 runs per arm for 5–10 point effects, which a hobby budget can't pay for at LLM speed.",
+  "Never use a peeking search as the oracle. The sts_lightspeed MCTS 'sees the future draw order'. The reference must determinise or use information-set search over hidden state. Also decide explicitly whether exploiting the RNG correlations documented at tck.mn counts as 'information available to the player'.",
+  "Put compute into combat search on boss and elite fights first: 67% of AgenticSTS defeats occur on boss floors. Shared LLM weaknesses are multi-turn tempo, attrition plans and non-damage loss conditions (timers), and search plus a value function handles these directly.",
+  "Use the real engine (wuhao21/sts2-cli, as forked by mingxuan-he) for rollouts rather than a Claude-written clone (METR found subtle rule bugs). Gate trust with replay validation: re-run logged live trajectories and require exact state matches, as mingxuan-he did for 285 actions. Treat 'combat ended without a fight' (the Kaiser Crab bug) as an invalid sample.",
+  "Interface pattern to adopt: code enumerates legal actions as numbered or typed candidates, and the model returns indices or probabilities. This removes CharTyr-style invalid_action failures. Compute lethal, fatal-end-turn and resource-waste checks in code, as jev and SpireMind do, instead of trusting LLM arithmetic.",
+  "Keep any LLM context bounded and typed (~5k tokens: state, legal actions, retrieved rules, a few triggered skills), following AgenticSTS's L1–L5 contract. Never accumulate transcripts, which cost 66–90x more fresh tokens per score point and about 4x the wall-clock.",
+  "Spend frontier-LLM tokens rarely, at root or strategic nodes (card reward, path, boss relic). Inside search, use cheap evaluators: Jev at about $0.00046 per decision, a small open model, or a learned value net. A full LLM-played run costs about $0.3–24; millions of rollouts must be LLM-free.",
+  "Evaluation protocol: server-issued seed batteries with a held-out pool, paired common-random-number comparisons, pre-registered first-N-completed denominators, aborts logged and analysed rather than silently dropped, Wilson/bootstrap CIs, and secondary sensitive metrics (damage taken per floor, HP loss per encounter vs per-enemy baseline, as in JoeB08 and AgenticSTS's skill_usage). Version-tag every record.",
+  "Build an 'oracle test set' that never drives tuning: a few hundred logged decision states (from AgenticSTS's HF trajectories, after checking they replay in the engine, plus your own runs), each with simulator-estimated action values. Use it to score any policy (LLM, Jev, search) by regret and top-1 agreement. jev's lesson: never select configs on the test fixtures.",
+  "Reuse rather than rebuild: AgenticSTS's typed decision JSON (problem, key_observations, candidate_lines, chosen_line) for explanations, its L3 knowledge extraction scripts, its skill-trigger schema as a way to express learned heuristics, its Wilson/bootstrap reproduce scripts, and the 3,214-episode combat store for per-enemy HP-loss priors. Beware the v0.103 vs v0.111 drift and the AGPL mod licence.",
+  "For a 'show me' dashboard, present per-decision regret distributions by decision type and per encounter, not only win rates. That separates 'finds the best play' from 'sometimes wins'."
+ ],
+ "open_questions": [
+  "How large is the per-decision regret of frontier LLMs (Opus 5.5, Fable 5) vs a non-peeking search reference in StS2 combat and card-reward decisions? Nobody has measured it; AgenticSTS's logged states plus sts2-cli would allow it.",
+  "Does the AgenticSTS skill-layer gain (3/10→6/10) hold at larger N, and on the current game version (v0.111.x) and with current models? Its data is v0.103-era Gemini 3.1 Pro.",
+  "How faithful and fast is sts2-cli across all characters and current patches (rollouts per second on a Mac, known divergences beyond Kaiser Crab)? This decides whether simulator-based regret is practical.",
+  "Did v0.107.1 really replace System.Random (removing the cross-stream RNG correlations), and how should a 'player-information-only' oracle treat inferable correlations?",
+  "Can licensed expert play (Spirebird/Jorbs replays) be obtained for an agreement-with-expert metric, and how often do experts and search references disagree?",
+  "Is an LLM useful as a policy prior inside MCTS/IS-MCTS for StS2 (cutting branching on card reward or pathing), or does a small learned network do as well at a fraction of the cost? sts-rl-agent found judgement decisions compress into small nets but planning decisions do not.",
+  "What are the actual AGI-Eval denominators and ascension, and are Anthropic's Fable 5 StS numbers (and OpenAI's StS2 daily-challenge run) StS1 or StS2, and with what N?",
+  "Why did sts2-local-agent-lab disappear, and are its random-baseline numbers (8 runs, mean floor 8.6) reproducible as a floor reference?"
+ ]
+}

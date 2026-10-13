@@ -1,0 +1,407 @@
+{
+ "key": "tooling",
+ "area": "StS2 game-integration tooling (the \"environment\" layer): real-game mods/bridges, headless real-engine runners, and re-implemented simulators",
+ "summary": "There are three kinds of environment for Slay the Spire 2 (StS2), and none of them covers both needs on its own.\n\n(1) **Mods that drive the real game.** STS2MCP (Gennadiyev, MIT, 510 stars, 102 forks) is the de facto standard. Its derivatives are HKUDS CLI-Anything STS2_Bridge, the evangambit, cicero225 and DarkArcZ forks, and the bots built on it (JoeB08, STS2FableBot, jev-the-spire2). CharTyr/STS2-Agent (AGPL-3.0, 338 stars, most actively maintained) is the better-engineered contract. It has a legal-action list, a decision snapshot and an SSE event stream, and AgenticSTS forked it. Communication_Mod_STS2, with the brmarcosbr bridge on top, is a hobby-grade push model that covers combat only and has no licence.\n\nThese mods give a faithful view of the game with no fidelity risk. STS2MCP deliberately sorts the draw pile so the order does not leak. They are slow and fragile, though:\n- About 30-40 decisions/min at 1x speed and 61.5/min at 3x Engine.TimeScale (measured by STS2FableBot). Roughly 35 runs in 3 h at 3x with a rules bot.\n- Godot `--headless` works on Mac: about 148 MB RSS and about 6 s to boot (r33hab).\n- Hangs and memory growth (13.3 GB after about 3 h) force periodic relaunches.\n- No mid-combat save/restore. Restore means quitting and using Continue on the room-level autosave.\n- They break on most game updates. STS2MCP upstream still fails on v0.111 as of 2026-10-10 (issue #131, PR #132 open since 2026-09-01). The v0.107.1 fix took about 40 days.\n\n(2) **Headless real engine.** wuhao21/sts2-cli (MIT, 272 stars) loads the owner's own sts2.dll with Godot stubbed out and two IL patches. It talks JSON over stdin/stdout and has:\n- seeded runs, all 5 characters, ascension 0-10, tested on v0.111.0 (25/25 runs completed);\n- room-level `write_continue_save`/`load_save`;\n- scenario tools: `enter_room` (named encounter or event), `set_player`, `set_draw_order`.\n\nIt runs as fast as the CPU allows and is all real game logic, but it has no in-memory clone. One of its IL patches also introduced a verified fidelity bug: a runaway enemy phase against 4x Phantasmal Gardener, found and fixed in the mingxuan-he fork with a real frame pump, but the patch is still applied upstream. Process start is about 485 ms; the process-reuse fix (PR #53) was not merged.\n\n(3) **Re-implemented simulators.** The best is the Zamiell → evangambit/sts2 → r33hab/sts2 lineage (MIT, C# NativeAOT plus a Gymnasium environment). It is what makes search possible:\n- `RunEngine.Clone` takes about 0.07 ms and a combat step about 58 µs.\n- `clone(resample_hidden=True)` re-seeds every RNG stream the player has not yet observed, so search respects what the player can know.\n- It accepts STS2MCP-shaped commands, and measured 2,270 rules-policy Act-1 runs/h on 8 workers with MCTS at 120/500 sims.\n\nIts limits: it targets v0.107.1, is verified bit-exact mainly in Act 1 (Ironclad, A9 standing in for A10), and its Act 2-3 fidelity is less verified. Other simulators are stale or have unverified fidelity: zhiyue (Python, about 28k steps/s, May 2026), Akirakato1 (Rust, patch 103.2) and StS2Sim (deck damage vs a dummy only, about 1000 trials/s).\n\n**Conclusion.**\n- **(a) Real-game play and evaluation:** use STS2MCP, but built from a maintained fork, because the v0.4.0 release is stale. The cicero225 v111-fork adds the master deck, `set_time_scale` (0.25-10x), `set_ascension`, `abandon_run`/`save_and_quit` and liveness checks; DarkArcZ fix/v0.111-compat is the other option, used by jev-the-spire2 together with its deck-state.patch. Run it headless with time-scale and a watchdog. CharTyr is the alternative if its AGPL licence and in-game LLM stack are acceptable.\n- **(b) High-throughput training:** use a two-tier engine. sts2-cli (preferably the mingxuan fork) gives full-content real-engine rollouts, run-level RL and scenario generation. The r33hab emulator gives clone-heavy in-combat search. The real game is the correctness oracle, checked by differential tests on fixed seeds.\n\n**What is missing:**\n- a real-engine fork/clone API (mid-combat snapshot);\n- a cross-backend differential-test harness;\n- a common observation/action schema;\n- legal-action masks in STS2MCP;\n- batch actions;\n- version pinning across backends (the emulator is on v0.107.1, sts2-cli and CharTyr on v0.111.0);\n- rules that keep seeds and draw order out of the agent's observation.",
+ "methods": [
+  {
+   "name": "Gennadiyev/STS2MCP (upstream)",
+   "what_it_is": "In-process C# mod (STS2_MCP.dll, Harmony) that starts an HttpListener on localhost:15526. REST: GET/POST /api/v1/singleplayer and /api/v1/multiplayer (each takes ?format=json|markdown), plus /api/v1/profile, /profiles, /compendium and /wiki. An optional Python FastMCP server (mcp/server.py) wraps it. Mod v0.4.0 (2026-05-05); README says tested on v0.103.2.",
+   "how_it_decides": "Environment only; no policy. Every GET or POST is marshalled onto the Godot main thread through a queue drained on ProcessFrame (at most 10 items per frame). Actions are enqueued into the game's own ActionQueueSynchronizer, the same path the UI uses. The call returns before the action resolves, so the client must poll.",
+   "reported_results": "No speed benchmark from the author. Third-party measurements on STS2MCP:\n- STS2FableBot: 159-decision run in about 5 min at 1x with 0.5 s polling; 30-40 decisions/min at 1x and 61.5/min at 3x time-scale (fork); about 35 runs in about 3 h at 3x; 343-run A0 Ironclad win rate 20.7% on v0.107.1.\n- JoeB08: needs a 0.3 s post-action delay plus a settle gate; screen transitions take about 2 s; real engine freezes mid-combat.\n- AgenticSTS: STS2MCP's reference agent took 9.9 min per floor, mostly LLM time.\n- Token cost: about 8M tokens per run with Sonnet 4.6 and 7.34M with GPT-5.4 (README).",
+   "strengths": [
+    "Most adopted (510 stars, 102 forks), so it has an ecosystem: JoeB08 bot, STS2FableBot, jev-the-spire2, and the evangambit emulator-oracle fork",
+    "Broad schema:\n- player: HP/max HP/block/energy/stars/gold, relics, potions, max_potion_slots, orbs, pets (Osty), powers\n- hand cards with can_play, unplayable_reason and target_type\n- draw, discard and exhaust pile contents and counts\n- enemies: entity_id, HP/max HP/block, powers, intents with type/label/description\n- full map nodes, next_options with one-level lookahead, boss identity for both bosses\n- event options (locked/proceed flags, relic), shop items, rest options, rewards, card select, bundles, relic select, treasure, Crystal Sphere\n- menus, character select (seed in custom/daily), game-over",
+    "Information-fair by design: the draw pile is sorted by rarity then ID, not draw order (PR #17 'Shuffle draw pile to avoid leaking actual draw order'), and card-reward indices follow visual position (v0.2.1)",
+    "Multiplayer (beta): host, Steam-friend join, FastMP localhost join, load lobby",
+    "Exposes the game's hidden FastModeType.Instant ('Instant Mode', v0.3.2) to cut animation stalls",
+    "The same platform-agnostic .NET DLL works on Windows, macOS and Linux; macOS install and build steps are documented",
+    "MIT licence"
+   ],
+   "weaknesses": [
+    "Upstream main breaks on game updates:\n- v0.104: IsPlayPhase change (#75, still open)\n- v0.107.1: broke about 2026-06-19 and was fixed in main 2026-07-29 (#123), about 40 days\n- v0.111: v0.4.0 fails to load (LobbyPlayer type) and main fails to build (#131); fix PR #132 by DarkArcZ open since 2026-09-01, still unmerged on 2026-10-10\n- No release since v0.4.0 (2026-05-05); last commit 2026-07-29",
+    "Upstream does not expose the master deck outside combat (#120 open)",
+    "No legal-action enumeration endpoint; validity comes from per-card can_play and option flags",
+    "No batch actions (#113 open)",
+    "Fire-and-forget actions with no completion signal, so clients poll and must handle stale state",
+    "Seed is exposed in /compendium current_run, which leaks hidden information if an agent can reach it",
+    "No save, restore or clone: snapshot PR #86 is open and works only on the save file, rejects map and shop screens, and restore requires leaving the run and pressing Continue",
+    "Dev-console passthrough for staging scenarios (PR #119) is unmerged",
+    "No time-scale control upstream",
+    "Unauthenticated localhost API, and the real game hangs in long sessions"
+   ],
+   "relevance_to_best_play": "Primary interface for real-game evaluation and for the jev agent, which already speaks STS2MCP. It suits measuring true win rate and capturing ground truth. It is far too slow for RL rollouts and has no rollback for search.",
+   "url": "https://github.com/Gennadiyev/STS2MCP",
+   "verified": true
+  },
+  {
+   "name": "STS2MCP community forks (cicero225 v107/v111-fork, DarkArcZ fix/v0.111-compat, evangambit oracle fork)",
+   "what_it_is": "Maintained forks that fill upstream gaps.\n- cicero225/STS2MCP: main adds the master deck (player.deck), set_time_scale (0.25-10x engine-level), set_ascension, battle.actions_disabled and selection_busy. v107-fork adds v0.107.1 compatibility, enchant-select support, abandon_run, save_and_quit and engine liveness. v111-fork adds lobby fields read by reflection for v0.111.\n- DarkArcZ fix/v0.111-compat: the branch behind upstream PR #132.\n- evangambit/STS2MCP (the emulator 'oracle' fork): adds draw_pile_ordered, discard_pile_ordered and hand_ordered, debug_start_encounter, debug_add_card, debug_set_energy, debug_add_power, custom-run seeded embark, and a rooms_entered counter.",
+   "how_it_decides": "Environment only. The time-scale fork sets Engine.TimeScale. FableBot notes cinematics reset it, so the client re-asserts it.",
+   "reported_results": "- cicero225: 3x time-scale gives 61.5 decisions/min vs 30-40 at 1x. Batches of 10/10 and 33-40 runs complete unattended at 3-4x. About 4,200 completed runs logged since June 2026. Long sessions hang or crash after about 3 h / 35+ runs at 3x (working set 13.3 GB), so the bot relaunches periodically.\n- jev-the-spire2 verified its deck-state.patch on the DarkArcZ branch at commit 199cf59 (2026-09-24).\n- evangambit oracle runs headless with --headless plus steam_appid.txt (2868840): about 148 MB RSS, drivable after about 6 s.",
+   "strengths": [
+    "Faster than real time (up to 10x engine time-scale)",
+    "Master deck and ascension control",
+    "Works on v0.111",
+    "Debug and staging actions for building exact test positions",
+    "Ordered-pile oracle mode for differential testing against a simulator"
+   ],
+   "weaknesses": [
+    "Fragmented: you must pick a fork per game build and rebuild from source",
+    "The oracle fork intentionally leaks draw order, so it is for verification only and never for agent observations",
+    "Hangs and memory growth remain under long sessions",
+    "Still no mid-combat rollback"
+   ],
+   "relevance_to_best_play": "Recommended way to build the real-game layer: the cicero225 branch matching your build for evaluation, and evangambit-style ordered piles for simulator verification.",
+   "url": "https://github.com/cicero225/STS2MCP",
+   "verified": true
+  },
+  {
+   "name": "CharTyr/STS2-Agent (and the AgenticSTS fork)",
+   "what_it_is": "In-game C# mod with an F8 overlay, an embedded OpenAI-compatible LLM client, an auto-play loop and dual-instance local co-op. HTTP API on 127.0.0.1:8080 (dynamic fallback port):\n- GET /state, /actions/available (action descriptors), /decision-snapshot, /events/stream (SSE), /data/{cards|relics|monsters|potions|events|powers|characters}, /health (timing), /diagnostics\n- POST /action, /session/control, /teammate/control\n- optional MCP at /mcp\nRelease v0.16.2 (2026-09-24), last commit 2026-10-07. Distributed on Steam Workshop. AgenticSTS forks it (port 8128).",
+   "how_it_decides": "The environment side is a state and action-gating contract (available_actions, combat.action_readiness and wait_until_actionable come from one gating evaluation). The bundled agent is LLM-driven; v0.16 adds a 'dual-layer' mode where an LLM planner sets the goal and posture and Jev executes fast, with an LLM fallback.",
+   "reported_results": "- Validated live on game v0.111.0 (2026-09-18/20, isolated profile).\n- v0.16.2: 882 C# and 423 Python offline tests.\n- AgenticSTS (CharTyr fork, v0.103.1/0.103.3): 2.3 min per floor with 96% of it LLM latency. CharTyr's own agent took 8.5 min per floor and won 0/5 on Silent A0, partly due to an invalid_action interface bug.",
+   "strengths": [
+    "Cleanest agent contract: explicit legal-action list with schemas, decision snapshot, SSE events, readiness gating",
+    "Draw, discard and exhaust are shown as grouped, sorted stacks (no order leak)",
+    "Enemy intents broken into damage, hits and total",
+    "Game-data export endpoints",
+    "Very active maintenance; validated on v0.111",
+    "Workshop install; co-op AI teammate; external agent can take over the teammate window (Option C)"
+   ],
+   "weaknesses": [
+    "AGPL-3.0, so derivative network services must publish source",
+    "Heavy: embeds an LLM client, budget guards and an overlay",
+    "GitHub release zip is Windows; macOS status UNVERIFIED",
+    "No time-scale control documented (UNVERIFIED)",
+    "No save, restore or clone",
+    "Same real-game speed ceiling as STS2MCP"
+   ],
+   "relevance_to_best_play": "Strong alternative real-game backend for evaluation, with built-in legal-action masks. It already hosts Jev as an in-game executor, which is relevant to the owner's jev plan.",
+   "url": "https://github.com/CharTyr/STS2-Agent",
+   "verified": true
+  },
+  {
+   "name": "Manuelbbl/Communication_Mod_STS2",
+   "what_it_is": "BaseLib-dependent Harmony mod ('DrB', v0.0.1). It POSTs JSON state to http://127.0.0.1:5000/update_state, and the HTTP response body is the command. Its Python Flask server.py is 92 lines. Uploaded in one day (2026-05-06), with a prebuilt DLL committed.",
+   "how_it_decides": "Push model. It hooks CombatStateTracker.NotifyCombatStateChanged, waits until ActionExecutor is idle, then waits 500 ms and sends. The response can be {Type:PlayCard, HandIndex, TargetIndex}, which runs CardModel.TryManualPlay, or {Type:EndTurn}. Non-combat rooms (rest, shop, events, map, loot) are only scanned and exported. A VirtualController for ui_up/down/accept exists but nothing calls it.",
+   "reported_results": "None from the author. 0 stars, no licence, 7 commits all on 2026-05-06.",
+   "strengths": [
+    "Exports combat state including pile contents (Card_ID hash), relic counters, powers, orbs, stars, and intent damage and hits through reflection",
+    "Non-combat scanners for shop, events, rest and loot",
+    "Push model, so no polling"
+   ],
+   "weaknesses": [
+    "No licence (all rights reserved)",
+    "Combat-only actions: no map, shop, event or reward actions",
+    "Exports DrawPile.Cards in internal order, which very likely leaks the true draw order (STS2MCP PR #17 fixed exactly this)",
+    "Fixed 500 ms debounce, so roughly 2 decisions/s at most",
+    "affects_gameplay:true; depends on BaseLib",
+    "Abandoned after its first day"
+   ],
+   "relevance_to_best_play": "Not suitable as a foundation. Useful only as an example of state fields worth exporting.",
+   "url": "https://github.com/Manuelbbl/Communication_Mod_STS2",
+   "verified": true
+  },
+  {
+   "name": "brmarcosbr/sts2-mcp-bridge (and its dev.to write-up)",
+   "what_it_is": "Python bridge (sts2_bridge.py v0.2.7, FastMCP with 10 tools) on top of a privately patched Communication_Mod (patches: 'selector v3' and a /rejection channel, distributed only as md5-hashed zips). Includes a local greedy autopilot and autopilot_harness.py with 5 synthetic scenarios.",
+   "how_it_decides": "Score-based greedy rules: damage per cost, kill bonus, AOE, preventive or desperate block, poison. Cards the game rejects as NotPlayable go into an 'unplayable' set (this fixed a GRAND_FINALE softlock). The article also notes the game has an internal AutoSlay runner and a public ICardSelector hook in sts2.dll.",
+   "reported_results": "One combat validated end to end on 2026-09-08: 7 turns, 35 actions, 0 rejections. No win rate. No latency figures. The author has not tested the current build.",
+   "strengths": [
+    "The rejection channel turns game refusals into state",
+    "Loopback-only",
+    "MIT bridge code"
+   ],
+   "weaknesses": [
+    "Inherits Communication_Mod's limits (combat only, no licence)",
+    "The mod patches are not public",
+    "Effectively one validated fight; 0 stars; last commit 2026-09-10"
+   ],
+   "relevance_to_best_play": "Negligible as infrastructure. The idea worth borrowing is to surface the game's rejection reasons (MissingTarget, InvalidTarget, NotEnoughEnergy, NotPlayable) as learning signal.",
+   "url": "https://github.com/brmarcosbr/sts2-mcp-bridge",
+   "verified": true
+  },
+  {
+   "name": "HKUDS CLI-Anything slay_the_spire_ii (STS2_Bridge plugin + cli-anything-sts2)",
+   "what_it_is": "A .NET 9 bridge mod (STS2_Bridge v0.3.0; prebuilt 126 KB DLL committed) plus a Python Click CLI/REPL. The CLI normalises the bridge's JSON into 15 decision types and has commands such as state, play-card, end-turn, choose-map, start-game --character --ascension. The bridge's code and file layout mirror STS2MCP v0.3.0 (same port 15526 and /api/v1/singleplayer). The repo credits STS2MCP and wuhao21/sts2-cli.",
+   "how_it_decides": "Environment only; the agent is an external LLM using a SKILL.md.",
+   "reported_results": "None. The slay_the_spire_ii directory was last touched 2026-04-18; there are 3 commits in total (Mar 25 to Apr 18). The repo as a whole is Apache-2.0 with 51.8k stars, but that reflects CLI-Anything, not this harness.",
+   "strengths": [
+    "Clean CLI with normalised decision states and tests (test_core, test_full_e2e)",
+    "macOS-first build and install scripts",
+    "Apache-2.0"
+   ],
+   "weaknesses": [
+    "Frozen at an STS2MCP v0.3.0-era copy",
+    "Uses CombatManager.Instance.IsPlayPhase, which v0.107.1 changed and v0.111 removed (STS2MCP #117/#131), so it is very likely broken on current builds (inferred; not run)",
+    "Serialises the draw pile unsorted, so it likely leaks draw order",
+    "No multiplayer endpoints in use; no seed or time-scale control"
+   ],
+   "relevance_to_best_play": "Low. Prefer STS2MCP or its forks; the normalised decision-type taxonomy is worth copying.",
+   "url": "https://github.com/HKUDS/CLI-Anything/tree/main/slay_the_spire_ii",
+   "verified": true
+  },
+  {
+   "name": "wuhao21/sts2-cli (headless real engine)",
+   "what_it_is": "C# host (Sts2Headless, RunSimulator.cs about 3.9k lines) that loads the owner's own sts2.dll and companion DLLs copied by setup.sh. It replaces GodotSharp.dll with no-op stubs and IL-patches sts2.dll with Mono.Cecil in two places: Task.Yield's awaiter IsCompleted always returns true, and WaitUntilQueueIsEmptyOrWaitingOnNonPlayerDrivenAction returns Task.CompletedTask. JSON lines over stdin/stdout.\n- Commands: start_run{character, ascension, seed}, action, load_save{path|json}, write_continue_save, get_map, set_player, enter_room{type, encounter, event}, set_draw_order, quit.\n- Decisions returned: map_select, combat_play, card_reward, card_select, rest_site, event_choice, shop, bundle, game_over.",
+   "how_it_decides": "Environment only. A synchronous request/response loop pumps a custom synchronisation context, so it runs as fast as the CPU with no rendering. It uses the real game logic for damage, enemy AI, relics and RNG.",
+   "reported_results": "- v0.111.0 (Steam public beta build 24724944) verification on macOS ARM64, 2026-09-07: 57 pytest passed, then 69 in the lib-only suite; 25/25 seeded runs (5 per character) reached a normal game-over with no crashes or stalls. The simple agent lost all 25.\n- Process start about 485 ms. Reusing one process cut that to about 35 ms (14x) in PR #53, which was closed unmerged.\n- Per-step throughput is not published (UNVERIFIED).",
+   "strengths": [
+    "Real engine with full content: all 5 characters, all cards and relics unlocked, ascension 0-10",
+    "Seedable and deterministic",
+    "Room-level save and load",
+    "Scenario construction (enter_room with a named encounter, set_player for deck/relics/HP/gold/potions, set_draw_order) suits curricula and determinised rollouts",
+    "Ports quickly after patches (v0.106.1 May 27, v0.107.0 Jun 6, v0.107.1 Jun 21/Aug 18, v0.111 Sep 7)",
+    "macOS, Linux and WSL support",
+    "MIT; the host code never redistributes game DLLs",
+    "Logs JSONL tapes"
+   ],
+   "weaknesses": [
+    "No in-memory clone or fork: save is room-level only (a mid-room save rolls back to the pre-room checkpoint), so search needs load_save plus prefix replay (cost UNVERIFIED)",
+    "The IL patches and stubs reimplement flow and can break fidelity. The mingxuan fork documents a runaway enemy phase against 4x Phantasmal Gardener (500 HP to 0 in one end_turn) caused by the queue-wait patch, which upstream still applies; earlier bugs include TalkCmd VFX false game_over and between-act healing reimplemented by hand",
+    "Single-player only",
+    "Combat observation gives pile counts but not contents (the mingxuan fork adds get_piles)",
+    "Each version needs adapter changes",
+    "Game DLLs must come from the owner's Steam install, so cloud use is a licensing grey zone"
+   ],
+   "relevance_to_best_play": "Best foundation for high-throughput real-engine rollouts. Good uses: run-level RL, imitation and evaluation at scale, scenario generation, and checking a fast simulator. Add a clone or replay layer and differential tests before trusting it for search.",
+   "url": "https://github.com/wuhao21/sts2-cli",
+   "verified": true
+  },
+  {
+   "name": "mingxuan-he/sts2-agent (vendored sts2-cli fork + HeadlessEnvPool + game service)",
+   "what_it_is": "A vendored fork of sts2-cli with a real next-tick frame pump instead of the Task.Yield IL suppression, headless combat hooks and get_piles. Adds an async Python HeadlessEnv/HeadlessEnvPool for parallel subprocess rollouts and a FastAPI game service (multiple concurrent runs, SQLite action-attempt logging, 200 train / 40 eval seed pools, draw order hidden by sorting). Also docker pods with the engine outside the agent's sandbox.",
+   "how_it_decides": "Environment plus two agent tracks. Track 1 is GRPO on Tinker (Qwen3 MoE, dense per-combat reward shaping). Track 2 is a frozen-weights agent that refines its own notes and skills.",
+   "reported_results": "- Deterministic replay: 97/97 recorded states matched on a tape for seed 02XTA38HK9.\n- Found the Gardener runaway bug on 2026-09-02; fixed 2026-09-03 on fix/headless-frame-pump. Deaths in 3 of 56 logged runs (18, 20, 55) were invalid because of it.\n- Cost model: full-run GRPO episodes are about 800 decisions; a combat-only GRPO campaign is estimated at $1.0-1.4K, a pilot at $100-150.\n- No published steps/s.",
+   "strengths": [
+    "Fixes a known upstream fidelity bug",
+    "Parallel env pool",
+    "Hidden-information discipline in the service (sorted piles, eval-seed gating)",
+    "Action-attempt logging gives a measurable illegal-action rate"
+   ],
+   "weaknesses": [
+    "Licence NOASSERTION",
+    "0 stars; last push 2026-09-12",
+    "Docker image bakes in game DLLs, so it must never be pushed to a registry",
+    "Its Python sim (sts2_sim.py) is marked obsolete"
+   ],
+   "relevance_to_best_play": "Use this fork rather than upstream sts2-cli for training rollouts. Its HeadlessEnvPool and service design are close to what a hobbyist RL loop needs.",
+   "url": "https://github.com/mingxuan-he/sts2-agent",
+   "verified": true
+  },
+  {
+   "name": "Zamiell → evangambit/sts2 → r33hab/sts2 emulator (C# NativeAOT + Gymnasium)",
+   "what_it_is": "A re-implemented StS2 combat and full-run simulator written from the decompiled source (not redistributed), targeting v0.107.1, compiled to a NativeAOT shared library and loaded from Python with ctypes.\n- Wrappers: Sts2CombatEnv and Sts2RunEnv with action masks. env.command() also accepts STS2MCP-style payloads.\n- Coverage (r33hab README): all 5 character card pools implemented and tested (Ironclad 85/87); 250/296 relics; 111 monsters; 57 events with tests; shops, rest sites, map and Neow; Osty, stars, Forge and orbs.\n- RNG is a faithful port of the game's MegaRandom (Xoshiro256** seeded by Splitmix64).",
+   "how_it_decides": "Environment plus a research agent: MCTS (combat_mcts.py) with rollout or PUCT/net priors, run-level training (run_train), and FightNet. clone(resample_hidden=True) re-seeds every RNG stream the agent has not observed and reshuffles the unknown part of the draw pile, tracking KnownTopCount and KnownBottomCount. This gives information-set-correct determinisation.",
+   "reported_results": "- Speed: combat step 58 µs; rollout about 750 µs; RunEngine.Clone about 0.07 ms; 28.6 fights/s for label generation on 24 workers.\n- Net inference: 845 µs CPU unbatched vs 20.7 µs per state batched at 128.\n- MCTS budget 120/500 sims (ordinary vs elite/boss): 12.7 s per rules-policy Act-1 run, i.e. 2,270 runs/h on 8 workers; 31.9 s per run that reaches the boss (904/h).\n- Fidelity: combat starts exact across 32 live captures (16 encounters x 2 seeds: ordered deck, roster, HP, opening intents); run generation exact for both Act-1 variants across 30 captures; Act-1 selection 88/88; 87 divergence-catalog entries.\n- 3650 C# and 492 Python tests. Active (r33hab push 2026-10-05).",
+   "strengths": [
+    "Only option with cheap clone and rollback, and with built-in hidden-information resampling, which is exactly what 'best play given the information available' needs",
+    "10^4-10^5 steps/s per core",
+    "Explicit fidelity discipline: a divergence catalog and differential capture against the real game through the STS2MCP oracle fork",
+    "STS2MCP command compatibility",
+    "MIT; macOS arm64 NativeAOT builds"
+   ],
+   "weaknesses": [
+    "A reimplementation, so every patch is manual porting; currently v0.107.1 vs v0.111 in sts2-cli and CharTyr",
+    "Bit-exact verification is mostly Act 1 (Ironclad, A9 standing in for A10); Acts 2-3 are newer and less verified; turn-2+ intent sweeps were incomplete at handoff",
+    "Tiny community (6 stars upstream Zamiell, 1 evangambit, 0 r33hab); Zamiell upstream last push 2026-06-04",
+    "Decompiled source must be regenerated locally"
+   ],
+   "relevance_to_best_play": "Best basis for search-heavy combat decisions (MCTS or AlphaZero) and for estimating best play under hidden information. Pair it with sts2-cli and the real game for verification.",
+   "url": "https://github.com/r33hab/sts2",
+   "verified": true
+  },
+  {
+   "name": "Other simulators: zhiyue/sts2-rl-agent (Python), Akirakato1 Rust sim, StS2Sim (cee.wtf)",
+   "what_it_is": "- zhiyue: Python headless sim (577 cards, 260 powers, 121 monsters, 290 relics, 63 potions), MaskablePPO Gymnasium environments (131-dim observation, 61/100 actions), and a C# bridge mod over TCP JSON.\n- Akirakato1: Rust sim for patch 103.2 with a C ABI and Python ctypes; 1,428 'Exact' functional parity items.\n- StS2Sim: runs sts2.dll outside Godot with Harmony to estimate a deck's damage against an infinite-HP dummy.",
+   "how_it_decides": "zhiyue: PPO. StS2Sim: epsilon-greedy highest-damage play with best-of-K per shuffle seed.",
+   "reported_results": "- zhiyue: about 1,276 episodes/s and 28,101 steps/s; about 92% Act-1 Ironclad combat win rate in its own sim (not validated against the real game).\n- StS2Sim: about 1000 trials/s single-threaded, about 25 s per deck.\n- Akirakato1: parity report against live 103.2 objects.",
+   "strengths": [
+    "Fast",
+    "StS2Sim shows sts2.dll can run outside Godot at about 10^3 combats/s for simple loops"
+   ],
+   "weaknesses": [
+    "zhiyue: no licence, last push 2026-05-22, before the v0.107.1 RNG overhaul; fidelity unverified",
+    "Akirakato1: pinned to 103.2 (pre-RNG-overhaul)",
+    "StS2Sim: no enemy turns, multi-enemy untested, last updated about 5 months ago"
+   ],
+   "relevance_to_best_play": "Mostly stale or narrow. StS2Sim's approach (real DLL, no Godot) is a template for in-process real-engine evaluators.",
+   "url": "https://github.com/zhiyue/sts2-rl-agent",
+   "verified": true
+  },
+  {
+   "name": "Game built-ins usable as environment features",
+   "what_it_is": "- FastModeType.Instant: a hidden setting STS2MCP exposes.\n- Engine.TimeScale: up to 10x through the cicero225 fork.\n- Godot --headless: the MegaDot 4.5 export keeps --display-driver headless --audio-driver Dummy; needs steam_appid.txt containing 2868840 when launched outside Steam.\n- Dev console: fight <encounter>, card, draw, heal, applypower and others; reachable over HTTP through the unmerged STS2MCP PR #119.\n- Internal AutoSlay automated runner: --autoslay launch option, used by TokenSpire2 and the STS2AutoSlayMod.\n- Per-room autosave plus Continue.\n- Official mod loader and Steam Workshop (Major Update #2, v0.107.1, 2026-06-19); modded runs keep separate saves.",
+   "how_it_decides": "Not applicable.",
+   "reported_results": "- Headless real game: about 148 MB RSS and about 6 s to drivable (r33hab).\n- After a kill and relaunch, Continue resumes at the start of the current fight with enemies at full HP (JoeB08).",
+   "strengths": [
+    "Faster-than-real-time real game",
+    "Scriptable scenario staging",
+    "Unattended headless capture"
+   ],
+   "weaknesses": [
+    "Only room-level restore",
+    "steam_appid.txt is a dev convenience",
+    "Time-scale resets on cinematics"
+   ],
+   "relevance_to_best_play": "Makes the real game viable for evaluation batches and ground-truth capture, but not for search.",
+   "url": "https://github.com/r33hab/sts2/blob/main/HANDOFF.md",
+   "verified": true
+  }
+ ],
+ "key_facts": [
+  {
+   "fact": "STS2MCP serialises the draw pile sorted by rarity then card ID ('matching in-game display'), not in draw order. Discard and exhaust are listed as-is; pile counts are given. PR #17 was explicitly 'Shuffle draw pile to avoid leaking actual draw order'.",
+   "source_url": "https://github.com/Gennadiyev/STS2MCP/blob/main/McpMod.StateBuilder.cs",
+   "confidence": "high"
+  },
+  {
+   "fact": "STS2MCP actions are enqueued through RunManager.Instance.ActionQueueSynchronizer.RequestEnqueue and return {status: ok} before they resolve. State reads and actions run on the Godot main thread through a queue drained at most 10 per frame, so clients must poll; AGENTS.md says to call get_game_state again after end_turn.",
+   "source_url": "https://github.com/Gennadiyev/STS2MCP/blob/main/McpMod.cs",
+   "confidence": "high"
+  },
+  {
+   "fact": "STS2MCP upstream does not load or build on game v0.111. v0.4.0 throws ReflectionTypeLoadException for LobbyPlayer, and main has CS1061 errors. Issue #131 (2026-09-01) is open, and fix PR #132 (DarkArcZ) is open and unmerged as of 2026-10-10. The v0.107.1 breakage (#114, 2026-06-19) was fixed in main on 2026-07-29 (#123).",
+   "source_url": "https://github.com/Gennadiyev/STS2MCP/issues/131",
+   "confidence": "high"
+  },
+  {
+   "fact": "STS2MCP upstream does not expose the master deck outside combat (issue #120 open). The cicero225 fork and jev-the-spire2's deck-state.patch add it.",
+   "source_url": "https://github.com/Gennadiyev/STS2MCP/issues/120",
+   "confidence": "high"
+  },
+  {
+   "fact": "The cicero225 STS2MCP fork adds set_time_scale (0.25-10x engine-level). It measured 61.5 decisions/min at 3x vs about 30-40/min at 1x. Long real-game sessions hang or crash after about 3 h / 35+ runs at 3x (working set 13.3 GB).",
+   "source_url": "https://github.com/cicero225/STS2FableBot/blob/main/LOG.md",
+   "confidence": "high"
+  },
+  {
+   "fact": "STS2FableBot (search-based Python on STS2MCP, Ironclad, v0.107.1): A0 win rate 20.7% over 343 runs (95% CI 16-25%), A1 19.4% over 175 runs. About 4,200 completed real-game runs logged since June 2026.",
+   "source_url": "https://github.com/cicero225/STS2FableBot",
+   "confidence": "high"
+  },
+  {
+   "fact": "The real StS2 game runs headless with Godot --headless when steam_appid.txt (2868840) sits next to the binary: about 148 MB RSS and the STS2MCP server is up in about 6 s on macOS.",
+   "source_url": "https://github.com/r33hab/sts2/blob/main/HANDOFF.md",
+   "confidence": "high"
+  },
+  {
+   "fact": "Real-game restore is room-level only. After a kill and relaunch, Continue resumes at the start of the current fight with enemies at full HP. STS2MCP has no flee, abandon or pause action reachable from combat upstream.",
+   "source_url": "https://github.com/JoeB08/Slay-the-Spire-2-Automatic-Bot/blob/main/KNOWLEDGE.md",
+   "confidence": "high"
+  },
+  {
+   "fact": "The STS2MCP snapshot PR #86 (unmerged) copies run saves. It rejects creation on map and shop screens because those saves do not restore exactly, and restore requires no run in progress followed by Continue.",
+   "source_url": "https://github.com/Gennadiyev/STS2MCP/pull/86",
+   "confidence": "high"
+  },
+  {
+   "fact": "wuhao21/sts2-cli runs the real sts2.dll headless (GodotStubs, Mono.Cecil IL patches) over JSON stdin/stdout. It has start_run with a seed, write_continue_save/load_save (room-level), enter_room (named encounter or event), set_player and set_draw_order. Tested on v0.111.0 build 24724944 (2026-09-07): 25/25 seeded runs completed across 5 characters.",
+   "source_url": "https://github.com/wuhao21/sts2-cli/blob/main/docs/compatibility-v0.111.0.md",
+   "confidence": "high"
+  },
+  {
+   "fact": "sts2-cli SaveCheckpoint outside a MapRoom serialises a 'pre-room checkpoint' (TryRollbackSerializedSaveToPreRoom), so there is no mid-combat save or clone.",
+   "source_url": "https://github.com/wuhao21/sts2-cli/blob/main/src/Sts2Headless/RunSimulator.cs",
+   "confidence": "high"
+  },
+  {
+   "fact": "sts2-cli process start is about 485 ms. Process reuse would cut it to about 35 ms (PR #53), but that PR was closed without merging.",
+   "source_url": "https://github.com/wuhao21/sts2-cli/pull/53",
+   "confidence": "high"
+  },
+  {
+   "fact": "The sts2-cli IL patch that makes WaitUntilQueueIsEmptyOrWaitingOnNonPlayerDrivenAction return Task.CompletedTask caused a runaway enemy phase against 4x Phantasmal Gardener (godmode 500 HP to 0 in one end_turn). The mingxuan-he fork fixed it with a real frame pump on 2026-09-03. Upstream setup.sh still applies the patch and has no issue filed.",
+   "source_url": "https://github.com/mingxuan-he/sts2-agent/blob/main/docs/BUG_gardener_runaway_phase.md",
+   "confidence": "high"
+  },
+  {
+   "fact": "The r33hab/sts2 emulator (fork of evangambit/sts2, itself a fork of Zamiell's) measured: combat step 58 µs, rollout about 750 µs, RunEngine.Clone about 0.07 ms, 12.7 s per rules-policy Act-1 run with MCTS 120/500 sims (2,270 runs/h on 8 workers). It targets v0.107.1.",
+   "source_url": "https://github.com/r33hab/sts2/blob/main/rl/FINDINGS.md",
+   "confidence": "high"
+  },
+  {
+   "fact": "The r33hab emulator's clone(resample_hidden=True) re-seeds every RNG stream the agent has not observed and reshuffles the unknown part of the draw pile (KnownTopCount and KnownBottomCount). The design doc explains why a plain clone would be an oracle over the whole future (rewards, shop stock, encounters).",
+   "source_url": "https://github.com/r33hab/sts2/blob/main/docs/agent-interface.md",
+   "confidence": "high"
+  },
+  {
+   "fact": "The r33hab emulator's combat starts match the real game exactly across 32 live captures (16 encounters x 2 seeds), run generation across 30 captures, and Act-1 selection 88/88. Act 2-3 comparison is newer and less verified.",
+   "source_url": "https://github.com/r33hab/sts2/blob/main/HANDOFF.md",
+   "confidence": "medium"
+  },
+  {
+   "fact": "CharTyr/STS2-Agent (AGPL-3.0, 338 stars, last commit 2026-10-07, v0.16.2 2026-09-24) exposes GET /state, /actions/available, /decision-snapshot, /events/stream (SSE), /data/{collection} and POST /action on 127.0.0.1:8080. It was validated on game v0.111.0, and v0.16 integrates Jev as a fast executor under an LLM planner.",
+   "source_url": "https://github.com/CharTyr/STS2-Agent/blob/main/CHANGELOG.md",
+   "confidence": "high"
+  },
+  {
+   "fact": "AgenticSTS uses a fork of CharTyr (port 8128) on game builds v0.103.1/0.103.3. Its agent needed 2.3 min per floor vs 9.9 (STS2MCP agent) and 8.5 (CharTyr agent), with 96% of wall-clock being LLM latency.",
+   "source_url": "https://github.com/AlayaLab/AgenticSTS",
+   "confidence": "high"
+  },
+  {
+   "fact": "Communication_Mod_STS2 has no licence, 0 stars and a one-day upload on 2026-05-06. It pushes state to 127.0.0.1:5000 with a 500 ms debounce, supports only PlayCard and EndTurn as actions, exports DrawPile.Cards in internal order, and depends on BaseLib.",
+   "source_url": "https://github.com/Manuelbbl/Communication_Mod_STS2/blob/main/Communication_Mod_eng/Communication_ModCode/MainFile.cs",
+   "confidence": "high"
+  },
+  {
+   "fact": "brmarcosbr/sts2-mcp-bridge validated a single combat end to end (2026-09-08: 7 turns, 35 actions, 0 rejections), has no win-rate metric, and reports no latency numbers.",
+   "source_url": "https://dev.to/brmarcosbr/i-made-an-agent-play-slay-the-spire-2-on-its-own-and-what-unlocked-it-was-the-game-saying-no-2hc2",
+   "confidence": "high"
+  },
+  {
+   "fact": "The HKUDS CLI-Anything STS2_Bridge is a v0.3.0 copy of STS2MCP-style code (port 15526, /api/v1/singleplayer). The directory was last changed 2026-04-18, and it reads CombatManager.Instance.IsPlayPhase, an API removed in v0.111, so it is likely broken on current builds (not run).",
+   "source_url": "https://github.com/HKUDS/CLI-Anything/tree/main/slay_the_spire_ii/agent-harness/bridge/plugin",
+   "confidence": "medium"
+  },
+  {
+   "fact": "Game version timeline:\n- Early Access: 2026-03-05\n- Major Update #1 (v0.103.2): Apr 17, main branch\n- Major Update #2 (v0.107.1): Jun 19, main branch (Steam Workshop + RNG overhaul)\n- Beta v0.110: Jul 31\n- Beta v0.111.0: Aug 14\nMega Crit then slowed its cadence. No newer build was found as of 2026-10-10.",
+   "source_url": "https://patched.gg/games/slay-the-spire-2/beta-patch-notes-v01110",
+   "confidence": "medium"
+  },
+  {
+   "fact": "jev-the-spire2 drives the real game through STS2MCP. On v0.111+ it requires the DarkArcZ fix/v0.111-compat branch plus its own deck-state.patch (verified at commit 199cf59 on 2026-09-24), and macOS needs the game launched through Steam.",
+   "source_url": "https://github.com/shoemoney/jev-the-spire2",
+   "confidence": "high"
+  },
+  {
+   "fact": "STS2MCP's /api/v1/compendium returns current_run.seed read from current_run.save, so an agent with API access can see the run seed.",
+   "source_url": "https://github.com/Gennadiyev/STS2MCP/blob/main/McpMod.Compendium.cs",
+   "confidence": "high"
+  },
+  {
+   "fact": "zhiyue/sts2-rl-agent's Python sim reports 1,276 episodes/s, 28,101 steps/s and about 92% Act-1 Ironclad combat win rate with PPO, all in its own unvalidated sim. It has no licence and was last pushed 2026-05-22.",
+   "source_url": "https://github.com/zhiyue/sts2-rl-agent",
+   "confidence": "medium"
+  },
+  {
+   "fact": "StS2Sim runs sts2.dll outside Godot with Harmony at about 1000 trials/s single-threaded, but only for deck damage against a no-op dummy (no enemy turns).",
+   "source_url": "https://next.tangled.org/cee.wtf/sts2-sim",
+   "confidence": "medium"
+  }
+ ],
+ "implications_for_design": [
+  "Use a three-backend environment with one shared schema. The real game (STS2MCP fork) is the ground-truth evaluator. sts2-cli (mingxuan fork) is the full-content real-engine rollout worker. The r33hab NativeAOT emulator is the cloneable search engine. Use STS2MCP's command shape (play_card{card_index, target}, choose_map_node{index}, ...) as the lingua franca: the emulator's env.command already accepts it, and jev already speaks it.",
+  "For 'best play given player information', every observation must exclude the seed, draw order and future RNG. Sort or stack piles as STS2MCP and CharTyr do, and strip /compendium seed fields. Search must determinise: in the emulator use clone(resample_hidden=True); in sts2-cli use set_draw_order with a permutation sampled from the unknown part of the draw pile. Never use the ordered-pile oracle fork or perfect-information seeds in decision-making.",
+  "Rollback is only cheap in the emulator (about 0.07 ms per clone). In sts2-cli the only rollback is load_save at room start plus replaying the action prefix. Benchmark this first; if it costs tens to hundreds of ms per branch, use sts2-cli for policy rollouts and run-level value estimates rather than per-node MCTS. In the real game, rollback is effectively impossible (room-level, seconds per reload).",
+  "Budget real-game throughput honestly:\n- about 1 decision/s at 3x time-scale with a local policy\n- about 5 min per run at 3x for a rules bot (FableBot: about 35 runs per 3 h)\n- LLM or remote-API policies add their own latency (jev about 315 ms per call)\nThat is about 300-400 runs/day on one machine at best, which is enough for evaluation with confidence intervals but not for RL.",
+  "Build a watchdog for the real game, following the JoeB08 and FableBot patterns: fingerprint polls, kill and relaunch after about 30 s of identical state, resume with Continue, escalate to abandon after two recoveries, and relaunch proactively every 25-30 runs because memory grows to about 13 GB by 3 h. Add a settle gate after every action.",
+  "Build a differential-test harness early. Use the same seed and action tape through (i) the real game with ordered piles, (ii) sts2-cli and (iii) the emulator, then diff state each step. The pieces exist: evangambit oracle fork, mingxuan tapes (97/97 deterministic replay), r33hab capture_sweep. The known sts2-cli Gardener bug shows unverified engines can silently corrupt training data.",
+  "Pin game versions per backend. Today the emulator targets v0.107.1 while sts2-cli and CharTyr target v0.111.0. Archive each build's DLLs (sts2-cli copies them into lib/) so one Mac can host matched engines. Expect each game update to break the mods for 1-6 weeks, and plan a patch playbook (r33hab's patch_refresh.py is a model).",
+  "Add the missing environment features: legal-action masks (CharTyr has /actions/available; STS2MCP does not), batch actions (STS2MCP #113), master deck on every screen, an explicit action-resolved signal (rooms_entered or a settle counter), and scenario staging (sts2-cli enter_room/set_player, or the dev console through STS2MCP PR #119) for combat curricula.",
+  "Mac-specific notes:\n- the STS2MCP DLL is platform-agnostic; mods live in SlayTheSpire2.app/Contents/MacOS/mods\n- headless needs steam_appid.txt, otherwise the game must be launched through Steam\n- sts2-cli and the r33hab NativeAOT build are tested on macOS ARM64\n- cheap cloud Linux CPU boxes can host sts2-cli and emulator workers, but only with DLLs from the owner's own install, never pushed to a registry",
+  "jev integration path: jev already plays the real game through STS2MCP, so it can be the 'fast policy' evaluated on the real game today. To use its cheap decisions as a rollout or teacher policy in training, write an adapter from sts2-cli or emulator JSON to the STS2MCP-shaped state jev expects, and keep its calls off the inner MCTS loop (network latency is about 10^4x a 58 µs sim step)."
+ ],
+ "open_questions": [
+  "What are sts2-cli's actual per-step latency and steps/s on a Mac, and what does the load_save + prefix-replay 'clone' cost per branch? None of this is published.",
+  "Are there other fidelity bugs in upstream sts2-cli from the IL patches or Godot stubs (beyond Gardener and TalkCmd), and does the mingxuan frame-pump fork track v0.111?",
+  "Can the real CombatState or RunState be deep-cloned in-process inside the sts2-cli host (sts2.dll objects), giving real-engine search without reimplementation?",
+  "How faithful is the r33hab emulator in Acts 2-3, for non-Ironclad characters and at A10? When will it port to v0.111 or later builds?",
+  "Will Mega Crit's next update after the break (expected after the August pause) break STS2MCP forks, CharTyr and sts2-cli together, and how quickly do they recover?",
+  "Does reloading a real-game room save re-roll combat RNG, i.e. can repeated real-game replays of one fight be used as Monte Carlo evaluations, or are they deterministic?",
+  "Is CharTyr usable on macOS (the release zip is Windows; is the Workshop build cross-platform?), and does it support time-scale?",
+  "Is running the owner's own sts2.dll on rented cloud machines acceptable under Mega Crit's EULA or Steam terms?",
+  "Can multiple real-game instances run in parallel on one Mac under one Steam account (CharTyr's dual-instance uses --force-steam off)? What instance count is practical before RAM or hangs dominate?"
+ ]
+}

@@ -1,0 +1,274 @@
+{
+ "key": "jev",
+ "area": "jev-the-spire2 / jev-the-spire and TypeSafe Jev (the owner's \"cheap compute\")",
+ "summary": "\"Jev\" is not a source of compute. You cannot run it locally, fine-tune it or train it with RL. TypeSafe Jev 1.13 is a closed, hosted \"System One\" decision model from TypeSafe AI, which launched on 2026-09-15 (the press reports a $40M seed round and founders Diogo Almeida, Erik Gafni and Sasha Sheng). You send it a state plus typed questions: choice (up to 255 options, returning a probability for each), noul (P(yes)) and score. It answers all the questions in one parallel pass and writes no text. It costs $0.042 per 1M input tokens, and output is free. It is served at api.typesafe.ai/v1/systemone and through OpenRouter at /api/alpha/decisions. Nothing says the weights are available. TypeSafe says the same weights serve every account and that customisation happens only through what you put in the request. alexmeckes/jev-the-spire (MIT, Sept 2026) is a zero-dependency Node harness. It reads the live game through the STS2MCP mod, uses a hand-written planner to list legal actions and short combat plans with damage forecasts, asks Jev to choose, runs only the first action, then observes again. shoemoney/jev-the-spire2 is not a GitHub fork, despite the name. It is a copy that keeps the upstream history and adds a \"single-call factored\" policy. One request carries one broad `move` choice plus three nouls per candidate (safe_, prog_, waste_), for up to 64 candidates. The code min-max normalises each signal, ignores any signal whose spread is under 0.15, and scores 0.25·move + 0.25·safe + 0.25·progress − 1.0·waste. It takes the top score, then applies a deterministic lethal-end-turn gate.\n\nThe headline numbers hold up as measurements of speed and cost. They do not measure best play. \"27/30 vs 29/30\" is 10 hand-picked fixtures × 3 repeats. The grader is the author's own string match on the first action: six \"avoid this card\" or \"play Beckon\" checks plus four \"play this specific card or target\" survival states. The grader itself says it is \"not optimality or win probability\". The author measured a noise floor of about ±3, so 27 and 29 cannot be told apart. The waste factor was written after seeing which fixtures failed, and there is no held-out set. The LLM arm also got a different prompt: state cut to 24,000 chars, candidates to 16,000 chars, reasoning effort 'low', and none of the factored nouls. \"259x cheaper\" matches Claude Fable 5.1 ($0.11952 vs $0.00046 per decision). Against Opus 5.5 it is about 102x cheaper and about 11x faster, and against DeepSeek v4.1 flash only about 10x cheaper. The latency was measured while the endpoint was in its fast mode. Earlier the same day p50 was 5.8 s, with about 53% of calls in a 7–16 s slow mode. Full-run results are weak. Upstream played 182 runs, all A0 Ironclad, 2026-09-17→23, with 1 win (run #182), mean floor 23.4 and median 22. The fork reports 0 wins in 9 recorded runs and a median A0 floor of 17 that stayed flat over 140+ iterations of an autonomous coding loop. Its weight-fitter refused to fit (471 survived turns vs 5 deaths).\n\nFor the owner's goal, Jev is very cheap per decision: about $0.15–0.25 per average run and about $150–250 per 1,000 runs. Money is not the constraint. Throughput is: the live game runs at about 5.2 s per decision, about 28 min per run, so roughly 50 runs a day per machine. Jev's latency is only about 6–15% of that, and the harness provides no simulator. Jev's useful technical property is that one roughly 300 ms call returns a full probability distribution over up to 255 legal actions, plus many independent yes/no judgments. That makes it a reasonable root-level policy prior or blunder filter, and a cheap labeller. It is too slow for rollouts because of the network round trip. It is impossible to distil into, because it is closed and cannot be fine-tuned. The cheap compute that matters for RL comes from a headless engine (wuhao21/sts2-cli: real game DLLs, IL-patched, seedable, parallel) plus small neural nets trained locally or on cheap CPUs. Jev, cheap APIs (GPT-5 nano, Gemini Flash-Lite, DeepSeek V4 Flash) or a small local MLX model would only be optional prior or labeller plug-ins. The Mac here is an Mac with 16 GB, which realistically fits only 4–8B 4-bit models, and at the harness's 11–19k-token prompts those would be slow.",
+ "methods": [
+  {
+   "name": "TypeSafe Jev 1.13 (the model)",
+   "what_it_is": "A closed, hosted 'System One' decision model from TypeSafe AI, launched 2026-09-15. It takes a JSON or text state plus typed questions: choice (≤255 options, returns choice, probabilities and confidence), noul (P(yes)) and score (2–10 levels). It answers all questions in one parallel pass and generates no text. The vendor says it uses a non-autoregressive 'parallel sampler' and is trained with 'Reinforcement Learning for Calibrated Decisions' (RLCD).",
+   "how_it_decides": "A single forward evaluation per question, with no reasoning trace. Questions in a request cannot see each other's answers. Probabilities 'differ slightly from run to run'. The dated snapshot typesafe/jev-1.13-20260917 can be pinned.",
+   "reported_results": "Vendor benchmark (4 workflows written by TypeSafe, reference answers from OpenAI and Anthropic models): Jev 67.8% accuracy at $0.0004/case and 0.4 s, vs GPT-5.6 Terra 67.9% ($0.0304, 10.1 s), GPT-5.6 Sol 74.1%, Claude Opus 5 73.1% ($0.1761, 37.8 s). The vendor claims 70–500 ms latency. None of this is independently verified.",
+   "strengths": [
+    "$0.042 per 1M input tokens and free output. An OpenRouter tutorial response shows usage.cost = exactly input_tokens × $0.042/M",
+    "One call returns a full probability distribution over up to 255 options, which is exactly the shape a PUCT/AlphaZero-style prior needs",
+    "Many nouls per call at roughly flat latency: 31 vs 160 questions both took about 0.46–0.49 s in jev-the-spire2's measurement",
+    "No parse failures, because output is schema-typed",
+    "Direct API rate limit of 80 req/s and 100K tokens/s"
+   ],
+   "weaknesses": [
+    "Closed weights, hosted only, no fine-tuning. The same weights serve all accounts, so you cannot do RL on it or distil into it",
+    "Context cap is 32k tokens per OpenRouter, while TypeSafe says 64k total with state plus the longest question capped at 32k. The docs conflict",
+    "Not deterministic, and latency is bimodal (a 7–16 s slow mode was observed)",
+    "Calibration is claimed against outcomes in general. There is no evidence it is calibrated to STS2 win probability",
+    "Early access. DataCamp reports TypeSafe 'can't prove the pricing isn't subsidized'",
+    "Text only, with no reasoning. TypeSafe itself says to escalate hard cases to 'a person or a reasoning model'"
+   ],
+   "relevance_to_best_play": "Useful as a cheap root-level prior or tie-breaker over legal actions, and as a per-candidate blunder detector (the waste noul). Usable as a labeller for behaviour-cloning warm starts. Not usable as a rollout policy (network latency) or as a trainable policy (closed weights). Its value has to be shown inside a search or RL system tested on a seed battery, not taken from its fixtures.",
+   "url": "https://docs.typesafe.ai/models",
+   "verified": true
+  },
+  {
+   "name": "alexmeckes/jev-the-spire (upstream harness, 'deliberate' policy)",
+   "what_it_is": "A zero-dependency Node 22 harness with a localhost dashboard. It reads visible STS2 state from the STS2MCP mod (REST on :15526), builds legal actions and short combat plan prefixes with forecasts in planner.mjs, asks Jev in 2–5 sequential calls (assess, review, and conditional end-turn, merchant or card-order passes), runs only the first action, then observes again. Developed against game v0.107.1 and STS2MCP commit 55e0648.",
+   "how_it_decides": "A hand-coded planner and forecaster generates the candidates. Jev's choice primitive picks among them. A long block of review prose sits in the request.",
+   "reported_results": "182 runs, all Ascension 0 Ironclad, 2026-09-17→2026-09-23. 1 win (run #182, 739 decisions, $0.81), mean floor 23.4, median 22, only 5 runs reached Act 3. 58,588 decisions, 1.086B input tokens ($45.64 total, $0.25 per run), 1.78 calls per decision, about 18.5k input tokens per decision, about 5.2 s wall-clock per decision, run mean 1,676 s. The policy changed across runs, so this is not a win rate for any one policy.",
+   "strengths": [
+    "Works end to end on the real game",
+    "Logs tokens and cost honestly",
+    "Includes an offline fixture suite and synthetic sequence tests"
+   ],
+   "weaknesses": [
+    "Bound to the live game at human speed (~5 s per decision)",
+    "The planner hardcodes about 50 cards, 11 potions, 12 relics and 26 powers. Anything else becomes 'unknown' (per the fork's PLAN.md)",
+    "The intent regex missed 'NxM (total)' attacks, so 94 of 519 combat decisions in one logged run had no reading of incoming damage",
+    "No learning loop"
+   ],
+   "relevance_to_best_play": "Mostly useful as plumbing and lessons: the STS2MCP integration, a candidate-generation pattern, and fixture formats. As a baseline it sits at about 0.5% wins at A0, so it shows where the bar starts, not what best play looks like.",
+   "url": "https://github.com/alexmeckes/jev-the-spire",
+   "verified": true
+  },
+  {
+   "name": "shoemoney/jev-the-spire2 single-call factored policy",
+   "what_it_is": "One Jev request per decision. It holds the broad `move` choice plus safe_/prog_/waste_ nouls for each of up to 64 candidates (up to about 193 questions). The wording of the nouls changes for combat, map and other screens. Signals are combined in code, followed by a deterministic gate (refuseLethalChoice). Opt-in via SPIRE_SINGLE_CALL=1 or SPIRE_RECALL=1. A bare launch still runs the upstream 2.4-call path.",
+   "how_it_decides": "Each factor is min-max normalised across candidates, with DEADBAND 0.15 (below that spread the factor is neutral). Score = 0.25·move + 0.25·safe + 0.25·progress − 1.0·waste. Take the top score. If factors are incomplete, fall back to Jev's raw choice. The gate swaps an end-turn pick only when a calculated forecast says it dies and another calculated candidate survives.",
+   "reported_results": "Sweep: 11 configs, 530 persisted runs plus a 300-run rerun, $0.36 in API spend. On the 10 fixtures, waste-veto passed 9/10 fixtures (45/50, 90%) at p50 306 ms and 1.00 calls; equal weights 44/50; no-waste 35/50. Hedge-only configs, which cannot change the choice, ranged 21–25 of 30, which is the noise floor. vs-LLM (30 decisions = 10 fixtures × 3): Jev 27/30 at $0.00046 and p50 315 ms; Opus 5.5 29/30 at $0.04704 and 3,590 ms; Fable 5.1 29/30 at $0.11952 and 5,534 ms; Kimi K3 29/30; Grok 4.7 29/30; GPT-6-astra 24/30; DeepSeek v4.1 flash 24/30 at $0.00446 and 23,366 ms. Full runs: 0 wins in 9 recorded runs. Loop state: A0 median floor 17, best 33, elite win rate 4/9. An internal A/B found the factored recombination dealt 0.546 more damage per decision than Jev's raw broad choice (one version, n=591).",
+   "strengths": [
+    "Cuts round trips from 2.4 to 1 and p50 from about 758 ms to about 315 ms",
+    "The waste noul is the only config that avoided all 9 self-harm trap runs (Bloodletting with an empty hand, Fortifier, Pact's End)",
+    "Unusually candid caveats and provenance notes",
+    "The idea of decomposing a hard question into many cheap independent judgments that code recombines is reusable"
+   ],
+   "weaknesses": [
+    "The quality metric is a narrow first-action error check on 10 fixtures, graded by string match, with no simulator or win-probability oracle",
+    "Weights were tuned on the test fixtures and there is no held-out set",
+    "The LLM baseline got truncated state and none of the nouls, so the comparison is not identical prompting",
+    "It fails beckon-play 100% of the time",
+    "The fitter refused to fit (5 deaths in 476 turns). Live-game data is too thin to learn from",
+    "Built by an autonomous 'ralph loop' coding agent (.opencode). Headline numbers were revised many times, and a 28 GB memory runaway was logged 2026-09-29",
+    "Needs an STS2MCP fork (DarkArcZ fix/v0.111-compat, still-open PR #132) for game v0.111+"
+   ],
+   "relevance_to_best_play": "The factored-noul pattern is a good cheap blunder filter and feature generator to run around a search or RL policy. Its benchmark tells you nothing about best play or win rate.",
+   "url": "https://github.com/shoemoney/jev-the-spire2",
+   "verified": true
+  },
+  {
+   "name": "jev-the-spire2 learning/ (recall memory + fit-weights)",
+   "what_it_is": "Cross-run memory stored in .private/learning/memory.json, enabled by SPIRE_RECALL=1. It attributes outcomes to decisions and tries to fit the factor weights.",
+   "how_it_decides": "Lessons are recalled into the request state. A logistic-style fitter tries to learn the combining weights from survived vs died turns.",
+   "reported_results": "'6 lessons, 5/5 confirmations on the core death'. The fitter refuses on the real corpus (471 survived turns vs 5 deaths) and returns fitted:false.",
+   "strengths": [
+    "Fails loudly when there is not enough data, rather than inventing weights"
+   ],
+   "weaknesses": [
+    "Live-game throughput (~50 runs/day) makes the labelled data far too small",
+    "No win-rate evidence"
+   ],
+   "relevance_to_best_play": "Shows the right idea (learn the combining weights from outcomes) and also why it needs a simulator: you need 10^4–10^6 labelled outcomes, not hundreds.",
+   "url": "https://github.com/shoemoney/jev-the-spire2/blob/main/SWEEP-FINDINGS.md",
+   "verified": true
+  },
+  {
+   "name": "Cheap API LLMs (GPT-5 nano, Gemini 2.0/2.5/3.5 Flash-Lite, DeepSeek V4/V4.1 Flash)",
+   "what_it_is": "General text LLMs at commodity prices, the nearest 'cheap compute' rivals to Jev.",
+   "how_it_decides": "Prompted generation of an action id. Probabilities need logprobs or repeated sampling.",
+   "reported_results": "Third-party prices, Aug–Oct 2026 (UNVERIFIED against vendor pages): GPT-5 nano $0.05/M in, $0.40/M out; Gemini 2.0 Flash-Lite $0.07/$0.30; Gemini 2.5 Flash-Lite $0.10/$0.40; Gemini 3.5 Flash-Lite $0.30/$2.50; DeepSeek V4 Flash $0.14/$0.28; V4.1 Flash $0.30/$1.20. In the jev bench, DeepSeek v4.1 flash scored 24/30 at $0.00446 per decision with p50 23 s.",
+   "strengths": [
+    "Per input token they cost only about 1.2–7x more than Jev",
+    "Can reason and explain, and can be batched",
+    "Some offer logprobs"
+   ],
+   "weaknesses": [
+    "Output tokens are billed",
+    "Reasoning models are slow and can return empty content when max_tokens is too small",
+    "Parse failures are possible"
+   ],
+   "relevance_to_best_play": "Interchangeable with Jev as a prior or labeller behind a common interface. Jev's edge over them is the native distribution over options and the parallel nouls, not raw price.",
+   "url": "https://costbench.com/best/cheapest-llm-api/",
+   "verified": false
+  },
+  {
+   "name": "Local small models on the owner's Mac (MLX / llama.cpp)",
+   "what_it_is": "Running a quantised 4–8B open model on the owner's machine, which is an Apple Mac (8P+2E cores) with 16 GB unified memory, as checked via system_profiler.",
+   "how_it_decides": "Prompted choice, or logprob scoring over candidate ids.",
+   "reported_results": "No measured Mac prefill figure was found. One estimate for Llama 3.1 8B Q4 on Mac gives about 72 tok/s prefill and 28.6 tok/s decode (estimated, UNVERIFIED). At 11–19k-token prompts that is minutes per decision. Prompts of about 1–2k tokens would take seconds.",
+   "strengths": [
+    "$0 marginal cost and private",
+    "Weights are open, so this is the only LLM route that allows fine-tuning or distillation (LoRA via MLX)"
+   ],
+   "weaknesses": [
+    "16 GB limits you to roughly 8B at 4-bit",
+    "Prefill for long JSON states is slow",
+    "Weaker than Jev or frontier models without fine-tuning"
+   ],
+   "relevance_to_best_play": "Only viable with a compact state encoding, or as a distillation student. A tiny task-specific net (MLP or small transformer over structured features) is far cheaper and faster than any local LLM for policy and value.",
+   "url": "https://willitrunai.com/can-run/llama-3.1-8b-on-m1-pro-16gb",
+   "verified": false
+  },
+  {
+   "name": "Headless engine + small neural nets (wuhao21/sts2-cli; mingxuan-he/sts2-agent)",
+   "what_it_is": "sts2-cli (MIT, 272 stars) copies the real game DLLs from your Steam install, IL-patches sts2.dll and runs the game headless with a JSON stdin/stdout protocol. Tested on v0.111.0 (beta build 24724944). sts2-agent wraps it in HeadlessEnvPool for parallel rollouts and plans GRPO training of Qwen3-30B-A3B on Tinker.",
+   "how_it_decides": "Whatever policy you plug in: search, RL-trained nets, or LLM priors.",
+   "reported_results": "No speed or steps-per-second numbers were found. sts2-agent says its training loop has not yet run ('Remaining: ... run the first loop').",
+   "strengths": [
+    "Deterministic and seedable, so you get matched seed batteries for evaluation",
+    "Parallel, and not bound to animation speed",
+    "Uses the real game rules"
+   ],
+   "weaknesses": [
+    "Must be rebuilt after each game update",
+    "Throughput is unmeasured",
+    "Exposes the hidden state (seed, draw order), so you must mask it yourself to stay within the information the player has"
+   ],
+   "relevance_to_best_play": "This, not Jev, is the cheap compute that makes RL and search possible. Jev or LLMs become optional plug-ins on top of it.",
+   "url": "https://github.com/wuhao21/sts2-cli",
+   "verified": true
+  }
+ ],
+ "key_facts": [
+  {
+   "fact": "Jev 1.13 (version id jev-1.13.0) is TypeSafe's only listed model. Price is $0.042 per 1M input tokens and output is free. Context is 64k per request in total, with state plus the longest question capped at 32k. Rate limits are 100K tokens/s and 80 req/s, 'adjusting dynamically'. TypeSafe says Jev is not fine-tuned with customer data and the same weights serve every account.",
+   "confidence": "high",
+   "source_url": "https://docs.typesafe.ai/models"
+  },
+  {
+   "fact": "The API is POST https://api.typesafe.ai/v1/systemone with {model, state, questions}. Question types are noul (P(yes)), choice (criteria required, max 255 options, returns choice, probabilities and confidence) and score (2–10 levels). Errors include 429 and 529 (overloaded).",
+   "confidence": "high",
+   "source_url": "https://docs.typesafe.ai/api"
+  },
+  {
+   "fact": "On OpenRouter, Jev is typesafe/jev-1.13 at POST /api/alpha/decisions (also /api/v1/systemone) with a 32,000-token context. Only an OpenRouter key is needed, with no TypeSafe account. Probabilities 'differ slightly from run to run'. The dated snapshot typesafe/jev-1.13-20260917 can be pinned.",
+   "confidence": "high",
+   "source_url": "https://openrouter.ai/docs/guides/community/jev-tutorial"
+  },
+  {
+   "fact": "TypeSafe launched on 2026-09-15 after 2 years in stealth. Reported $40M seed round (DCVC), founders Diogo Almeida (ex-OpenAI), Erik Gafni and Sasha Sheng. Early access. The vendor claims 70–500 ms latency and a non-autoregressive parallel sampler trained with RLCD. All speed and accuracy figures are vendor-reported.",
+   "confidence": "medium",
+   "source_url": "https://www.datacamp.com/blog/system-one-models-jev"
+  },
+  {
+   "fact": "No open weights or self-hosting are mentioned anywhere. DataCamp calls Jev 'a proprietary, hosted model'.",
+   "confidence": "high",
+   "source_url": "https://www.datacamp.com/blog/system-one-models-jev"
+  },
+  {
+   "fact": "jev-the-spire2's factored policy is WEIGHTS = {move:0.25, safe:0.25, progress:0.25, waste:1}, DEADBAND = 0.15, MAX_FACTORED_CANDIDATES = 64, in one request with 3 nouls per candidate. A lethal-end-turn gate overrides only when calculated forecasts disagree.",
+   "confidence": "high",
+   "source_url": "https://github.com/shoemoney/jev-the-spire2/blob/main/spire-demo/factored.mjs"
+  },
+  {
+   "fact": "The 30-decision vs-LLM benchmark is 10 fixtures × 3 repeats. Six fixtures come from suite.mjs, graded by string match on the first action label (avoid Hemokinesis, Bloodletting, Pact's End, Fortifier or Pyre; play Beckon). Four 'fresh' fixtures require a specific card index or target. The grader's own scope line: 'Narrow first-action error check; not optimality or win probability.'",
+   "confidence": "high",
+   "source_url": "https://github.com/shoemoney/jev-the-spire2/blob/main/spire-demo/benchmark/suite.mjs"
+  },
+  {
+   "fact": "In vs-llm.mjs the LLM prompt is JSON.stringify(q.state).slice(0, 24000) plus candidates .slice(0, 16000), with reasoning effort 'low' and max_tokens 24000, built from the base decisionQuestion without the factored nouls. Jev gets factoredDeliberate with all nouls, so the two arms are not prompted identically. Whether the truncation actually cut any of the 10 fixtures is UNVERIFIED (I did not run the code).",
+   "confidence": "high",
+   "source_url": "https://github.com/shoemoney/jev-the-spire2/blob/main/spire-demo/benchmark/vs-llm.mjs"
+  },
+  {
+   "fact": "Table: Jev 27/30 at p50 315 ms, p90 585 ms, $0.00046; Opus 5.5 29/30 at 3,590 ms, $0.04704; Fable 5.1 29/30 at 5,534 ms, $0.11952. '259x cheaper' = Fable 5.1 ($0.11952/$0.00046 ≈ 260). Against Opus 5.5 it is about 102x cheaper and 11.4x faster. The author says the noise floor is about ±3, so '27 and 29 are not separable'.",
+   "confidence": "high",
+   "source_url": "https://github.com/shoemoney/jev-the-spire2"
+  },
+  {
+   "fact": "Sweep: waste-veto 45/50 (9/10 fixtures), equal weights 44/50, no-waste 35/50. Hedge-timing configs, which cannot change the choice, ranged 21–25/30, which is the noise floor. The waste question was written after seeing the failures, and there is no held-out set. beckon-play fails 100% of the time.",
+   "confidence": "high",
+   "source_url": "https://github.com/shoemoney/jev-the-spire2/blob/main/SWEEP-FINDINGS.md"
+  },
+  {
+   "fact": "Endpoint latency is bimodal: a fast cluster at 0.34–0.79 s and a slow cluster at 7–16 s (about 53% slow earlier on 2026-09-23, p50 5,824 ms). The sweep ran entirely in fast mode.",
+   "confidence": "high",
+   "source_url": "https://github.com/shoemoney/jev-the-spire2/blob/main/SWEEP-FINDINGS.md"
+  },
+  {
+   "fact": "Upstream 182-run snapshot, all Ascension 0 Ironclad, 2026-09-17→23: 1 win (run #182), mean floor 23.4, median 22. 58,588 decisions (mean 322, median 306, range 126–739 per run). 1,086,755,296 input tokens (about 18.5k per decision, 1.78 calls per decision). $45.64 total, $0.25 per run, the winning run $0.81. Mean run 1,676 s (about 5.2 s per decision). Figures computed from the committed run-tokens.csv and data.json.",
+   "confidence": "high",
+   "source_url": "https://github.com/alexmeckes/jev-the-spire/tree/main/spire-demo/progress-site/dist"
+  },
+  {
+   "fact": "jev-the-spire2 says the 'measured win rate ... is 0 wins in 9 recorded runs'. Its loop state reports A0 median run floor 17 ('flat since iteration 62'), best 33, elite win rate 0.444 (4/9), boss record 10/21, and wins 0 in every recorded run.",
+   "confidence": "high",
+   "source_url": "https://github.com/shoemoney/jev-the-spire2/blob/main/.opencode/ralph-loop.local.md"
+  },
+  {
+   "fact": "The weight-fitter (learning/fit-weights.mjs) refuses on the real corpus, '471 survived turns against 5 deaths', so the weights are still hand-set.",
+   "confidence": "high",
+   "source_url": "https://github.com/shoemoney/jev-the-spire2/blob/main/PLAN.md"
+  },
+  {
+   "fact": "jev-the-spire2 was developed by an autonomous opencode 'ralph loop' ('scan for todo items ... do not stop until finished', maxIterations 100, 140+ iterations reported). Many headline figures were later corrected as not reproducible from disk.",
+   "confidence": "high",
+   "source_url": "https://github.com/shoemoney/jev-the-spire2/blob/main/.opencode/ralph-loop.local.md"
+  },
+  {
+   "fact": "STS2MCP's prebuilt DLL fails on game v0.111+. jev-the-spire2 requires the DarkArcZ/STS2MCP fix/v0.111-compat branch (upstream PR #132, still open) plus a vendored deck-state.patch. Upstream development used v0.107.1.",
+   "confidence": "high",
+   "source_url": "https://github.com/shoemoney/jev-the-spire2"
+  },
+  {
+   "fact": "Median combat request is 52,171 bytes and the largest is 151,518 bytes (50 combat fixtures). A 53-candidate board with 160 questions used 29,846 tokens ($0.00125), close to the 32k OpenRouter cap.",
+   "confidence": "high",
+   "source_url": "https://github.com/shoemoney/jev-the-spire2/blob/main/spire-demo/planner.mjs"
+  },
+  {
+   "fact": "TypeSafe's site Terms do not address using outputs to train or distil other models. Separate API terms were not found, so whether distilling Jev into another model is allowed is UNVERIFIED.",
+   "confidence": "medium",
+   "source_url": "https://typesafe.ai/terms"
+  },
+  {
+   "fact": "wuhao21/sts2-cli runs the real STS2 engine headless (DLLs copied from your Steam install, IL-patched) with a JSON stdin/stdout protocol. It is seedable and tested on v0.111.0. Its throughput was not found (UNVERIFIED).",
+   "confidence": "high",
+   "source_url": "https://github.com/wuhao21/sts2-cli"
+  },
+  {
+   "fact": "the owner's Mac is an Apple Mac (8 performance + 2 efficiency cores) with 16 GB unified memory (from system_profiler), which limits local LLMs to about 4–8B at 4-bit.",
+   "confidence": "high"
+  }
+ ],
+ "implications_for_design": [
+  "Tell the owner plainly: Jev is cheap hosted inference, not cheap compute for RL. You cannot train it, run it locally, or get rollouts from it. The RL engine has to be a headless simulator (sts2-cli) plus small locally trained networks. Jev is an optional plug-in.",
+  "Define one model-agnostic policy interface, policy(info_state, legal_actions) -> distribution (+ optional value/nouls), so that Jev, cheap API LLMs, a local MLX model and a trained net can be swapped and compared on the same seed battery.",
+  "Cost model for Jev, measured: about $0.00046 per decision for the factored single call (about 11k tokens), $0.00078 at upstream's average (18.5k tokens over 1.78 calls), and at most about $0.00125–0.00134 per request at the 32k cap. That is $460–$1,250 per 1M decisions; about 322 decisions per average run (739 for a winning run); $0.15–0.25 per average run; $150–$250 per 1,000 average runs and up to about $340–$810 per 1,000 if every run were a full-length win. A frontier LLM costs about $15,000 per 1,000 runs with Opus 5.5 ($0.047/decision) and about $1,440 with DeepSeek v4.1 flash.",
+  "Throughput, not cost, is what binds. In the live game, 1,000 runs at about 1,676 s each is about 466 h, roughly 19 days on one machine (about 50 runs/day). Jev's latency is only about 0.3–0.8 s of the 5.2 s per decision, so the '15x faster' claim barely shortens a run. Through the API, the rate limits (100K tokens/s) allow about 5–9 decisions/s, roughly 0.45–0.8M labels per day.",
+  "Role (1), policy prior for search: feasible at the root or a handful of nodes, with one call per expanded node. Each call gives a full distribution over ≤255 actions, which plugs directly into PUCT. A 200-expansion search per decision would cost about $0.09 per decision and about $30 per run, which erases the cost advantage. So use Jev at the root only, or cache it, and let a learned net supply priors deeper in the tree.",
+  "Role (2), rollout policy: not viable. At about 300 ms+ per network round trip and 10–30 decisions per combat rollout, 100 rollouts take minutes per decision. Use a heuristic or a tiny local net for rollouts.",
+  "Role (3), data generator or labeller: viable and cheap. 1M simulator states × $0.00046 is about $460, taking about 1.5–2.5 days at the rate limit. You get soft action distributions plus safe/progress/waste nouls usable as behaviour-cloning warm-start targets or auxiliary features. The label quality ceiling is low (about 0.5% A0 win rate end to end), so treat the labels as a prior that RL or search must beat, never as ground truth.",
+  "Role (4), distillation target: Jev cannot be the student because it is closed and cannot be fine-tuned. It can be the teacher for a local student (a small net or LoRA'd local model), but check TypeSafe's and OpenRouter's API terms on training with outputs first (UNVERIFIED).",
+  "Keep the waste/self-harm noul idea as a cheap blunder filter or auxiliary signal. It is the one jev-the-spire2 finding that holds up despite its caveats (0/9 trap failures vs 2–7/9 for every other config).",
+  "Replace first-action fixture grading with matched-seed batteries in the headless engine. Report win rate with confidence intervals, plus floor reached, elite and boss win rates and HP lost. At about 0.5–1% baseline win rates you need thousands of seeds to see improvements. Keep a frozen held-out seed set to avoid jev-the-spire2's selection-on-test problem.",
+  "Enforce information-set hygiene. The headless engine exposes the seed and draw order, so the state encoder must strip them, and Jev, LLM and net prompts must see only what the player can see. jev-the-spire2's 'visible state' discipline is a good template.",
+  "Handle non-determinism and drift: pin the dated Jev snapshot (typesafe/jev-1.13-20260917), sample or average where it matters, and budget for the bimodal latency with a hedged idempotent read like hedge.mjs.",
+  "Keep state encodings compact (target ≤8k tokens). Busy boards already reach about 30k tokens, near the 32k OpenRouter cap, and a local Mac model needs roughly 1–2k-token prompts to be usable."
+ ],
+ "open_questions": [
+  "Do TypeSafe's API terms (separate from the site Terms) or OpenRouter's terms allow training or distilling other models on Jev outputs?",
+  "What are OpenRouter's rate limits for typesafe/jev-1.13, and is TypeSafe pricing subsidised or likely to change after early access?",
+  "Is Jev's choice distribution calibrated on STS2 at all, for example does P(choice) track the win-rate delta in simulator evaluations? No evidence exists.",
+  "Did the 24,000-char state truncation in vs-llm.mjs actually cut the LLM's view on any of the 10 scored fixtures? Checking needs the planner to be run, which I did not do.",
+  "How was '15x faster' computed? The table supports 11.4x (Opus 5.5) to 17.6x (Fable 5.1).",
+  "What is sts2-cli's headless throughput (decisions or full runs per second per core) on an Mac or a cheap cloud CPU? This sets the whole RL budget.",
+  "What ascension and character mix are in jev-the-spire2's '9 recorded runs'? The loop state mentions both A0 and 37 A10 fights.",
+  "Would Jev's priors measurably improve a simulator-based search over a uniform or heuristic prior at a matched compute budget? This is the key experiment before committing to Jev.",
+  "Does sts2-cli track Early Access patches quickly enough? STS2MCP already broke at v0.111."
+ ]
+}

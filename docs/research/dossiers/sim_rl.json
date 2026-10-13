@@ -1,0 +1,438 @@
+{
+ "key": "sim_rl",
+ "area": "Simulators, search bots and RL for Slay the Spire (STS1 and STS2)",
+ "summary": "The STS1 record points one way. Search inside combat combined with hand-written or lightly learned judgment outside combat has done best. End-to-end RL has done badly, even with billions of simulated steps. The strongest honest STS1 bot is Bottled AI. It searches up to 11,000 card-play paths for the current turn and scores the end-of-turn states with about 40 weighted features; everything outside combat is rule lists. It wins 20/40/33/52% at A0 (Ironclad/Silent/Defect/Watcher, about 50 runs each) and has beaten the Heart, but it runs at UI speed (15–25 minutes per winning run). Pure RL on the fast C++ sim sts_lightspeed (about 2M decisions/s) reached only 15.4% A0 Ironclad wins over 10,000 paired seeds (DavidSnoble/Slay_RL), after about 3.5B decisions plus behaviour-cloning warm starts. A learned non-combat policy (REINFORCE) plus sts_lightspeed's MCTS reached 14% A0 (50 seeds). That MCTS can see RNG and draw order, so the result is optimistic. For scale, top humans have rotating A20 Heart streaks of about 24 (unverified). No bot has come near strong human play at A20. Bot results that beat these numbers usually leak hidden information, such as sts_lightspeed's 'ScumSearch' or save/load in scumthespire. Imitating such clairvoyant teachers fails: accuracy plateaued at 0.44 and floors fell by half.\n\nFor STS2 (Godot/.NET) there are two kinds of simulator. (a) The real sts2.dll loaded headless with Godot stubs. This is wuhao21/sts2-cli, which mingxuan-he/sts2-agent vendors; rjeli/sts2_gym is similar but combat-only. Its rules are exact in principle, but it runs at only about 20 decisions/s per process (about 140–174/s with 12–16 workers). It has no in-combat clone, and its stubs cause serious silent bugs: an enemy phase that loops until the player dies, and a boss that crashes and is then credited as a win. (b) Re-implementations: Zamiell → evangambit C# NativeAOT (about 14k steps/s per handle, 17 µs clone with hidden-state resampling, about 1.4k MCTS sims/s) and Akirakato1 in Rust (patch 103.2). These are fast but drift from the real game; evangambit's catalogue lists 450 divergences.\n\nmingxuan-he/sts2-agent itself has no GRPO results. Its Qwen3-30B-A3B/Tinker per-combat pipeline still runs on an obsolete approximate Python sim with STS1-style enemies. Its working part is an LLM self-improving 'pod' on sts2-cli. The best STS2 search evidence is evangambit's determinized MCTS over single combats. What helped was all in the search or its target: an exploration constant suited to [0,1] values (P(death) 0.183 → 0.092), a tempo-weighted rollout, common random numbers (4.6x variance reduction), and a policy prior used in PUCT search (+2 HP). Enriching the observation did nothing. PPO on the real STS2 engine (Zaaacqwq) reached at best 12% on Act 1 and spent weeks on fidelity and reward-inversion bugs.\n\nWhat this means for building a best-play finder: build two levels. Combat should be a determinized search that never sees the true draw order, using a value scored in run-level terms. Macro decisions (map, rewards, shop, events, rest) can use an LLM such as jev or a small learned scorer, checked by short simulated rollouts. Use the real engine as the oracle for differential testing and a fast emulator for search. Evaluate on paired seeds, with at least 1,000 runs per comparison.",
+ "methods": [
+  {
+   "name": "mingxuan-he/sts2-agent (Track 1 GRPO + Track 2 self-improving pod)",
+   "what_it_is": "A Python repo, MIT with notices, created 2026-08-22, last pushed 2026-09-12, 0 stars. Track 1 plans GRPO on Qwen3-30B-A3B (later Qwen3.6-35B-A3B) via Tinker, with per-combat episodes. Track 2 runs a frozen-weights LLM agent in a sandboxed pod that writes notes and skills and edits its own harness. Both play through a vendored fork of wuhao21/sts2-cli.",
+   "how_it_decides": "Track 1: an LLM outputs JSON actions with dense shaped reward (invalid -0.5, illegal -0.3, +0.01/damage, -0.02/HP lost, +0.2/kill, ±1 win/loss), trained by GRPO on groups of identical seeded scenarios. Track 2: LLM tool calls against a FastAPI game service. Models named include gpt-5.6-luna and gpt-6-astra (the pilot runs 'gpt-6-astra' at medium reasoning).",
+   "reported_results": "No GRPO training has been run. The README says it still needs to 'swap the approximate Python sim (sts2_sim.py, now obsolete) for real HeadlessEnv stepping … run the first loop'. The scenarios are Ironclad Act 1 fights against Jaw Worm, Cultist, Red Louse, Gremlin Nob and Lagavulin in that approximate sim. The cost model estimates about $1.0–1.4K for a 2,000-step combat GRPO campaign, about $100–150 for a 200-step pilot, and about $0.30–0.80 per full run for the LLM pod. Debug notes cover 56 pod runs to 2026-09-02, including 44 defeats, 3 of them caused by an engine bug. No wins are reported.",
+   "strengths": [
+    "The real engine is deterministic: a 97-decision tape replayed 97/97 identical states",
+    "Strict eval rules: held-out seeds, the engine outside the agent sandbox, a contamination policy",
+    "Careful notes on fidelity bugs and cost/token budgets per decision (~800 decisions/run, ~3K input tokens per decision)"
+   ],
+   "weaknesses": [
+    "The RL track is unfinished, so there is nothing to compare against",
+    "sts2-cli has no in-combat clone, so search would mean replaying from save points",
+    "The training data was contaminated by engine bugs (Gardener runaway enemy phase; Kaiser Crab false boss victory)",
+    "The HF dataset mingxuan-he/sts2-agent-runs is private"
+   ],
+   "relevance_to_best_play": "Moderate. Useful as an infrastructure template (FastAPI service, seed batteries, SQLite tapes, replay checks) and as a warning list for fidelity. It does not show that GRPO on an LLM produces good play.",
+   "url": "https://github.com/mingxuan-he/sts2-agent",
+   "verified": true,
+   "cost_and_speed": "No engine throughput is published. Code inspection shows wall-clock waits in the pump loop (Thread.Sleep 1 ms per iteration, 100–200 ms in some paths), so it is slow. Model-cost tables are in docs/model-selection-2026-08.md."
+  },
+  {
+   "name": "wuhao21/sts2-cli (headless real STS2 engine)",
+   "what_it_is": "A C# host that loads the game's own sts2.dll plus 8 other DLLs copied from the owner's Steam install. GodotSharp.dll is replaced by no-op GodotStubs, with Harmony patches. A JSON stdin/stdout protocol exposes decision points (map_select, combat_play, card_reward, rest_site, event_choice, shop, card_select, game_over). 272 stars and 65 forks. Updated to v0.111.0 beta on 2026-09-07.",
+   "how_it_decides": "It is a simulator, not an agent. Commands: start_run(character, seed, ascension), action, load_save/write_continue_save (native saves at room boundaries), set_player, enter_room, set_draw_order, get_piles, get_map.",
+   "reported_results": "The regression test requires 5 runs per character for all 5 characters with 0 crashes. Upstream has closed about 40 fidelity/export issues (#56–#95: wrong damage previews, false game_over, stuck events and others). No speed figures are published.",
+   "strengths": [
+    "The same rules code as the real game, all 5 characters, deterministic and seedable",
+    "set_draw_order allows draw-pile determinization",
+    "Easy to run many processes in parallel"
+   ],
+   "weaknesses": [
+    "About 20 decisions/s per process; 140 decisions/s with 16 workers (measured by Zaaacqwq)",
+    "No in-process state clone, which makes MCTS impractical",
+    "Godot stubs fail silently: the Kaiser Crab boss crashed at init and was credited as a win, and the Gardener enemy phase looped",
+    "It breaks every patch (v0.103 → 0.106.1 → 0.107.1 → 0.111.0)"
+   ],
+   "relevance_to_best_play": "High as a ground-truth oracle and verifier, for differential testing of a fast emulator and final evaluation. Too slow to be the inner loop of search or RL.",
+   "url": "https://github.com/wuhao21/sts2-cli",
+   "verified": true,
+   "cost_and_speed": "About 20.5, 73, 123 and 140 decision steps/s at 1, 4, 8 and 16 workers. On Windows, 78–80 → 172–174 training steps/s after fixing the 15.6 ms timer granularity (from Zaaacqwq's plan docs). Runs on a Mac (arm64)."
+  },
+  {
+   "name": "evangambit/sts2 (fork of Zamiell/slay-the-spire-2-emulator) with determinized MCTS combat agent",
+   "what_it_is": "A C# re-implementation of STS2 v0.107.1 combat and full runs, compiled to a NativeAOT dylib and called from Python via ctypes with Gymnasium wrappers. Card, enemy and relic data are generated from decompiled source; all 5 characters' card pools are captured against the live game. The rl/ directory holds a determinized MCTS for combat, a transformer value/policy net, and AlphaZero-style plans.",
+   "how_it_decides": "Determinized MCTS over a single combat. Each simulation clones the state, and Sts2_Clone plus ReshuffleUnknownDrawOrder resample hidden draw order while respecting known top/bottom cards. Rollouts use a tempo-weighted policy, siblings are compared under common random numbers, and moves are chosen by argmax mean value. A policy head serves as the PUCT prior. The value target blends search estimate and actual outcome (λ=0.3). Planned: a two-level search where run-level nodes call a combat value in run-level units.",
+   "reported_results": "Over 240 fights per setting, exploration constant c=1.4 gave P(death) 0.183 and c=0.1 gave 0.092. The tempo rollout added +3.8 HP (paired SE 1.1, 64 fights). Plain MCTS improved with budget: 60 sims gave P(death) 0.078 at 0.09 s/fight, 1,500 sims gave 0.026 at 1.50 s/fight. Augmented 60 sims gave 0.036 at 0.12 s/fight, which is roughly 12–25x compute saved. The trained value head at the leaf did not beat rollouts (−10.6 HP at 15 sims, +0.5 at 60). The policy prior in PUCT added +2.0 HP. Four attempts to enrich the observation had no effect. Run-level search improved on random by +1.7 floors at 40 sims/move and +4.6 at 120.",
+   "strengths": [
+    "Fast, cloneable and honest: it resamples hidden information instead of seeing it",
+    "Unusually rigorous, measured findings with paired comparisons",
+    "Covers full runs and all characters; runs on macOS arm64"
+   ],
+   "weaknesses": [
+    "450 catalogued divergences from the real game; parity is ongoing work",
+    "Pinned to v0.107.1 while the live game is on v0.111 beta",
+    "Its combat 'end HP' value needs conversion into run-level win probability (the design doc flags mixing the two as a failure mode)",
+    "Requires decompiling the game locally (legal and ToS gray area; not redistributed)"
+   ],
+   "relevance_to_best_play": "Very high. This is the closest existing STS2 template for an honest combat solver. Its design (two-level search, a single run-level value currency, determinization with common random numbers) maps directly onto a best-play finder.",
+   "url": "https://github.com/evangambit/sts2/blob/main/rl/FINDINGS.md",
+   "verified": true,
+   "cost_and_speed": "About 72 µs per step (~14k/s), about 17 µs per clone including resampling (~59k/s), about 714 µs per simulation (~1.4k sims/s), 255 concurrent native handles. Generating 6,400 fights at 300 sims took 30 minutes on 24 workers."
+  },
+  {
+   "name": "Akirakato1/Slay-the-Spire-2-Simulator (+ Slay-the-Spire-2-RL-)",
+   "what_it_is": "A headless Rust simulator for STS2 patch 103.2 with a C ABI, Python ctypes bridge, observation encoder and legal-action masks. A separate RL repo exists. MIT licence, 5 stars, last pushed 2026-05-21.",
+   "how_it_decides": "It is a simulator. The RL repo plans masked policies over legal-action tables and a live-game layer through STS2MCP.",
+   "reported_results": "No RL results. Parity report: 1,428 Exact, 22 NoRuntimeEffect, 18 OutOfScope rows; 527 Rust tests passing (2026-05-21).",
+   "strengths": [
+    "Native speed",
+    "Data-driven from Spire Codex",
+    "Observation/action-mask bridge already built"
+   ],
+   "weaknesses": [
+    "Pinned to patch 103.2 (old); single-player only",
+    "No published speed numbers or agent results",
+    "Parity is judged by object audits, not differential traces against the game"
+   ],
+   "relevance_to_best_play": "Low to medium. An alternative fast backend, but out of date.",
+   "url": "https://github.com/Akirakato1/Slay-the-Spire-2-Simulator",
+   "verified": true,
+   "cost_and_speed": "Not reported."
+  },
+  {
+   "name": "rjeli/sts2_gym",
+   "what_it_is": "A C# 'headless' driver that loads the installed STS2 engine, patches methods so it runs outside Godot, and serves combat over a unix socket to a Python trio client. Combat only: reset with a chosen deck and encounter, then step.",
+   "how_it_decides": "It is a simulator.",
+   "reported_results": "None. 1 star, created 2026-03-24, inactive since.",
+   "strengths": [
+    "Real engine with arbitrary deck/encounter resets"
+   ],
+   "weaknesses": [
+    "Abandoned at launch-era version",
+    "Combat only",
+    "Finds game files only for Steam + macOS + arm64"
+   ],
+   "relevance_to_best_play": "Low. A reference for how to reset combats on the real engine.",
+   "url": "https://github.com/rjeli/sts2_gym",
+   "verified": true,
+   "cost_and_speed": "Not reported."
+  },
+  {
+   "name": "Zaaacqwq/SlayTheSpireRL (Recurrent masked PPO on real STS2 engine)",
+   "what_it_is": "A Chinese-language project training a Transformer+GRU pointer policy with Recurrent Masked PPO on a fork of sts2-cli. Ironclad A0, with a curriculum: normal combat → mixed combat → Act 1 → full A0.",
+   "how_it_decides": "PPO with GAE. Reward is ±1 terminal plus 0.2× potential-based floor shaping. Entity vocabulary of 1,316–2,299 stable game ids, with pointer heads that gather the candidate entity embedding.",
+   "reported_results": "Best Act 1 dev pass rate 12% at about 14 average floor. The full-A0 target (≥40%) has not been reached. Found a reward inversion: a death in front of the boss returned +1.76 while a boss win returned +0.65, so the policy learned to walk to the boss and die. After the fix, act1 train win rate rose from 0.0024 to 0.0634. Earlier blind spots: map candidates were encoded identically, card-reward candidates were opaque, and events were invisible.",
+   "strengths": [
+    "Tests honestly on frozen test seeds",
+    "Telemetry checks that wins outrank losses",
+    "Shows exactly how full-run RL fails"
+   ],
+   "weaknesses": [
+    "Very slow environment (about 170 steps/s)",
+    "Only about 2,400 Act 1 games trained",
+    "Weeks lost to engine and protocol bugs"
+   ],
+   "relevance_to_best_play": "High as a negative result. End-to-end PPO on the real STS2 engine is not viable on hobby compute.",
+   "url": "https://github.com/Zaaacqwq/SlayTheSpireRL/blob/main/plan/rl_v2_current_stage.md",
+   "verified": true,
+   "cost_and_speed": "RTX 5080 with 12 workers: 78–80 → 172–174 steps/s after the Windows timer fix; M0 benchmark 20.48/73.14/122.81/140.20 steps/s at 1/4/8/16 workers."
+  },
+  {
+   "name": "gamerpuppy/sts_lightspeed (STS1 C++ simulator + BattleScumSearcher2 MCTS)",
+   "what_it_is": "A C++17 STS1 simulator, MIT, 105 stars, last pushed 2024. Designed to be RNG-accurate, with all enemies, relics and Ironclad/colourless cards, and everything outside combat. pybind11 bindings with a 412-dim NNInterface observation.",
+   "how_it_decides": "UCT MCTS (exploration 3·√2) from a root BattleContext that includes the true RNG state, so it effectively knows draw order and enemy rolls. Random playouts run to the end of the battle. The end-state evaluation is 100·(35 + HP + 4·potions − 0.01·turn) on a win, and HP-ratio/turn heuristics otherwise. ScumSearchAgent2 uses 50,000 sims (×3 for bosses). Outside combat it uses simple rules: boss-relic ordering, rest if HP<15, buy the first affordable relic, random map path.",
+   "reported_results": "README: '1M random playouts in 5s with 16 threads'. No win rates are published. Downstream (sts-rl-agent), the stock heuristics plus MCTS@50000 reached 6% A0 Ironclad and average floor 31.2 on 50 seeds.",
+   "strengths": [
+    "Very fast: DavidSnoble measured about 2.05M decisions/s on CPU",
+    "Can load from save files",
+    "Widely reused (Slay_RL, sts-rl-agent, AutoClad)"
+   ],
+   "weaknesses": [
+    "The search is clairvoyant (README: 'best result, knowing the state of the game's rng')",
+    "Ironclad only",
+    "STS1 only; nothing to port to STS2"
+   ],
+   "relevance_to_best_play": "A conceptual template only: fast native sim plus combat MCTS. Shows that clairvoyant search plus weak macro play still loses most A0 runs.",
+   "url": "https://github.com/gamerpuppy/sts_lightspeed",
+   "verified": true,
+   "cost_and_speed": "About 200k random playouts/s (16 threads); about 2.05M raw decisions/s in Slay_RL's measurement."
+  },
+  {
+   "name": "DavidSnoble/Slay_RL (end-to-end PPO on sts_lightspeed)",
+   "what_it_is": "Native batched combat and macro RL for STS1 Ironclad A0, built on sts_lightspeed. Uses a 1,169-action legal mask, int16 packed observations and a GPU PPO pipeline. Combat PPO is trained first and then frozen, followed by macro PPO with full-run Monte Carlo returns, teacher KL to a behaviour-cloned snapshot, and a counterfactual candidate-Q auxiliary for MAP/CAMPFIRE.",
+   "how_it_decides": "A masked policy network (512 run latent, 256 candidate latent, 64 combat latent) chooses all combat and macro actions. There is no search at play time. Return = ±1 + 0.5·floor/51 + 0.01·combats.",
+   "reported_results": "On 10,000 paired seeds the heuristic baseline averaged floor 16.0 with 0 wins. The 2-hour production model averaged floor 26.9 with 95 wins (0.95%). After an 8-hour macro campaign, the model reached a 15.43% win rate against 9.84% for the KL-0 champion (+5.59pp, CI [+4.82, +6.36]), averaging floor 32.7 and reaching Act 3 in 34.2% of runs, at global step 3.55B. Combat PPO alone won 88.3% of 4,885 combats against 74.2% for masked-random. A reward loophole (defensive stalling) was found and patched.",
+   "strengths": [
+    "Huge throughput and very rigorous paired evaluation with CIs",
+    "Behaviour cloning reached 97.8% agreement with the heuristic demonstrator",
+    "Ships a Torch-free live CommunicationMod driver"
+   ],
+   "weaknesses": [
+    "Even after about 3.5B decisions, wins only 15% at A0, far below strong humans and below Bottled AI's 20% Ironclad",
+    "Map encoding needed special ordered features (pooled map plateaued at 76% clone agreement)",
+    "Live-game protocol mismatches (shop loop)"
+   ],
+   "relevance_to_best_play": "High as evidence that pure policy RL without search plateaus low even with near-unlimited simulated data. Supports search plus value over pure policy.",
+   "url": "https://github.com/DavidSnoble/Slay_RL/blob/master/docs/schema_v4_handoff.md",
+   "verified": true,
+   "cost_and_speed": "RTX 5070 Ti: 202k decisions/s collection; 62–143k decisions/s while training; 2 hours = 449M decisions and 2.0M complete runs; demonstrations of 2M decisions (56k runs) collected in 88 s."
+  },
+  {
+   "name": "Jialeiv/sts-rl-agent (REINFORCE non-combat policy + sts_lightspeed MCTS combat)",
+   "what_it_is": "A roughly 100k-parameter MLP ([128,128]) that scores candidates from a 412-dim observation plus a 368-dim candidate descriptor. Trained from scratch with REINFORCE for map, card rewards, shop, campfire and events. Combat uses sts_lightspeed's built-in MCTS.",
+   "how_it_decides": "Argmax score per candidate for macro decisions; clairvoyant MCTS for combat.",
+   "reported_results": "A0 Ironclad on 50 fixed held-out seeds. Stock heuristics + MCTS@50000: floor 31.2, 6% wins. This model + MCTS@2000: floor 38.5, 4%. This model + MCTS@50000: floor 42.5, 14%. Trained on 15k games. Negative results: behaviour cloning of combat reached floor about 12 vs the teacher's 23; a value net with 1-ply lookahead reached about 8; an attention model about 14; imitation accuracy plateaued at 0.44 because the MCTS teacher sees future draw order. A Defect A20 track is paused, with no Heart wins.",
+   "strengths": [
+    "Shows that macro judgment compresses into a small network (+11 floors)",
+    "Publishes its failures honestly"
+   ],
+   "weaknesses": [
+    "Single runs on 50 seeds, no CIs",
+    "Combat is clairvoyant",
+    "Ironclad A0 only"
+   ],
+   "relevance_to_best_play": "High. Supports the split: learned or LLM scorer for macro decisions, search for combat. Warns against distilling a clairvoyant teacher.",
+   "url": "https://huggingface.co/Jialeiv/sts-rl-agent",
+   "verified": true,
+   "cost_and_speed": "Not reported."
+  },
+  {
+   "name": "xaved88/bottled_ai (Bottled AI)",
+   "what_it_is": "A rule-based STS1 bot with search inside each turn, run through CommunicationMod in the real game. MIT, 80 stars, active through Dec 2025.",
+   "how_it_decides": "In combat, a breadth-first search over orderings of the current hand (capped at 11,000 paths) simulates each line with a custom Python battle calculator. It ends the turn and compares end states with a strategy-specific comparator weighing about 40 values (kills, damage taken, and so on), then replans after each card. Outside combat it uses prioritised card/relic/upgrade lists and per-event conditions. No hidden information.",
+   "reported_results": "release-03 (Oct 2024), A0, random seeds: Ironclad 20% (50 runs, avg floor 32.7), Silent 40% (48), Defect 33% (52), Watcher 52% (50, avg floor 45.9). The authors note Ironclad's 95% CI is 8.9–31.1%. It beat the Corrupt Heart (Manifold market resolved YES, Nov 16, presumably 2024). A Python port by Doron Singer reached 26% wins with Silent, averaging floor 34.0.",
+   "strengths": [
+    "The strongest documented honest full-game STS1 bot",
+    "Turn search plus evaluator is cheap and interpretable",
+    "Easy to tune per strategy"
+   ],
+   "weaknesses": [
+    "Plans only within the current turn",
+    "Hand-written evaluators per character",
+    "Runs at UI speed (about 11 minutes per game; 1,000 games per character would take about a month of 24/7 play for 4 characters)",
+    "Gives up on complex turns once the path cap is hit"
+   ],
+   "relevance_to_best_play": "Very high. This is the baseline to beat: turn-level enumeration plus a value function is the minimum viable combat solver. Replacing the hand-written comparator with a learned or rollout value is the natural upgrade.",
+   "url": "https://github.com/xaved88/bottled_ai/blob/main/docs/winrates.md",
+   "verified": true,
+   "cost_and_speed": "About 15–25 minutes per winning run at UI speed; the port ran at about 15 steps/s."
+  },
+  {
+   "name": "Doron Singer dev.to series (STS1 Silent agent: BC, PPO, search on AlphaStS)",
+   "what_it_is": "A nine-part write-up (Aug–Oct 2026) of a Claude Code-assisted attempt to train an STS1 Silent agent on the real game engine run headless (SeedSearch-derived headless mode via Py4J), later adding MANGO1234/AlphaStS for state cloning and search.",
+   "how_it_decides": "In turn: behaviour cloning from spirecomm, PPO per fight, BFS/MCTS search with hand-written or learned evaluators, dominance pruning, then learning from preference pairs out of the author's own play.",
+   "reported_results": "BC reached the Act 1 boss in 51% of runs (avg floor 12.4). A fidelity harness found about 100 bugs; fixing them raised avg floor 12.0 → 16.7 and Act 1 boss wins 6.5% → 36%. PPO on Cultist: 70% → 100% after per-card scoring. Bottled AI port: 26% wins, avg floor 34.0, 15 steps/s. AlphaStS with a hand-written evaluator: 0% at 237 steps/s. Dominance-pruned search: 28.7 floor, 2/30 wins. Learned evaluator: 31.2 on 5 seeds but 27.2 vs 28.8 on 30 games. BFS 28.0 floor (1/30 wins) vs MCTS 27.8 (3/30). Deduplication cut capped searches from 75% to 0.37% with no gain. A card-pick model with better offline accuracy (55.8%) did worst in-game; the 53.5% mechanical-feature model did best (data: 34,210 Silent runs, 358,870 picks from a 77M-run dump).",
+   "strengths": [
+    "Honest small-n reporting and causal debugging",
+    "Directly relevant to a solo developer working with Claude Code"
+   ],
+   "weaknesses": [
+    "Small samples (5–30 games)",
+    "Never surpassed the Bottled AI port"
+   ],
+   "relevance_to_best_play": "High as cautionary evidence. More search does not help when evaluation is poor. Offline imitation accuracy does not equal play strength. Environment fidelity bugs dominate early progress.",
+   "url": "https://dev.to/feed/doronsinger",
+   "verified": true,
+   "cost_and_speed": "237 steps/s with AlphaStS and the hand-written evaluator; the triple-Sentries fight took 67 minutes for 6 decisions under one search configuration."
+  },
+  {
+   "name": "MANGO1234/AlphaStS",
+   "what_it_is": "A Java STS1 fight simulator plus AlphaZero training for a fight described by deck, HP, enemies, relics and potions. 33 stars, active (pushed 2026-08-30).",
+   "how_it_decides": "MCTS guided by a 2-layer fully connected net with outputs policy, v_win and v_health. Search maximises v_win/2 + v_win²·v_health/2, with a configurable potion-use penalty and meta-rewards (e.g., Feed kills). Multi-step actions are split into sub-actions; illegal actions are masked out of the loss.",
+   "reported_results": "No aggregate win rates are published in the README. It was used by Doron Singer as a cloneable search substrate.",
+   "strengths": [
+    "A clean objective that puts win probability first, then HP",
+    "Supports state cloning and chance nodes (partly TODO)"
+   ],
+   "weaknesses": [
+    "Trained per fight; does not generalise across decks",
+    "STS1 only"
+   ],
+   "relevance_to_best_play": "Medium. A good reference objective for combat value (win-probability first, then HP, with a potion-value penalty).",
+   "url": "https://github.com/MANGO1234/AlphaStS",
+   "verified": true,
+   "cost_and_speed": "Not reported."
+  },
+  {
+   "name": "boardengineer scumthespire / BattleAIMod + STSStateSaver + LudicrousSpeed (+ CommunicationModExtension)",
+   "what_it_is": "STS1 battle AI mods. A second game instance runs as a 'server' and searches move sequences using in-battle save/load states (STSStateSaver), with animations skipped (LudicrousSpeed). The same author has early STS2 work: STS2LudicrousSpeed (template only) and the RunReplays STS2 mod.",
+   "how_it_decides": "Search over move sequences by saving and reloading real game states, choosing the line that ends combat with the most HP. Because it reloads, it implicitly learns draw order and RNG.",
+   "reported_results": "No formal numbers. The Edinburgh thesis reports battles take 'up to a few seconds' and that the AI 'more or less knows how cards are ordered'. Steam comments call it strong with Ironclad and Defect, weaker with Silent and Watcher (anecdotal, UNVERIFIED).",
+   "strengths": [
+    "Uses the real game engine, so fidelity is exact"
+   ],
+   "weaknesses": [
+    "Clairvoyant through save-scumming",
+    "Slow; needs two game instances"
+   ],
+   "relevance_to_best_play": "Low to medium. Shows the risk of information leaking through save/load in any real-engine search.",
+   "url": "https://github.com/boardengineer/scumthespire",
+   "verified": true,
+   "cost_and_speed": "Seconds per battle."
+  },
+  {
+   "name": "ForgottenArbiter CommunicationMod + spirecomm",
+   "what_it_is": "A 2019 STS1 mod giving a stdin/stdout JSON protocol (START/PLAY/END/CHOOSE/POTION/PROCEED/RETURN/KEY/CLICK) plus a Python package with a simple heuristic AI. The basis of gym-sts, Bottled AI, Slay_RL's live driver and others.",
+   "how_it_decides": "spirecomm uses simple priority heuristics.",
+   "reported_results": "The Edinburgh thesis says spirecomm 'can rarely win Ascension 0 runs' (no numbers).",
+   "strengths": [
+    "The standard interface pattern that STS2MCP and sts2-cli copy"
+   ],
+   "weaknesses": [
+    "Human speed (SuperFastMode up to about 10x)",
+    "STS1 only"
+   ],
+   "relevance_to_best_play": "Low directly. Its protocol design and the 'state stable → send JSON' handshake carry over to STS2MCP.",
+   "url": "https://github.com/ForgottenArbiter/CommunicationMod",
+   "verified": true,
+   "cost_and_speed": "UI speed."
+  },
+  {
+   "name": "Small STS1 sims and RL environments: decapitate-the-spire, mini-spire, gym-sts, AutoClad, shadorbs",
+   "what_it_is": "decapitate-the-spire: a Python headless clone, Silent Act 1 only, abandoned April 2022. mini-spire: C++ Ironclad vs Jaw Worm with a Gymnasium API. gym-sts: Docker-wrapped real game via CommunicationMod and SuperFastMode. AutoClad: supervised imitation on sts_lightspeed, Jaw Worm only. shadorbs: imitation of Jorbs from video frames.",
+   "how_it_decides": "Various: maskable PPO (mini-spire, about 15k parameters, 1M steps), supervised learning, imitation.",
+   "reported_results": "mini-spire: 145k env steps/s raw on an M1 MacBook Pro CPU and 4.3k steps/s while training; won about 90% of Jaw Worm fights by 50k steps vs 52% for random, 100% in under 1 minute. Others report no win rates.",
+   "strengths": [
+    "Show that single-fight RL is easy when the environment is fast and the fight is small",
+    "Count-based hand encoding and action masking"
+   ],
+   "weaknesses": [
+    "Toy scope; none reaches full-run strength"
+   ],
+   "relevance_to_best_play": "Low. Single-fight RL success does not carry over to full runs.",
+   "url": "https://rhp.bearblog.dev/mini-spire/",
+   "verified": true,
+   "cost_and_speed": "mini-spire: 145k steps/s on an M1 MacBook Pro."
+  },
+  {
+   "name": "Zelnia 2023, 'Exploring Different Deck Building Algorithms in Slay the Spire' (Edinburgh UG4)",
+   "what_it_is": "An undergraduate thesis comparing a 'bottom-up' synergy-based card picker with a 'top-down' picker that simulates upcoming elite and boss fights with each candidate card (using scumthespire with STSStateSaver custom battles). Ironclad, spirecomm, CommunicationMod.",
+   "how_it_decides": "Top-down: for each card-reward option, load custom battle states with the card added, run the battle AI, and pick the option with the best remaining-HP outcome.",
+   "reported_results": "20 runs at each of A0, A10 and A20 for bottom-up; at A20 none reached Act 3. On 10 A20 seeds top-down reached the same or a higher floor every time (e.g., 16 → 33). A bottom-up winning run took about 10 minutes; a top-down run took up to 3 hours.",
+   "strengths": [
+    "Simulation-based card evaluation helps most when short-term survival matters (A20)"
+   ],
+   "weaknesses": [
+    "Tiny samples",
+    "The battle AI is clairvoyant",
+    "Very slow"
+   ],
+   "relevance_to_best_play": "Medium to high. Evidence for evaluating card rewards by rollout ('simulate the next elite/boss with each option') as a check on LLM or heuristic picks.",
+   "url": "https://project-archive.inf.ed.ac.uk/ug4/20233951/ug4_proj.pdf",
+   "verified": true,
+   "cost_and_speed": "Up to 3 hours per run (top-down)."
+  }
+ ],
+ "key_facts": [
+  {
+   "fact": "sts2-agent's headless engine is a vendored fork of wuhao21/sts2-cli. It copies 9 DLLs from the owner's Steam install (sts2.dll, SmartFormat, Sentry, Steamworks.NET, MonoMod, 0Harmony and others), replaces GodotSharp.dll with GodotStubs, and drives the game's async state machines with a host frame pump. The fork's DllPatcher now applies 0 IL patches and copies sts2.dll byte-for-byte.",
+   "confidence": "high",
+   "source_url": "https://github.com/mingxuan-he/sts2-agent"
+  },
+  {
+   "fact": "No GRPO training has been run in sts2-agent. The per-combat pipeline (Tinker MessageEnv, GRPO group builder) still runs on an approximate Python sim, which the README calls obsolete. The target model moved from Qwen3-30B-A3B (retired on Tinker) to Qwen3.6-35B-A3B. The estimated cost is about $1.0–1.4K for a 2,000-step combat GRPO campaign.",
+   "confidence": "high",
+   "source_url": "https://github.com/mingxuan-he/sts2-agent/blob/main/docs/model-selection-2026-08.md"
+  },
+  {
+   "fact": "Fidelity bugs in headless STS2: (1) the 4x Phantasmal Gardener elite's enemy phase looped until the player died (500 HP → 0 in one end_turn in godmode), contaminating 3 of 44 recorded defeats. It was fixed 2026-09-03 by restoring the original queue wait and pumping frames. (2) The Kaiser Crab boss threw MissingMethodException (Godot CanvasItem.SetVisible) at init, and the simulator awarded boss rewards without a fight. Upstream sts2-cli had the same flaw as of 2026-09-07.",
+   "confidence": "high",
+   "source_url": "https://github.com/mingxuan-he/sts2-agent/blob/main/docs/astra-kaiser-crab-reproduction.md"
+  },
+  {
+   "fact": "sts2-cli's protocol has no in-combat clone. It has native continue saves (write_continue_save/load_save), set_player, enter_room, and set_draw_order, which can be used to resample unknown draw order.",
+   "confidence": "high",
+   "source_url": "https://github.com/wuhao21/sts2-cli"
+  },
+  {
+   "fact": "Measured throughput of the real STS2 engine headless (sts2-cli fork): 20.48, 73.14, 122.81 and 140.20 decision steps/s with 1, 4, 8 and 16 workers. PPO training rose from 78–80 to 172–174 steps/s after fixing the Windows 15.6 ms sleep granularity.",
+   "confidence": "high",
+   "source_url": "https://github.com/Zaaacqwq/SlayTheSpireRL/blob/main/plan/timeline.md"
+  },
+  {
+   "fact": "The evangambit STS2 emulator (C# NativeAOT, v0.107.1) measures about 72 µs per step (~14,000/s), about 17 µs per clone including hidden-state resampling, and about 714 µs per MCTS simulation (~1,400/s), with 255 concurrent handles. Combat is about 61% of a run's step time. Its divergence catalogue lists 450 entries.",
+   "confidence": "high",
+   "source_url": "https://github.com/evangambit/sts2/blob/main/rl/ARCHITECTURE.md"
+  },
+  {
+   "fact": "evangambit's determinized MCTS for STS2 combat: changing the exploration constant from 1.4 to 0.1 halved P(death) (0.183 → 0.092, 240 fights per setting). Common random numbers at the root gave 4.6x variance reduction. The trained value head never beat rollouts. A policy prior in PUCT added +2.0 HP. Four attempts to enrich the observation had no effect: 'Everything that worked was about the SEARCH or its TARGET.'",
+   "confidence": "high",
+   "source_url": "https://github.com/evangambit/sts2/blob/main/rl/FINDINGS.md"
+  },
+  {
+   "fact": "Plain uniform-rollout MCTS on STS2 combat: 60 sims gave P(death) 0.078 at 0.09 s/fight; 1,500 sims gave 0.026 at 1.50 s/fight. Augmented search (tempo rollout and CRN) at 60 sims gave 0.036 at 0.12 s/fight. The augmentations act as a budget multiplier of roughly 12–25x.",
+   "confidence": "high",
+   "source_url": "https://github.com/evangambit/sts2/blob/main/rl/FINDINGS.md"
+  },
+  {
+   "fact": "Bottled AI (STS1, A0, Oct 2024): Ironclad 20% (50 runs), Silent 40% (48), Defect 33% (52), Watcher 52% (50). It uses BFS over the current turn's card orderings, capped at 11,000 paths, scored by about 40 weighted features, with no hidden information. It beat the Corrupt Heart; the Manifold market resolved YES.",
+   "confidence": "high",
+   "source_url": "https://github.com/xaved88/bottled_ai/blob/main/docs/winrates.md"
+  },
+  {
+   "fact": "End-to-end PPO on sts_lightspeed (STS1 Ironclad A0) reached a 15.43% win rate over 10,000 paired seeds after about 3.55B decisions. The heuristic baseline won 0%, and the 2-hour production model won 0.95%. Collection ran at about 202k decisions/s on one RTX 5070 Ti.",
+   "confidence": "high",
+   "source_url": "https://github.com/DavidSnoble/Slay_RL/blob/master/docs/schema_v4_handoff.md"
+  },
+  {
+   "fact": "The sts_lightspeed MCTS (BattleScumSearcher2) searches from a root that includes the real RNG state, so it is clairvoyant. Imitating it plateaued at 0.44 accuracy, and distilled combat nets reached floors 8–14 against the teacher's 23.",
+   "confidence": "high",
+   "source_url": "https://huggingface.co/Jialeiv/sts-rl-agent"
+  },
+  {
+   "fact": "sts-rl-agent results, A0 Ironclad, 50 seeds: learned REINFORCE macro policy + MCTS@50000 gave 14% wins and floor 42.5. Stock heuristics + MCTS@50000 gave 6% and floor 31.2. The learned macro layer was worth about 11 floors.",
+   "confidence": "high",
+   "source_url": "https://huggingface.co/Jialeiv/sts-rl-agent"
+  },
+  {
+   "fact": "PPO on the real STS2 engine (Ironclad A0 curriculum) peaked at a 12% Act 1 dev pass rate. A potential-based shaping bug paid a death at the boss +1.76 versus +0.65 for winning it, so the policy learned to reach the boss and die.",
+   "confidence": "high",
+   "source_url": "https://github.com/Zaaacqwq/SlayTheSpireRL/blob/main/plan/rl_v2_current_stage.md"
+  },
+  {
+   "fact": "sts_lightspeed README: '1M random playouts in 5s with 16 threads'; 'Designed to be 100% RNG accurate'; Ironclad and colourless cards only; tree search not given RNG state is listed as planned and was never done.",
+   "confidence": "high",
+   "source_url": "https://github.com/gamerpuppy/sts_lightspeed"
+  },
+  {
+   "fact": "STS2 v0.107.0 had correlated RNG streams: each stream was seeded with seed + hash(name) using System.Random. As a result, early rolls predicted other streams' outcomes; for example, the first-fight potion drop occurred about 76% of the time in Underdocks versus 4% in Overgrowth. A reader comment says v0.107.1 switched to xoshiro256** (UNVERIFIED).",
+   "confidence": "medium",
+   "source_url": "https://tck.mn/blog/correlated-randomness-sts2/"
+  },
+  {
+   "fact": "The human STS1 rotating A20 Heart win-streak record is reportedly 24 (Xecnar), previously 20 (Baalorlord). The source is an undated Reddit comment mirror (UNVERIFIED).",
+   "confidence": "low",
+   "source_url": "https://redlib.belloworld.it/user/Dwv590"
+  },
+  {
+   "fact": "AgenticSTS (arXiv 2607.02255, STS2 LLM agent) won 3/10 A0 runs without a skill store and 6/10 with triggered skills (Fisher p≈0.37). Summaries cite a developer-reported human win rate of about 16% at the lowest difficulty (secondhand, UNVERIFIED).",
+   "confidence": "medium",
+   "source_url": "https://huggingface.co/papers/2607.02255"
+  },
+  {
+   "fact": "Edinburgh UG4 (Zelnia 2023): picking cards by simulating upcoming fights with each candidate (via the scumthespire battle AI) beat a synergy-rule picker on 10 A20 seeds, but took up to 3 hours per run against about 10 minutes.",
+   "confidence": "high",
+   "source_url": "https://project-archive.inf.ed.ac.uk/ug4/20233951/ug4_proj.pdf"
+  },
+  {
+   "fact": "A card-pick model trained on human data (34,210 Silent runs, 358,870 picks) with the best offline accuracy (55.8%) ranked last in-game. A 53.5% model using only mechanical features ranked first.",
+   "confidence": "medium",
+   "source_url": "https://dev.to/doronsinger/part-3-good-models-finish-last-2n6a"
+  },
+  {
+   "fact": "Bottled AI notes that ±3% precision would need about 1,000 runs per character, roughly a month of 24/7 real-game play for four characters. Its Ironclad 20% from 50 runs has a 95% CI of 8.9–31.1%.",
+   "confidence": "high",
+   "source_url": "https://github.com/xaved88/bottled_ai/blob/main/docs/winrates.md"
+  }
+ ],
+ "implications_for_design": [
+  "Use two levels, not one end-to-end policy. Combat (card order, targets, potions, end turn) should be solved by search: at minimum Bottled-AI-style turn enumeration plus an evaluator, ideally determinized MCTS/PUCT across turns. Macro decisions (path, card reward, shop, event, rest, relic) should go to a cheap judgment model (jev/LLM or a small learned scorer), with short simulated rollouts as a tie-breaker or check. Every STS1 data point says pure policy RL plateaus low (15% A0 after 3.5B steps).",
+  "Score every node in run-level units (estimated P(run win) or a calibrated proxy). Never mix end-of-fight HP and P(win) inside one backup (evangambit ARCHITECTURE). For a combat-only first version, use AlphaStS's objective: v_win/2 + v_win²·v_health/2 with a potion-value penalty.",
+  "Keep the search honest. The engine's real RNG and draw order must never reach the searcher. Resample hidden information at every simulation: unknown draw-pile order outside known top/bottom cards, enemy move rolls, random card effects. Clairvoyant searchers (sts_lightspeed ScumSearch, save/load scumming) inflate results and make poor teachers. Also hide the seed: sts2-agent flags seed determinism as an exploitable channel, and the v0.107.0 RNG streams were correlated.",
+  "Use common random numbers across sibling actions (score each candidate in the same set of imagined worlds), pick moves by mean value rather than visit count, and tune the exploration constant to the value scale (c≈0.1 for [0,1] values). These were the biggest measured wins and cost nothing.",
+  "Simulator strategy for STS2: treat the real engine headless (sts2-cli) as the ground-truth oracle and final evaluator, at about 20 decisions/s/process. Use a fast cloneable emulator (evangambit/Zamiell C# NativeAOT, ~1.4k sims/s per core) for search and training. Run differential tests between the two (replay tapes, check state hashes) and pin a single game version. Budget real effort for fidelity: there are 450 known divergences, and real-engine stubs fail silently.",
+  "For a solo hobbyist on a Mac with a modest budget, MCTS at about 60–300 sims per move costs about 0.1–0.5 s per fight per core on the emulator, which is affordable for live advice and for generating training labels. GPU RL at hundreds of thousands of steps/s needs a sts_lightspeed-class simulator, which does not exist for STS2.",
+  "Learned components should help the search, not replace it. A policy prior for PUCT showed measurable gains; a learned value at the leaf did not beat rollouts until the target was fixed (blend search estimate and outcome, λ≈0.3). Enriching observations was useless because the teacher was the ceiling. Distil only from a non-clairvoyant teacher.",
+  "Card rewards and pathing: check LLM or heuristic picks with simulation where possible (simulate the next elite or boss with each option, or estimate counterfactual values per candidate as in Slay_RL's candidate-Q). Do not trust offline accuracy at predicting human picks as a measure of strength.",
+  "Build evaluation in from the start. Use frozen paired seed batteries, report CIs, run at least 1,000 games for ±3% (sample sizes of 5–50 have repeatedly misled), and track telemetry that checks wins outrank all losses, action-mix coverage, and a boss funnel. These catch the reward inversions and stalling loopholes that hit the PPO projects.",
+  "Treat the live game as an integration state machine, separate from the simulator's decision states. Both Slay_RL (shop loop) and STS2 ports hit protocol mismatches. Keep the STS2MCP command shape shared between emulator and live mod, as evangambit does, so one policy runs in both."
+ ],
+ "open_questions": [
+  "How fast is wuhao21/sts2-cli on an Apple Silicon Mac per process, and can the 1 ms sleeps and 100–200 ms waits in RunSimulator be cut safely to reach hundreds of decisions/s?",
+  "Does the evangambit/Zamiell emulator (pinned to v0.107.1) track the current game (v0.111.0 beta as of 2026-09-07), and how many of the 450 divergences affect common Act 1–3 fights?",
+  "Did STS2 v0.107.1 actually remove the correlated-RNG weakness (reported xoshiro256** switch)? Any simulator must match each patch's RNG algorithm exactly.",
+  "What is a credible STS2 human baseline at A0–A10 per character (developer telemetry, spirebird, metabot.gg, ststracker), for judging 'best play'?",
+  "Can a combat value in run-level units (P(run win) given post-combat HP, potions and deck) be learned cheaply, e.g. from LLM-macro self-play tapes, or must it start as a hand-written mapping from HP and resources?",
+  "How strong is Bottled-AI-style turn enumeration plus a hand-written evaluator on STS2 compared with determinized MCTS on the emulator? No head-to-head exists.",
+  "Can jev's 'single-call factored decisions' serve as the macro layer and as a rollout policy inside search? At ~800 decisions per run, LLM latency and cost inside rollouts may be prohibitive (UNVERIFIED for jev).",
+  "Licensing and ToS: is decompiling sts2.dll to generate emulator data acceptable for a hobby project? (evangambit does not redistribute decompiled code.)",
+  "Is mingxuan-he/sts2-agent's private Hugging Face dataset (per-decision states plus actions), or AgenticSTS's 298 released trajectories, usable as warm-start data for a macro scorer?"
+ ]
+}
