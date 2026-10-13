@@ -1,7 +1,7 @@
 # Security review addendum 1: our fork, and the game's own code as referee
 
-> **Decision: section 1 GO (2026-10-13); sections 3 and 4 PENDING.** Nothing in section 3 runs until the
-> owner records GO at the end of this file (decision D3). Sections 1 and 2 extend conditions the review already set.
+> **Decision (2026-10-13): sections 1 and 3 GO, with the choices in the GO record; section 4 private for now.**
+> Sections 1 and 2 extend conditions the review already set.
 
 - **Date:** 2026-10-13, on the Windows PC.
 - **Basis:** `docs/SECURITY_REVIEW.md` (the review of r33hab/sts2 @ `b745217` and r33hab/STS2MCP @
@@ -59,7 +59,7 @@ might touch while doing so.
 | # | Condition |
 |---|---|
 | H1 | Run only a copy of the archived build, made into the referee's own folder and checked against the archive's `.manifest.sha256` before every session. The archive itself is never written to. |
-| H2 | No network for the referee. Before the first run the owner adds a Windows Firewall outbound block rule for the referee host executable (and `crashpad_handler.exe`), and the harness never initialises Sentry or Steamworks. Spot check: no outbound connection from the referee process during a run. |
+| H2 | No network for the referee. The harness never initialises Sentry or Steamworks, and every session checks that the referee process opened no network connection. A Windows Firewall outbound block rule for the host executable (and `crashpad_handler.exe`) is the owner's optional second layer, required if a session ever shows a connection. |
 | H3 | No writes outside the referee's scratch folder. Saves are in memory, and Godot's `user://` points at the scratch folder. Before the first run, back up `%APPDATA%\SlayTheSpire2` (as review M2), and compare its file list and modification times before and after the first session. |
 | H4 | If a Godot host is needed: the official headless .NET build at one pinned version (4.5.1), downloaded only with the owner's approval, from the Godot project's official GitHub releases, checked against the published checksums, sha256 recorded in `versions.pc.lock`. |
 | H5 | Learn the API without executing it: read type and method names from `sts2.dll`'s metadata (System.Reflection.Metadata, which runs no game code), plus the class names upstream already cites. Decompile only under E15. |
@@ -81,5 +81,5 @@ might touch while doing so.
 |---|---|---|---|
 | Section 1 (fork builds: who runs them, F3) | GO: Claude builds and tests the fork (Option A), offline from the recorded package cache | 2026-10-13 | owner, in chat |
 | Section 1 (repository visibility, F5) | Private repository `microchimp/spireline-sim`; read access on request (issue template), and for upstream (r33hab) | 2026-10-13 | owner, in chat |
-| Section 3 (referee, stages H1-H8) | PENDING | | |
-| Section 4 (publishing the harness) | PENDING | | |
+| Section 3 (referee, stages H1-H8) | GO, with these choices: (1) run the archived game's code headless for checking only; (2) download the official headless Godot .NET build rather than stubbing Godot, so as little as possible is faked (H4); (3) decompile `sts2.dll` locally with the pinned `ilspycmd` 8.2.0.7535, output never leaves the PC, which amends E15's "only after a patch update" for v0.107.1 (H5); (4) no firewall rule for now: the harness never initialises Sentry or Steamworks, and each session checks the referee opened no network connection (H2) | 2026-10-13 | owner, in chat |
+| Section 4 (publishing the harness) | Private for now: the harness lives in the private simulator repo; publishing waits | 2026-10-13 | owner, in chat |
