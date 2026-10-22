@@ -205,7 +205,10 @@ owner-use windows) in `readiness.json`. Target: 90% of wall-clock busy.
 
 - H2: add the Windows Firewall outbound block for the Godot host executable and `crashpad_handler.exe` now. Continuous
   training use multiplies the exposure; the rule stops being optional.
-- H3: back up `%APPDATA%\SlayTheSpire2` before the first `score-real` block and compare file lists after it.
+- H3: checked 2026-10-22: no profile folder exists on this PC (the game is installed but has never been played here,
+  so the folder the referee watches was never created); nothing to back up. The referee's per-session check that the
+  folder is not created or touched (`run_referee.py`, `real_profile_state`) is the control. If the game is ever played
+  on this PC, back the folder up before the next `score-real` block and compare file lists after it.
 - H6: refresh the patch list with every env patch and the trace-mode `L` patch (rebuild-plan D2, approved under D-d);
   record whether a live-client check is possible on this PC (no readable profile is noted in `SIMULATOR.md`); if it is
   not, say so in the addendum rather than leaving H6 silent.
