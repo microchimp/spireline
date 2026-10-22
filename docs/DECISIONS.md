@@ -182,3 +182,67 @@ every character.**
 - Supersedes: "wait for upstream ports" in D1 (the fork ports changes itself). The emulator pin in
   D1 and `spireline/__init__.py` stays `b745217` until the fork's first tested build. D3's review
   covers the fork's base; every later upstream pick is read before it is taken.
+
+## D17 · 2026-10-22 · The goal is the agent; the simulator serves it
+
+- Agent work starts now on the current emulator (our fork at `b8402e96`), judged on the headless
+  referee. The plan of record is `docs/PLAN.md`; it replaces section 5 of the 2026-10-22 handoff.
+- Why: simulator-first did not converge (the remaining combat errors are architectural, site fixes
+  do not close them, and the full rebuild was re-priced at ~95% of a week's credit), and nothing in
+  that order measured the goal's own number, the agent's real-game win rate. The independent review
+  of 2026-10-22 (`referee/design/plan-review-2026-10-22.md`) found the same.
+- The fork, the referee, the gates (corpus, Codex walk, refset, invariants, mutation) and the
+  complete-coverage direction all stay; coverage is no longer a prerequisite for the agent.
+- Supersedes: D16's "search and agent work wait for it". The rest of D16 stands.
+- Decided by the owner's instruction of 2026-10-22 to re-plan; D17-D21 are vetoable by a later entry.
+
+## D18 · 2026-10-22 · Where learning runs
+
+- The headless referee (Amendment 1a of `SECURITY_REVIEW_ADDENDUM_1.md`) may score the agent on
+  fixed seed blocks and supply run outcomes to fine-tune the learned components of D5 (the combat
+  prior and the run value). Bulk self-play and expert iteration stay on the emulator.
+- No end-to-end PPO/GRPO policy, no hand-shaped dense rewards, no bot on the live client, no play
+  on the vanilla profile, Daily runs or leaderboards (`CONTRIBUTING.md` rule 6).
+- Why: the referee is exact by construction and is the only judge the goal accepts; the search sets
+  the pace, so its throughput suffices (`PLAN.md` section 8.1).
+- Narrows D6 ("no RL on sts2-cli or the live game"): the referee is not the live client, and the
+  learning is of D5's components, not an end-to-end policy. D5's keep-rules and the anti-circularity
+  rule apply unchanged.
+
+## D19 · 2026-10-22 · Fidelity work is ranked by agent play; the kernel rebuild is gated
+
+- Emulator divergences are ranked weekly by the agent's own real-game play replayed in lockstep
+  (`PLAN.md` section 8.2). Fixes go to the top of that list, through bug process v2, Sonnet first.
+- The combat-kernel rebuild in the game's shape (`referee/design/rebuild-plan.md`, P0-P2) is
+  decided at gate G1 (end of week 4) by the rule in `PLAN.md` section 8.3, at the reviewed price of
+  ~255 rounds (190-340), ~73% of a week (45-122%), with C1 and K1-K5 unchanged. The run layer is
+  not rebuilt.
+- Why: the review found the 40-50% figure covered P1+P2 alone (M3), and that the rebuild's size
+  should follow the harm measurement, not precede it (B2).
+- Supersedes: the handoff's step 4 scope and price, and its open decision D-b.
+
+## D20 · 2026-10-22 · Hosts
+
+- The full-host referee env (branch `proto/real-game-env`, to be hardened) is the judge and the
+  fine-tuning environment. The nodeless run host and the Godot-free host are parked behind the
+  throughput bar of `PLAN.md` section 8.1: built only if the measured agent-side decision rate
+  exceeds 80% of the measured sustained env rate.
+- Why: the census (`referee/design/nodeless-run-host.md`) found the 27-encounter fallback list caps
+  the whole-run gain at ~2-3x, and the review re-derived the step-1 estimate at 250-800/s, not
+  1,000-1,500 (M2). Under D5's method the search, not the env, sets the pace.
+- Supersedes: the handoff's steps 1 and 2 and its open decisions D-a and D-c. Addendum 2 is drafted
+  only if the bar is reached.
+
+## D21 · 2026-10-22 · Budget and model policy
+
+- Ceiling 15% of a week's allowance (~52 Sonnet-equivalent rounds), split by lane as `PLAN.md`
+  section 6; unspent credit is not carried forward. Sonnet by default; Opus for kernel and search
+  design, amends after a failed Sonnet round, and the weekly review; Haiku for mechanical sweeps.
+  One reviewer per change with the checklist of `PLAN.md` section 10.
+- CPU runs around the clock on the lab's priority ladder (`PLAN.md` section 7); agent rounds start
+  only from a prepared input.
+- Why: credit is the limit and the CPU is free; the measured history is 1.36 rounds per fix attempt
+  with 46% accepted outright, so prepared inputs and the cheapest capable model are where the
+  savings are.
+- Supersedes: the handoff's proposed 15% rebuild cap as a lane of its own; D13 stands (the Codex
+  export is not an imitation source; the review's M5 found ~21k usable runs with no combat plays).

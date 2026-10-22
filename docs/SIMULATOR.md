@@ -1,8 +1,9 @@
 # The simulator plan
 
-Goal (D16): **a high-fidelity Slay the Spire 2 simulator with complete coverage**: every
-character, act, ascension and piece of content, verified against the game's own code. Ironclad
-first, then every character (D15). Search and agent work wait for it.
+Goal (D15, D17): **an agent that makes the best plays in Slay the Spire 2**, Ascension 10, Acts 1-3,
+Ironclad first, then every character. The simulator serves it. The plan of record is `PLAN.md`
+(2026-10-22); this file keeps the simulator's own parts: where things are, the referee, the gates and
+the coverage checklist. The earlier D16 goal line (complete coverage before any agent work) is superseded.
 
 This file is the current plan. It integrates `DESIGN.md` and `research/IDEAS.md`, which were
 written before D15 and D16; where they disagree with this file or `DECISIONS.md`, these win.
