@@ -83,3 +83,15 @@ might touch while doing so.
 | Section 1 (repository visibility, F5) | Private repository `microchimp/spireline-sim`, no outside access for now (owner, 2026-10-13: nothing useful to share yet). Requests can still be filed with the issue template; personal-account repos cannot grant read-only access, so access later needs an organisation | 2026-10-13 | owner, in chat |
 | Section 3 (referee, stages H1-H8) | GO, with these choices: (1) run the archived game's code headless for checking only; (2) download the official headless Godot .NET build rather than stubbing Godot, so as little as possible is faked (H4); (3) decompile `sts2.dll` locally with the pinned `ilspycmd` 8.2.0.7535, output never leaves the PC, which amends E15's "only after a patch update" for v0.107.1 (H5); (4) no firewall rule for now: the harness never initialises Sentry or Steamworks, and each session checks the referee opened no network connection (H2) | 2026-10-13 | owner, in chat |
 | Section 4 (publishing the harness) | Private for now: the harness lives in the private simulator repo; publishing waits | 2026-10-13 | owner, in chat |
+
+## Amendment 1a (2026-10-22): H7 relaxed for training
+
+The owner decided on 2026-10-22 that the referee may serve as a training environment. Agent and search code may send it decisions over a local channel, and receive states and outcomes back.
+
+Everything else in this addendum stays in force:
+- the headless Godot host only;
+- the no-network check on every session;
+- a read-only game copy;
+- one game per process.
+
+The channel is local to the PC; it is not a network socket reachable from outside it. A Godot-free host is not covered by this amendment and still needs its own addendum.
