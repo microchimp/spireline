@@ -29,26 +29,38 @@ This plan turns the order around:
 4. **Keep the CPU busy and the credit idle.** Self-play, training, scoring and comparison are round-the-clock CPU jobs.
    Agent rounds consume only what those jobs prepare. Sonnet does the routine work; Opus designs, amends and reviews.
 
+The finish line is better than the best human players, not the human average. A public mod that shows the best
+in-fight play is a side product for interest: it carries only a small distilled network, never the simulator, and ships
+when it passes its own gate.
+
 What was dropped: the faster "nodeless" host for whole runs (measured gain two to three times, not the seven assumed),
 learning from human run logs (too little usable data, and it needs the part of the copy we stop improving), and a
 rebuild budget set before anything is measured.
 
 ## 1. Goal and metric
 
-**Goal (decided, D15, D17):** an agent that makes the best plays in Slay the Spire 2, v0.107.1, Ascension 10 with all
-modifiers, Acts 1-3. Ironclad first, then every character.
+**Goal (decided, D15, D17, D22):** an agent that plays Slay the Spire 2 better than the best human players: v0.107.1,
+Ascension 10 with all modifiers, Acts 1-3, Ironclad first, then every character. "Perfect" is the direction; the
+operational target is no measurable regret, in the sense of `DESIGN.md` section 1: on a benchmark of positions, the
+agent's action is in the near-best set with a confidence bound, and no decision type has a blunder rate above the
+pre-registered threshold.
 
 **Headline metric:** the agent's win rate and mean floor on a fixed block of real-game runs (the referee, headless),
-with a Wilson interval, reported weekly. Secondary: per-decision regret on a benchmark of positions, in the units
-`DESIGN.md` section 1 defines, once labels exist (P2).
+with a Wilson interval, reported weekly. Its reference is the best measurable human play, in this order as each becomes
+available: (1) the top-decile Ironclad A10 win rate among Codex players with at least 50 runs (an aggregate, allowed by
+D13); (2) the regret of recorded top-player decisions under the agent's own labels (P2); (3) head-to-head on fixed seed
+blocks with invited strong players (P3, also the public proof). Secondary: per-decision regret on the benchmark.
 
 **What "best play" means** stays as `DESIGN.md` section 1: the action with the highest estimated value using only what the
 player can know. Hidden information (seed, draw order, unrevealed content, the enemy's unidentified move) is resampled,
 never read. The firewall rules of `DESIGN.md` section 3.2 apply to every search.
 
-**Done for Ironclad:** the agent beats the human Ironclad A10 average win rate on 2,000 fresh real-game seeds with the
-lower confidence bound above it, and the regret table shows no decision type with a blunder rate above the pre-registered
-threshold. The human average comes from the Codex aggregates (D13 allows aggregates).
+**Done for Ironclad:** the agent beats reference (1) on 2,000 fresh real-game seeds with the lower confidence bound above
+it, the regret table shows no decision type above threshold, and reference (3) is won or tied on a published seed block.
+
+**The public side product (D22):** a mod that shows the best in-fight play, carrying the small distilled policy network
+only, released when Lane F's gate passes. It exists to build interest; it is not the goal and it never ships the
+simulator, the referee, game files or decompiled text.
 
 ## 2. Principles
 
@@ -76,6 +88,7 @@ threshold. The human average comes from the Codex aggregates (D13 allows aggrega
 | D18 | Where learning runs: the headless referee may score the agent and supply outcomes to fine-tune the learned components (Amendment 1a). No end-to-end RL policy, no bot on the live client. | Narrows D6; keeps D5's method |
 | D19 | Fidelity work is ranked by agent play. The combat-kernel rebuild is decided at gate G1 by the rule in section 8.3, at the reviewed price (~255 rounds, ~73% of a week). | HANDOFF 5.4's 40-50% and its unconditional start |
 | D20 | Hosts: the full-host referee env is the judge. The nodeless run host and the Godot-free host are parked behind the throughput bar of section 8.1. | HANDOFF 5.1, 5.2 |
+| D22 | The target is better than the best human players, measured against the references of section 1; a public in-fight mod carrying only the distilled policy network is a side product with its own release gate (Lane F). | Section 1's earlier "human average" finish line; the private-everything rule, for the mod and its weights only |
 | D21 | Budget and model policy: a 15%-of-a-week ceiling, the lane split of section 6, Sonnet first, idle credit unspent. `docs/PLAN.md` is the plan of record. | HANDOFF 7 D-b's cap |
 
 Unchanged: D1 (v0.107.1 pinned; a port to a later patch is priced separately, not before P2 ends), D7 (no LLM
@@ -214,6 +227,38 @@ owner-use windows) in `readiness.json`. Target: 90% of wall-clock busy.
   not, say so in the addendum rather than leaving H6 silent.
 - Version policy: stay on v0.107.1 through P2. A port is priced when a later build is archived, never assumed.
 
+### Lane F: the public in-fight mod (side product, D22)
+
+**What it is.** A game mod, our own code, that reads the live fight through the game's modding hooks and shows the
+agent's recommended play with a short reason. It runs the **distilled combat policy network alone**: no search, no
+emulator, no referee, so nothing private ships. Answers are instant and the network is a few MB. Its advice is weaker
+than the searching agent by a measured margin that the release notes state.
+
+**Why a distilled network and not the searcher.** The searcher needs the emulator, and the simulator stays private
+(Amendment 1a). A network trained on the searcher's own play (the combat prior of Lane A, `DESIGN.md` section 5.3)
+captures most of its in-fight strength and can be exported (ONNX) and run inside a C# mod on any player's PC.
+
+**Release gate (pre-registered).** All of: the network's top action agrees with the searching agent's on at least 85%
+of decisive benchmark positions and is in the near-best set on at least 95%; the network playing alone (no search)
+loses less HP per fight than the human Codex median per floor on paired setups; the mod reads only displayed state
+(the allow-list of `DESIGN.md` section 3.2) and never the seed or hidden piles, checked by the leak tests; the mod's
+patch list is published with reasons and contains no game text; the game's and the modding framework's terms allow it
+(checked and recorded before release); and the owner approves the release.
+
+**CPU jobs.** `distill`: after each promoted generation, export the combat prior and score it against the searcher
+on the benchmark (agreement, near-best share, HP per fight). Its numbers go to `readiness.json` under `mod`.
+
+**Agent rounds.** F0 (P2): the export and the agreement scorer (2-3 rounds, Sonnet). F1 (P2): the mod itself, built
+on the game's modding framework in a public repo of its own, reading state through the allow-list, with the patch
+list (6-10 rounds, Sonnet; Opus for the state reader). F2 (P3): release once the gate passes: the mod, the weights, a
+short write-up of what it is and is not, and the seed block for the head-to-head.
+
+**Not in scope.** Autoplay, Daily runs, leaderboards (`CONTRIBUTING.md` rule 6); run-level advice (map, shop, rewards)
+until the run value network passes its own gate; any server.
+
+**Kill rule.** If the network alone cannot pass the agreement gate within three generations after the searcher beats
+reference (1), the release waits; the mod is never shipped weaker than the human median in fights.
+
 ## 6. Budget
 
 Ceiling 15% of a week (~52 Sonnet-equivalent rounds). The split is a ceiling per lane; unspent credit is not carried
@@ -225,6 +270,7 @@ forward or reallocated without a yield that justifies it.
 | B fidelity on demand | 1-2 (ranking only) | 12-15 | 10-15, or the rebuild's lane at its own cap | Sonnet; Opus for named mechanism classes and amends |
 | C referee env | 2-3 | 5-8 | 2-4 | Sonnet |
 | D scheduler | 2-3 | 1-2 | 1 | Sonnet, Haiku |
+| F public mod | 0 | 0 | 3-5 (from week 6) | Sonnet; Opus for the state reader |
 | orchestration and weekly review | 2 | 4 | 4 | Opus |
 | **total** | **13-18 (~3-5%)** | **37-49 (~10-14%)** | **32-44 (~9-13%)** | |
 
@@ -304,8 +350,8 @@ criteria. The run layer is not rebuilt (D20); Codex walk and corpus gates stay a
 |---|---|---|---|
 | **P0 foundations and measurements** | 1 | A0 `rl/` on Windows and the speed table; A1 lockstep adapter; C0 env measurement round and the leak result; D0 job kinds; E owner actions; decisions recorded | G0 |
 | **P1 the flywheel** | 2-4 | nightly generations; weekly `score-real` blocks; ranked list and fix cycles; C1 hardening; A3 search tuning (Opus); F3/F4 run-clone tests then Acts 2-3 (A4) | G1 |
-| **P2 scale and judge** | 5-8 | the rebuild if G1 approved, else continued fixing; V_run fine-tuned on real outcomes (D18); labels and the regret benchmark (A6); offline run review (A5); H6 check recorded | G2 |
-| **P3 other characters** | 9+ | lab combat recordings for Silent, Defect, Necrobinder, Regent (D-d, from the Osty, orb and pet sets); env `character` key; per-character generations; the observation-only bridge for a live advisor if the owner wants one | per character: the P2 criterion |
+| **P2 scale and judge** | 5-8 | the rebuild if G1 approved, else continued fixing; V_run fine-tuned on real outcomes (D18); labels and the regret benchmark (A6); top-player reference (2); the distilled network and its scorer (F0), the mod built (F1); H6 check recorded | G2 |
+| **P3 other characters, public proof** | 9+ | the mod released when Lane F's gate passes (F2); the head-to-head seed block with invited players (reference 3); lab combat recordings for Silent, Defect, Necrobinder, Regent (D-d, from the Osty, orb and pet sets); env `character` key; per-character generations; the observation-only bridge for a live advisor if the owner wants one | per character: the P2 criterion |
 
 ## 10. Operating rules for the running session
 

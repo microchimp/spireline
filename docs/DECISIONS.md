@@ -246,3 +246,20 @@ every character.**
   savings are.
 - Supersedes: the handoff's proposed 15% rebuild cap as a lane of its own; D13 stands (the Codex
   export is not an imitation source; the review's M5 found ~21k usable runs with no combat plays).
+
+## D22 · 2026-10-22 · The target is better than the best players; a public in-fight mod is a side product
+
+- The agent's target is play better than the best human players at Ascension 10 (`PLAN.md` section 1:
+  top-decile Codex players as the first reference, recorded top-player decisions under the agent's
+  labels as the second, head-to-head on fixed seed blocks as the public proof). The human average
+  is a milestone, not the finish line.
+- A game mod that shows the best in-fight play may be released publicly to build interest. It
+  carries only the distilled combat policy network (a few MB, no search) and our own mod code. It
+  never ships the simulator, the referee, game files, decompiled text or any server. Its release
+  gate, allow-list and kill rule are `PLAN.md` Lane F; the owner approves each release.
+- Why: the owner stated the goal on 2026-10-22 ("a perfect playing AI that is better than the best
+  pros") and the side product ("a smaller AI that says the best plays in a fight, as a mod").
+- Supersedes: the "human average" done criterion of `PLAN.md` section 1 as first written. Narrows
+  the private-everything constraint (Amendment 1a: "simulator repo stays private") to exclude the
+  mod repo and its exported weights only. D7 (no LLM components), D13 (Codex: aggregates only) and
+  `CONTRIBUTING.md` rule 6 (no bots on Daily runs or leaderboards) stand.
