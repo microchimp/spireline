@@ -94,8 +94,10 @@ components), D11 (A10, Acts 1-3), D13 (Codex is a test corpus; imitation from it
   `test_combat_mcts_pools.py`, `test_live_search.py`). Whether they run on Windows against our main is unverified (P0, A0).
 - **Referee env** (branch `proto/real-game-env`): plays whole A10 Ironclad runs through a stdin/stdout decision channel;
   108 decisions/s sustained for the whole PC at 12 processes with recycling (141/s peak); replay exact on 1,630 of
-  1,630 state hashes; ~1 native crash per 1,000 short runs; memory grows and the session slows ~20x after ~10 min
-  without recycling (a probe is in progress; result in `D:/spireline/referee/design/env-leak.md`). Its action space
+  1,630 state hashes; ~1 native crash per 1,000 short runs. The ~20x slowdown after ~10 minutes is a cliff that hits every game
+  process within 4 s at the same bench minute whatever each process's age, run count or memory, so it is shared, not a
+  per-process leak; two reruns did not reproduce it and its cause is not named (`D:/spireline/referee/design/env-leak.md`).
+  Separately, private memory grows ~1.6 MB a run (Godot non-node objects, +~90 a run; nodes flat), bounded by recycling. Its action space
   omits "choose 0" selections, card-reward alternatives, and potion use or discard outside fights.
 - **Lab** (`fork/tools/lab`): a Windows scheduled task that runs a job rotation around the clock (`presort` per new main,
   then `fights, fights, probes, fights, mutation, fights, invariants`), strategies weighted in `LAB/mix.json`, a
@@ -172,7 +174,8 @@ agent decisions whose lockstep hash differs from the referee's), both from `scor
 
 ### Lane C: the referee as environment
 
-**Deliverables.** A hardened full-host env: process recycling, crash as episode truncation, the leak fixed or bounded,
+**Deliverables.** A hardened full-host env: process recycling, crash as episode truncation, the ten-minute cliff named (rerun the 12-process, 31-minute conditions with the bench's new system-stats logging) and
+the per-run memory growth bounded by recycling,
 the missing action types added (choose 0, card-reward alternatives, potion use and discard outside fights), a
 `character` key, a whole-run A/B of the fast settings against stock pacing over a few hundred runs with run hashes
 (review m3), and the H6 patch list current. Throughput measured per phase and per process count.
@@ -333,8 +336,8 @@ flight, the next brief).
    emulator's venv Python. Report what runs, what fails and why. Cap 40 calls.
 2. **A0b (Sonnet, or Opus if A0a shows a design gap):** make them run; record steps/s, clones/s, simulations/s per
    core and at 16 processes into `readiness.json` under `bench.emu`. The fork's "15k/s" claim is replaced by this number.
-3. **C0 (Sonnet):** the env measurement round of section 5 Lane C, on `proto/real-game-env`, with the leak probe's
-   result folded in; numbers into `readiness.json` under `bench.env`.
+3. **C0 (Sonnet):** the env measurement round of section 5 Lane C, on `proto/real-game-env`, including a 31-minute rerun of the 12-process conditions with the
+   bench's system-stats logging (branch `env/leak-probe`) to name the cliff; numbers into `readiness.json` under `bench.env`.
 4. **A1 (Sonnet, Opus review):** the lockstep adapter: `envproto.py` takes `--agent play` and runs the emulator in
    lockstep with hash comparison and re-anchoring; a 50-run smoke on 4 processes; the clairvoyance and L2/L3/L8 tests as
    pytest.
@@ -364,7 +367,8 @@ flight, the next brief).
 
 - `D:/spireline/referee/design/plan-review-2026-10-22.md`: the independent review (B1-B2, M1-M7, m1-m6).
 - `D:/spireline/referee/design/nodeless-run-host.md`: the census.
-- `D:/spireline/referee/design/env-leak.md`: the leak probe (in progress at the time of writing).
+- `D:/spireline/referee/design/env-leak.md`: the leak probe (the slowdown is a shared cliff, cause not yet named; memory
+  growth is separate and bounded by recycling).
 - `D:/spireline/referee/design/`: `game-shaped-dispatch.md`, `architecture-survey.md`, `rebuild-baselines.md`,
   `rebuild-plan.md`, `real-game-speed.md`, `real-game-host-feasibility.md`, `real-game-env.md`.
 - `D:/spireline/referee/backlog/HANDOFF.md` (2026-10-22) for status and the operating rules it kept.
