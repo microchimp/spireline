@@ -6,6 +6,13 @@ Claude Code session started in a terminal where `ANTHROPIC_API_KEY` is set bills
 key is typed into that terminal for that session and never written to a file, a user-level variable or the lab's
 scheduled task (the same rule as the repo's no-stored-GitHub-token rule).
 
+**Status (2026-10-23): on hold.** The owner is holding the credit back. No API-key session starts and nothing in
+sections 2-4 runs until the owner says so. Meanwhile the subscription session (P1 week 2) owns Lane B from the start,
+at the reduced share in `PLAN.md` section 6 (the by-family report first); the rebuild lane owns the `L` patch and the
+local tables (item 4); the Tier 1 design review (item 3c) was done on the subscription as K0 and is not repeated. The
+credit still expires in early November, so each day on hold removes about a tenth of what it can buy. If the owner
+starts it later, run sections 2-4 as written, day-1 items first.
+
 **Stop rules:** stop at $95 of spend on the Console's usage page, or on 2026-11-03, whichever comes first. The
 orchestrator records spend per item in section 5 after each item.
 
@@ -48,7 +55,8 @@ roughly 15-20 landed-or-rejected fixes.
 - **Division with the subscription session** (P1 week 2, `HANDOFF.md` section 0 briefs): the API-key session owns Lane B
   (brief B1) and item 4 for the two weeks; the subscription session owns C1, A2b, A1b, the leak follow-ups, D1 and the
   weekly review. If the API-key session has landed nothing by day 4, the subscription session takes B1 back. Landing is
-  serialised by the fork's `main.lock` either way.
+  serialised by the fork's `main.lock` either way. While the plan is on hold the subscription session owns Lane B from the start
+  (see the status note).
 - **Owner prerequisites:** the lab task restarted (the `runs` repro step makes the minimal repros item 5 needs); the API
   key typed into one terminal.
 

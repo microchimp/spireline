@@ -267,12 +267,12 @@ forward or reallocated without a yield that justifies it.
 
 | lane | P0 (week 1) | P1 (weeks 2-4), per week | P2 (weeks 5-8), per week | model |
 |---|---|---|---|---|
-| A agent | 6-8 rounds | 15-20 | 15-20 | Sonnet; Opus for A3 and search changes |
-| B fidelity on demand | 1-2 (ranking only) | 12-15 | 10-15, or the rebuild's lane at its own cap | Sonnet; Opus for named mechanism classes and amends |
+| A agent | 6-8 rounds | 12-15 while the rebuild lane runs | 15-20 | Sonnet; Opus for A3 and search changes |
+| B fidelity on demand | 1-2 (ranking only) | 3-5 while the API credit is held back (the by-family report, repros, the top single-site kits); 12-15 if the credit runs Lane B | 10-15, or the rebuild's lane at its own cap | Sonnet; Opus for named mechanism classes and amends |
 | C referee env | 2-3 | 5-8 | 2-4 | Sonnet |
 | D scheduler | 2-3 | 1-2 | 1 | Sonnet, Haiku |
 | F public mod | 0 | 0 | 3-5 (from week 6) | Sonnet; Opus for the state reader |
-| R rebuild lane (Tier 1 kernel stage, D23) | 0 | 20-25, taking Lane B's share while the API credit covers fixes | per G1 | Opus for the dispatcher and queue; Sonnet for adapters, tables, tests |
+| R rebuild lane (Tier 1 kernel stage, D23) | 0 | 20-25, taking most of Lane B's share (the credit plan is on hold since 2026-10-23) | per G1 | Opus for the dispatcher and queue; Sonnet for adapters, tables, tests |
 | orchestration and weekly review | 2 | 4 | 4 | Opus |
 | **total** | **13-18 (~3-5%)** | **at the 52-round ceiling (15%)** | **32-44 (~9-13%)** | |
 
@@ -364,9 +364,10 @@ Otherwise continue demand-driven fixing and re-test at G2. In both tiers the P0 
 walk and corpus gates stay as regression gates on the old engine.
 
 **Decided 2026-10-23 (D23):** the owner approved Tier 1's kernel stage ahead of G1. The P0 option-neutral items and the
-kernel start in week 2 in a rebuild lane capped at 25 rounds a week, while Lane B runs on the API credit. G1 then sets the
-family migration order from the by-family table and decides any escalation. The kernel is needed in both tiers, so
-nothing is wasted if G1 chooses Tier 2.
+kernel start in week 2 in a rebuild lane capped at 25 rounds a week, while Lane B runs on the API credit or, while the
+owner holds the credit back (decided the same day), at the reduced share in section 6 with the by-family report first.
+G1 then sets the family migration order from the by-family table and decides any escalation. The kernel is needed in
+both tiers, so nothing is wasted if G1 chooses Tier 2.
 
 ### 8.4 Gates G0 and G2
 

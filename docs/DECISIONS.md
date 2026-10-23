@@ -299,3 +299,7 @@ every character.**
   the Tier 1 design runs on day 1 of `API_CREDIT_PLAN.md`.
 - Supersedes: D19's single all-or-nothing rebuild decision at G1. D19's price for the full rebuild stands
   as Tier 2.
+- Addendum 2026-10-23 (owner, in chat): the API credit is held back for now, so `API_CREDIT_PLAN.md` is on
+  hold. Lane B runs on the subscription at the reduced share in `PLAN.md` section 6, the by-family report
+  first; the rebuild lane takes the `L` patch and the local tables; the K0 design review done on the
+  subscription stands in for the batch-priced one.
