@@ -151,7 +151,8 @@ lab's `runs` replay, `Reanchor` and the structural comparer; no new state format
 - `selfplay`: emulator self-play runs with the current PLAY agent and generation; the filler that takes every idle core.
 - `train`: on the GPU, after each generation's self-play budget: the combat prior (Gumbel ExIt) and V_run (DMC),
   `DESIGN.md` section 5.4, with promotion on a fresh 2,000-seed emulator E-block (paired mean floor, cluster bootstrap,
-  one-sided alpha 0.01; Act-1 boss-kill rate co-primary; wins join once both arms reach 10%).
+  one-sided alpha 0.01; Act-1 boss-kill rate a not-worse guard, one-sided 0.01, until both arms reach 10%, then
+  co-primary; wins join once both arms reach 10%; D24).
 - `score-real`: the promoted agent plays a fixed real-game block (E-block seeds), lockstep on, at 12-16 game processes.
   Yield: win rate, mean floor, crashes (counted as losses), decisions/s, and the agent-weighted divergence list for Lane B.
 

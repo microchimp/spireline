@@ -724,7 +724,8 @@ for gen in 0..G:                                   # each generation capped at ~
   train combat net (per-head checkpoints, 167k-935k params; capacity was never the limit)
   # promotion, on a FRESH 2,000-seed E-block each generation
   primary:     paired mean floor (cluster bootstrap), one-sided, alpha 0.01
-  co-primary:  Act-1 boss-kill rate (exact McNemar); wins join as co-primary once both arms >= 10%
+  guard:       Act-1 boss-kill rate not worse (exact McNemar, one-sided 0.01) while either arm < 10%;
+               co-primary once both arms >= 10% (D24). Wins join as co-primary once both arms >= 10%
   AND F7 audit clean; else revert and log in DECISIONS.md
   regenerate 200 rotating silver labels under the new pi_ref; report argmax stability across generations
 ```

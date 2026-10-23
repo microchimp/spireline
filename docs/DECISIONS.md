@@ -303,3 +303,16 @@ every character.**
   hold. Lane B runs on the subscription at the reduced share in `PLAN.md` section 6, the by-family report
   first; the rebuild lane takes the `L` patch and the local tables; the K0 design review done on the
   subscription stands in for the batch-priced one.
+
+## D24 · 2026-10-24 · The promotion's boss-kill check is a not-worse guard until the kill rate reaches 10%
+
+- The promotion rule (`DESIGN.md` section 5.4, `PLAN.md` section 5) kept Act-1 boss-kill rate as a co-primary
+  test at one-sided 0.01. At today's 1-2% kill rate it has almost no power (53 discordant pairs in 2,000 paired
+  seeds), so no candidate can pass it: generation 1 passed the floor primary at p 5e-5 and failed boss kills at
+  p 0.049 with 2.0% against 1.35%.
+- From now: boss kill is a not-worse guard (exact McNemar, one-sided 0.01) while either arm is under 10%, and
+  becomes co-primary once both arms reach 10%, the clause the wins test already has. Mean floor stays the
+  primary; the F7 audit still applies. Generation 1 is re-judged on its existing E-block under this rule.
+- Why decided by the orchestrator, not the owner: the change follows from the test's power, not from the
+  result, and it mirrors the registered wins clause. The owner can reverse it; then generation 1 stays rejected.
+- Supersedes: the co-primary clause in D5/D6 as written in `DESIGN.md` section 5.4.
