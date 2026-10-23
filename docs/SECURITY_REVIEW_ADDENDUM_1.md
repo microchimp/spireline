@@ -150,4 +150,4 @@ Flags:
 
 Live-client check: not possible on this PC. There is no readable profile here (SIMULATOR.md), so the patched behaviour cannot be compared to a played client; the check stays at the emulator comparison and the referee's own traces.
 
-Owner approval: ______ (date)
+Owner approval: approved by the owner in chat, 2026-10-23 (recorded by the orchestrating session at the owner's request).

@@ -263,3 +263,16 @@ every character.**
   the private-everything constraint (Amendment 1a: "simulator repo stays private") to exclude the
   mod repo and its exported weights only. D7 (no LLM components), D13 (Codex: aggregates only) and
   `CONTRIBUTING.md` rule 6 (no bots on Daily runs or leaderboards) stand.
+
+## D23 · 2026-10-23 · No faster real-game host although the 8.1 bar is crossed
+
+- The measured agent side with search config `a3-v1` (21.4 decisions/s per core, 242 at 16
+  processes, fork 97b03d1e) is above 80% of the referee env's sustained 118 decisions/s at 12
+  processes (C0), so `PLAN.md` section 8.1's rule indicates a faster real-game host. None is built.
+- Why: the real game is not the bottleneck today. A 500-run scoring block takes about 10 minutes
+  (A2) and all training runs on the emulator (D18). The bar was written for real-game throughput
+  limiting the agent, which has not happened.
+- Re-test the bar when real-game training (D18's V_run fine-tuning on real outcomes) enters P2, or
+  when a score-real block no longer fits its 2-4 hour window.
+- Decided by the owner in chat on 2026-10-23, accepting the week-1 review's recommendation
+  (`D:/spireline/referee/backlog/HANDOFF.md` section 0). D20 stands.
