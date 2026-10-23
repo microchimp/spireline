@@ -95,3 +95,59 @@ Everything else in this addendum stays in force:
 - one game per process.
 
 The channel is local to the PC; it is not a network socket reachable from outside it. A Godot-free host is not covered by this amendment and still needs its own addendum.
+
+## H2, H3, H6 status (2026-10-23)
+
+**H2: done by the owner.** 82 Windows Firewall outbound block rules, one per `SlayTheSpire2.exe` and `crashpad_handler.exe` under the 41 referee game folders, by program path. A new game copy is not covered until the owner reruns the rule command, so rounds reuse the existing copies.
+
+**H3: not applicable.** The save folder `%APPDATA%\SlayTheSpire2` has never been created on this PC (the game is installed and has never been played here). The referee's real-profile-state check that it stays absent is the control.
+
+**H6: Harmony patch list.** Compiled from fork `main`, `proto/real-game-env` and `env/leak-probe` (`referee/driver/**`), by searching for `harmony.Patch(`. All patches are installed by the driver inside the headless game process; each names a game method, and none carries game code here. "Reach" is whether the patched method, as patched, can touch the network (N), the real profile or save folder (P) or the file system (F); "none" means the patch adds no such reach and only removes or observes work.
+
+Branch key: all = `main`, `proto/real-game-env` and `env/leak-probe` (the two env branches add no patch site; their Env.cs and the Selector.cs hooks `PickHook` and `CardRewardHook` are driver code with no Harmony call). Line numbers are on `main`.
+
+| Patch | Branch | File:line | Game method | Kind | Reason | Reach |
+|---|---|---|---|---|---|---|
+| Checksum tap | all | ChecksumTap.cs:131 | ChecksumTracker.GenerateChecksum | prefix + postfix | time the checksum and note which action it belongs to | none |
+| Choice context | all | Selector.cs:151 (env: 157) | CardSelectCmd.From* (FromHand, FromHandForDiscard, FromHandForUpgrade, FromCombatPile, other From*) | prefix | answer card choices headless (first choice, or the agent's pick on the env branches) | none |
+| Trace hooks | all | Trace.cs:103 | Hook.Before*, Hook.After* | prefix | record hook order in trace mode (inert unless a trace is on) | none |
+| Trace move | all | Trace.cs:106 | MonsterModel.PerformMove | prefix | record which monster moves | none |
+| Trace roll | all | Trace.cs:109 | MonsterModel.RollMove | prefix + postfix | attribute AI random draws to a monster | none |
+| Trace rng | all | Trace.cs:114 | Rng.Next* | postfix | record each random draw | none |
+| Room fade skip | all | Patches.cs:37 | NTransition.RoomFadeIn | prefix | skip the fade so rooms change at once | none |
+| Preload skip (fast) | all | Patches.cs:43 | PreloadManager.LoadRunAssets, LoadActAssets, LoadRoomAssets | prefix | skip asset warm-up and the forced GC | none (removes asset loads) |
+| Fast tweens | all | Patches.cs:70 | TweenHelper.AwaitFinishedInternal | prefix | finish awaited tweens at once | none |
+| Tween trace | all | Patches.cs:105 | TweenHelper.AwaitFinishedInternal | prefix | diagnostics: log awaited tweens (job `trace_frames`) | none |
+| Silence | all | Patches.cs:152 (via 175-180) | NAudioManager (PlayLoop, StopLoop, SetParam, StopAllLoops, PlayOneShot, PlayMusic, UpdateMusicParameter, StopMusic); NRunMusicController (11 music and ambience methods); NDebugAudioManager (Play, Stop, StopAll) | prefix | no sound is ever started | none |
+| Still FX | all | Patches.cs:215 | RichTextEffect subclasses, `_ProcessCustomFX` | prefix | stop text effects animating | none |
+| Still card trail | all | Patches.cs:219 | NCardTrail._Process | prefix | stop trail updates | none |
+| Nodeless preload skip | all | NodelessPatches.cs:99 | PreloadManager.LoadRunAssets, LoadActAssets, LoadRoomAssets | prefix | no scenes are shown nodeless | none |
+| Clear screens | all | NodelessPatches.cs:105 | RunManager.ClearScreens | prefix | skip UI-node calls | none |
+| Map room enter | all | NodelessPatches.cs:109 | MapRoom.EnterInternal | prefix | skip UI-node creation, keep the restore check | none |
+| Rewards screen | all | NodelessPatches.cs:113 | NRewardsScreen.ShowScreen | prefix | no overlay nodeless | none |
+| Card node | all | NodelessPatches.cs:119 | CardPileCmd.CreateCardNodeAndUpdateVisuals | prefix | no card nodes nodeless | none |
+| Card preview | all | NodelessPatches.cs:123 | CardCmd.PreviewInternal | prefix | no preview nodes | none |
+| Forge preview | all | NodelessPatches.cs:126 | ForgeCmd.PreviewSovereignBlade | prefix | no preview nodes | none |
+| Screen shake | all | NodelessPatches.cs:133 | NGame.ScreenShake, ScreenRumble, ScreenShakeTrauma | prefix | the shake target does not exist nodeless | none |
+| VFX | all | NodelessPatches.cs:139 | VfxCmd.PlayVfx | prefix | stop orphan VFX nodes | none |
+| Nodeless audio | all | NodelessPatches.cs:149 | NAudioManager public void Play*, Stop*, SetParam, UpdateMusicParameter (not volume setters) | prefix | sound only | none |
+| Trigger anim | all | NodelessPatches.cs:156 | CreatureCmd.TriggerAnim | prefix | no creature nodes | none |
+| Bundle show | all | NodelessPatches.cs:165 | NChooseABundleSelectionScreen.ShowScreen | postfix | record the screen so the driver answers it | none |
+| Bundle selected | all | NodelessPatches.cs:167 | NChooseABundleSelectionScreen.CardsSelected | prefix | return the result without the overlay removal | none |
+| Game over | all | NodelessPatches.cs:180 | CreatureCmd.Kill | postfix | replace the one expected nodeless exception with the game's own RunManager.OnEnded(false) | none added (the game's own OnEnded may write run history; it does so on any host) |
+| Deferred state change | all | NodelessPatches.cs:200 | CombatStateTracker.CallCombatStateChangedDeferred | prefix | wait one frame on the scene tree as the full host does | none |
+| Fallback detect | all | NodelessPatches.cs:218 | AbstractModel.MutableClone | postfix | read-only: note models using a fallback | none |
+| Orphan count | all | NodelessPatches.cs:225 | Driver.Snapshot (our own driver method) | postfix | diagnostics: orphan-node count | none |
+| Test-mode node factories | all | NodelessPatches.cs:353 | every static method in the game's Nodes namespaces whose body starts "if TestMode.IsOn return null" (found by IL scan at boot, names logged) | prefix | return null at once, which the method already does in test mode | none |
+| Hook order (trace mode, rebuild-plan D2, "L patch") | none yet | not in code | widen the Hook name filter to Modify*, Should*, Try*; postfix on IterateHookListeners and its run twin | prefix + postfix | write `L` records to check hook order against the game | none (read-only wrapper, off unless the spec asks); approved in principle, not yet in code |
+
+Patch count: 32 rows in code (the Silence, Nodeless audio and Test-mode rows each expand to several methods at runtime); the same set on `main`, `proto/real-game-env` and `env/leak-probe`. One more row (the L patch) is not yet in code.
+
+Flags:
+- No patch disables or bypasses the referee's no-network check, and none patches a networking, Steam, save-writing or profile method. The no-network check is outside the Harmony set.
+- Not a Harmony patch but worth the owner's eye: Driver.cs sets `SaveManager.Instance.PrefsSave.FastMode` and `Progress.EnableFtues` in memory at boot (lines 216, 258), and calls `Progress.MarkActAsSeen` (349) on the in-process profile. These do not create the real save folder by themselves; the real-profile-state check is the control.
+- Filesystem reach of the patches themselves: none added. The only removals are of work (assets, UI, audio).
+
+Live-client check: not possible on this PC. There is no readable profile here (SIMULATOR.md), so the patched behaviour cannot be compared to a played client; the check stays at the emulator comparison and the referee's own traces.
+
+Owner approval: ______ (date)
