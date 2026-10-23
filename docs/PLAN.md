@@ -310,7 +310,11 @@ simulations/s) at 120 simulations a decision: ~12 acted decisions/s per core, ~7
 cores, ~1,000-1,500 self-play runs an hour at ~400 decisions a run, ~25-35k runs a day. A generation of ~2,000 runs is
 therefore hours, not nights. For scoring, the referee at 108 decisions/s sustained already exceeds what a searching
 agent can consume. **A faster real-game host is needed only if the measured agent-side decision rate exceeds 80% of
-the measured sustained env rate at the process count used.** A0 and C0 replace these estimates with measurements in
+the measured sustained env rate at the process count used.** That test applies once the real game is a training
+environment (D18 fine-tuning, or scoring blocks that take more than an hour a day). While it only scores, a 500-run
+block takes ten minutes and the bar is not a trigger. Week 1 measured 242 agent decisions/s at 16 processes against
+118/s sustained at 12 (crossed), and no host is built on that basis (decided 2026-10-23); re-test when real-game
+training enters P2. A0 and C0 replace these estimates with measurements in
 week 1; D20 holds until then.
 
 ### 8.2 The transfer gap and the agent-weighted ranking (replaces HANDOFF step 5)
