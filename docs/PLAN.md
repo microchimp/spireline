@@ -24,8 +24,8 @@ This plan turns the order around:
 2. **Judge it on the real game.** The game's own code runs headless on this PC and is exact by definition. Every week
    the current AI plays a fixed block of real games. Its win rate and how far it gets are the headline numbers.
 3. **Let the AI tell us which copy errors matter.** Every real game the AI plays is replayed on the copy. Where the two
-   disagree, the disagreement is ranked by how often the AI meets it. Only those errors get fixed. The big rebuild of
-   the copy's core is decided in week 4 from that ranking, at the reviewed price, not assumed.
+   disagree, the disagreement is ranked by how often the AI meets it. Only those errors get fixed. The rebuild of the copy's core is decided in week 4 from that ranking, in one of two sizes: the kernel plus
+   the few hook families the AI actually meets, or the full rebuild. Neither is assumed.
 4. **Keep the CPU busy and the credit idle.** Self-play, training, scoring and comparison are round-the-clock CPU jobs.
    Agent rounds consume only what those jobs prepare. Sonnet does the routine work; Opus designs, amends and reviews.
 
@@ -88,6 +88,7 @@ simulator, the referee, game files or decompiled text.
 | D18 | Where learning runs: the headless referee may score the agent and supply outcomes to fine-tune the learned components (Amendment 1a). No end-to-end RL policy, no bot on the live client. | Narrows D6; keeps D5's method |
 | D19 | Fidelity work is ranked by agent play. The combat-kernel rebuild is decided at gate G1 by the rule in section 8.3, at the reviewed price (~255 rounds, ~73% of a week). | HANDOFF 5.4's 40-50% and its unconditional start |
 | D20 | Hosts: the full-host referee env is the judge. The nodeless run host and the Godot-free host are parked behind the throughput bar of section 8.1. | HANDOFF 5.1, 5.2 |
+| D23 | The kernel rebuild has two tiers: the kernel plus the hook families the agent's ranking points at (estimated 60-100 rounds), or the full rebuild (reviewed ~255 rounds); G1 chooses by the rule in section 8.3, on a by-family divergence report. | D19's single all-or-nothing rebuild at G1 |
 | D22 | The target is better than the best human players, measured against the references of section 1; a public in-fight mod carrying only the distilled policy network is a side product with its own release gate (Lane F). | Section 1's earlier "human average" finish line; the private-everything rule, for the mod and its weights only |
 | D21 | Budget and model policy: a 15%-of-a-week ceiling, the lane split of section 6, Sonnet first, idle credit unspent. `docs/PLAN.md` is the plan of record. | HANDOFF 7 D-b's cap |
 
@@ -271,15 +272,17 @@ forward or reallocated without a yield that justifies it.
 | C referee env | 2-3 | 5-8 | 2-4 | Sonnet |
 | D scheduler | 2-3 | 1-2 | 1 | Sonnet, Haiku |
 | F public mod | 0 | 0 | 3-5 (from week 6) | Sonnet; Opus for the state reader |
+| R rebuild lane (Tier 1 kernel stage, D23) | 0 | 20-25, taking Lane B's share while the API credit covers fixes | per G1 | Opus for the dispatcher and queue; Sonnet for adapters, tables, tests |
 | orchestration and weekly review | 2 | 4 | 4 | Opus |
-| **total** | **13-18 (~3-5%)** | **37-49 (~10-14%)** | **32-44 (~9-13%)** | |
+| **total** | **13-18 (~3-5%)** | **at the 52-round ceiling (15%)** | **32-44 (~9-13%)** | |
 
 *Estimated.* Re-priced at G0 and G1 from measured rounds per fix, generations per week and env throughput. If any lane's
 measured cost exceeds its estimate by more than 25% for two weeks, the orchestrator stops that lane and reports.
 
-The kernel rebuild, if G1 approves it, is a separate line at the reviewed ~255 rounds (190-340), ~73% of a week
-(45-122%), run at no more than 15% a week with `rebuild-plan.md`'s C1 calibration and K1-K5 kill criteria, P0 items
-first (IEngine, byte proof, single comparer, local tables).
+The kernel rebuild, if G1 approves it, is a separate line: Tier 1 at an estimated 60-100 rounds (~17-28% of a week,
+unreviewed) or Tier 2 at the reviewed ~255 rounds (190-340), ~73% of a week (45-122%), either run at no more than 15% a
+week with `rebuild-plan.md`'s C1 calibration and K1-K5 kill criteria, P0 items first (IEngine, byte proof, single
+comparer, local tables).
 
 ## 7. The CPU schedule
 
@@ -324,20 +327,46 @@ Reported weekly from `score-real`:
 - the top 20 mechanism groups by agent weight, each tagged single-site or architectural (listener order, action queue,
   damage and block pipeline order, RNG stream order, as the audits define them);
 - the share of agent weight in architectural groups.
+- divergence by hook family: agent weight and architectural share per family (the audits' families: exhaust and discard
+  triggers, the damage and block pipeline, start- and end-of-turn hooks, card-play hooks, power stacking and removal,
+  relic triggers, RNG order), with the cumulative curve over families, written to `agent/gen<N>/rank/by_family.md`.
 
 Divergences at near-tied decisions are not harmless by assumption: a group is also tagged by whether the run's outcome
 differed between engines (outcome-changing). From P2, value regret per decision in the label's units is added on the
 labelled benchmark (review m6).
 
-### 8.3 Gate G1 (end of week 4): the kernel rebuild
+### 8.3 Gate G1 (end of week 4): the kernel rebuild, in two tiers
 
-Approve the combat-kernel rebuild (D19) if, after at least two weekly fix cycles on the ranked list:
-- architectural groups hold more than 50% of agent weight, or
-- `G` has not fallen by half from its week-2 value and the fix lane's groups closed per round is below 1.
+The rebuild bundles a cheap part and an expensive part, and G1 chooses how much of it to do.
 
-Otherwise continue demand-driven fixing and re-test at G2. If approved: the P0 items of `rebuild-plan.md` first (IEngine
-with one comparer, byte proof, local tables, the `L` patch), then P1-P2, with C1 after two P2 days and the K1-K5 kill
-criteria. The run layer is not rebuilt (D20); Codex walk and corpus gates stay as regression gates on the old engine.
+- **Tier 1, the kernel plus ranked families** (*estimated, unreviewed:* 60-100 rounds, ~17-28% of a week). Build the
+  kernel in the game's shape: the hook dispatcher with the game's listener order, generated from a descriptor table that
+  the trace-mode `L` patch verifies against the real game, and the action queue (about 30-40 rounds: `rebuild-plan.md`
+  P1's kernel plus the P0 construction checks). Then migrate content onto it one hook family at a time, in the order of
+  the by-family ranking of section 8.2, each family behind the gates; for families not yet migrated the dispatcher calls
+  the old code path. Stop when the unmigrated families hold under 10% of agent weight. A hybrid runs throughout; its
+  soundness is measured by the transfer gap and the per-family divergence, never assumed.
+- **Tier 2, the full rebuild** (*reviewed:* ~255 rounds, ~73% of a week, 45-122%). `rebuild-plan.md` P0-P2 with C1 and
+  K1-K5, as D19 priced it: every combat model re-expressed as handlers, the tests converted, one switchover.
+
+**The rule.** A rebuild is approved if, after at least two weekly fix cycles on the ranked list, architectural groups
+hold more than 50% of agent weight, or `G` has not fallen by half from its week-2 value and the fix lane's groups closed
+per round is below 1. Then:
+- **Tier 1** if the top five hook families hold at least 70% of the architectural weight (the weight is concentrated), or
+  if the owner wants the smaller commitment first. Tier 1 escalates to Tier 2 if the architectural share has not halved
+  once the top five families are migrated, or if a migrated family's divergence returns through an unmigrated one more
+  than twice.
+- **Tier 2** if the architectural weight is spread (the top five families under 50%), since family-by-family migration
+  would then cover most of the content anyway.
+
+Otherwise continue demand-driven fixing and re-test at G2. In both tiers the P0 items of `rebuild-plan.md` come first
+(IEngine with one comparer, byte proof, local tables, the `L` patch), the run layer is not rebuilt (D20), and the Codex
+walk and corpus gates stay as regression gates on the old engine.
+
+**Decided 2026-10-23 (D23):** the owner approved Tier 1's kernel stage ahead of G1. The P0 option-neutral items and the
+kernel start in week 2 in a rebuild lane capped at 25 rounds a week, while Lane B runs on the API credit. G1 then sets the
+family migration order from the by-family table and decides any escalation. The kernel is needed in both tiers, so
+nothing is wasted if G1 chooses Tier 2.
 
 ### 8.4 Gates G0 and G2
 
@@ -353,7 +382,7 @@ criteria. The run layer is not rebuilt (D20); Codex walk and corpus gates stay a
 | phase | weeks | work | gate |
 |---|---|---|---|
 | **P0 foundations and measurements** | 1 | A0 `rl/` on Windows and the speed table; A1 lockstep adapter; C0 env measurement round and the leak result; D0 job kinds; E owner actions; decisions recorded | G0 |
-| **P1 the flywheel** | 2-4 | nightly generations; weekly `score-real` blocks; ranked list and fix cycles; C1 hardening; A3 search tuning (Opus); F3/F4 run-clone tests then Acts 2-3 (A4) | G1 |
+| **P1 the flywheel** | 2-4 | nightly generations; weekly `score-real` blocks; ranked list and fix cycles; C1 hardening; A3 search tuning (Opus); F3/F4 run-clone tests then Acts 2-3 (A4); Tier 1 kernel stage in the rebuild lane (D23) | G1 |
 | **P2 scale and judge** | 5-8 | the rebuild if G1 approved, else continued fixing; V_run fine-tuned on real outcomes (D18); labels and the regret benchmark (A6); top-player reference (2); the distilled network and its scorer (F0), the mod built (F1); H6 check recorded | G2 |
 | **P3 other characters, public proof** | 9+ | the mod released when Lane F's gate passes (F2); the head-to-head seed block with invited players (reference 3); lab combat recordings for Silent, Defect, Necrobinder, Regent (D-d, from the Osty, orb and pet sets); env `character` key; per-character generations; the observation-only bridge for a live advisor if the owner wants one | per character: the P2 criterion |
 

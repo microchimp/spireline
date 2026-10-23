@@ -276,3 +276,26 @@ every character.**
   when a score-real block no longer fits its 2-4 hour window.
 - Decided by the owner in chat on 2026-10-23, accepting the week-1 review's recommendation
   (`D:/spireline/referee/backlog/HANDOFF.md` section 0). D20 stands.
+
+## D23 · 2026-10-23 · The kernel rebuild has two tiers; G1 chooses on a by-family report
+
+- Tier 1: the kernel in the game's shape (the hook dispatcher with the game's listener order from a
+  generated table verified by the trace-mode `L` patch, and the action queue), then content migrated
+  onto it one hook family at a time in the order of the agent's by-family divergence ranking, the
+  old code path serving unmigrated families, stopping when unmigrated families hold under 10% of
+  agent weight. Estimated, unreviewed: 60-100 rounds, ~17-28% of a week.
+- Tier 2: the full rebuild as D19 priced it (reviewed ~255 rounds, ~73% of a week).
+- G1 picks by `PLAN.md` section 8.3: Tier 1 when the top five hook families hold at least 70% of the
+  architectural weight or the owner wants the smaller commitment first, with escalation rules; Tier 2
+  when the weight is spread. The weekly Lane B report gains a by-family table.
+- Why: the full price bundles a cheap kernel (30-40 rounds) with an expensive re-expression of about a
+  thousand content models; three quarters of the agent's divergence is in a few ordering families, so
+  migrating those first buys most of the benefit at a fraction of the cost. The earlier objection to a
+  hybrid ("never sound until done") is answered by the real game as judge: soundness is measured by the
+  transfer gap and per-family divergence, not assumed.
+- Decided 2026-10-23 by the owner, in chat: start Tier 1's kernel stage now, ahead of G1, in a
+  rebuild lane capped at 25 rounds a week while Lane B runs on the API credit. G1 sets the family
+  order from the by-family table and decides any escalation. A batch-priced independent review of
+  the Tier 1 design runs on day 1 of `API_CREDIT_PLAN.md`.
+- Supersedes: D19's single all-or-nothing rebuild decision at G1. D19's price for the full rebuild stands
+  as Tier 2.

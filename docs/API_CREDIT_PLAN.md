@@ -27,8 +27,8 @@ an Opus review round $4-8. A one-shot review sent as a batch request with the do
 | # | item | how | model | est. | ceiling |
 |---|---|---|---|---|---|
 | 1 | Triage of the 218 agent-ranked groups, then the 1,880 open lab groups: mechanism, host-suspect confidence, single-site or architectural, with the evidence line | Batch API | Haiku 5.5 | $2 | $4 |
-| 2 | Fix kits for every single-site agent-ranked group (~60): the exact divergence, the emulator mechanism and its other uses, the proposed change, the failing scenario test to write, risk | Batch API, one request per group, shared cached prefix (hook and queue code, scenario format) | Sonnet 5.5 | $5 | $8 |
-| 3 | Independent one-shot reviews as batch requests: (a) the lockstep bridge and ranking method (`real-game-env.md`, the A1 notes, `top20.md`, HANDOFF section 0); (b) the G1 rule and this plan | Batch API | Opus 5.5 | $2 | $4 |
+| 2 | Fix kits for every single-site agent-ranked group (~60): the exact divergence, the emulator mechanism and its other uses, the proposed change, the failing scenario test to write, risk; plus one table of agent weight by hook family (`rank/by_family.md`, `PLAN.md` section 8.2) | Batch API, one request per group, shared cached prefix (hook and queue code, scenario format) | Sonnet 5.5 | $5 | $8 |
+| 3 | Independent one-shot reviews as batch requests: (a) the lockstep bridge and ranking method (`real-game-env.md`, the A1 notes, `top20.md`, HANDOFF section 0); (b) the G1 rule and this plan; (c) the Tier 1 kernel plan (`PLAN.md` section 8.3 with `rebuild-plan.md` sections 2-3), submitted on day 1 so its verdict lands before the kernel rounds spend much | Batch API | Opus 5.5 | $2 | $4 |
 | 4 | The trace-mode hook-order patch (`rebuild-plan.md` D2) and local table generation (D5): option-neutral, needed for G1 evidence and for any rebuild | Claude Code on the key, Sonnet workers, one reviewer each | Sonnet 5.5 | $18 | $22 |
 | 5 | Lane B fix cycle for week 2: land the item-2 kits through bug process v2, one reviewer each, behind the gates | Claude Code on the key, Sonnet workers, Opus amend only after a failed Sonnet round | Sonnet 5.5 | $55 | $55 |
 | 6 | Lane F research only: the game's modding framework, what a mod may read, the game's and the framework's terms for a public mod | Claude Code on the key with web access, one capped round | Sonnet 5.5 | $5 | $6 |
@@ -43,7 +43,8 @@ roughly 15-20 landed-or-rejected fixes.
 - **Day 1:** items 1, 2 and 3 are submitted as batches (results within hours) and item 4 starts. Item 2 works from the
   traces and repros that exist; groups whose minimal repro the lab has not made yet get a kit marked "repro pending".
 - **Day 2 onward:** item 5 lands kits as the reviews and repros allow, in the ranking's order, single-site groups only.
-  Architectural groups wait for G1 (`PLAN.md` section 8.3). Item 6 runs once, any day.
+  Architectural groups wait for G1 (`PLAN.md` section 8.3), which now chooses between two rebuild tiers on the
+  by-family table, so item 5 re-reports that table after the cycle. Item 6 runs once, any day.
 - **Division with the subscription session** (P1 week 2, `HANDOFF.md` section 0 briefs): the API-key session owns Lane B
   (brief B1) and item 4 for the two weeks; the subscription session owns C1, A2b, A1b, the leak follow-ups, D1 and the
   weekly review. If the API-key session has landed nothing by day 4, the subscription session takes B1 back. Landing is
