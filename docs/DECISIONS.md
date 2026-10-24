@@ -369,6 +369,12 @@ every character.**
   with a go/no-go self-test (at most 1.2 ms host CPU per batch, at least 1,000 batches/s) before any plumbing. Safety:
   logits over a local-only authenticated named pipe, per-process CPU fallback, the kill file `LAB/GPU_OFF`, the judge on
   the CPU path until a 1,000-seed equivalence check passes, `jobs.json` only after a 2,000-run server block passes.
+- Addendum 2026-10-24 17:02Z: piece 1 landed on fork main `b163b4cc` (Python only, default off, 3,105 tests, 0 new
+  failures). Go/no-go GO: graph replay costs 0.09-0.41 ms of host CPU per batch against 2.5-3.4 ms eager, 4,898 calls/s
+  capacity against a demand bound of about 1,830; the tolerance check passes on 10,000 recorded positions (max logit
+  difference 1.9e-6, no argmax flips); a two-worker smoke beside the running lab gives 14.6 against 12.0 decisions per
+  CPU-second. Window 1 (lab paused) at 21:00Z measures throughput at 16-24 workers and the 1,000-seed block; `jobs.json`
+  switches only after the 2,000-run server block passes.
 
 ## D28 · 2026-10-24 · Lane F proceeds on the assumption that modding is allowed
 
