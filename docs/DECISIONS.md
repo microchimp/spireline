@@ -420,6 +420,13 @@ every character.**
 - Family order for the migration: F10 and F08 (in progress), then F06, F11, F15. G1 at the end of week 4 confirms or
   escalates per 8.3; it no longer has to choose the tier.
 - Decided by the orchestrator on the week-3 session's numbers (HANDOFF 2026-10-24 13:00Z line); reversible by the owner.
+- Progress 2026-10-24 ~19:40Z: every F08/F10 (model, hook) pair has a Core2 handler (the port gate reads 0) at fork main
+  `16c35043`: the pilot and C2-C6 from the cloud, the monster and local batches L1-L3 and the R4 reroutes locally (landing 8,
+  `ad9c8909`, full-corpus byte proof 0 differ over 47,432 pairs). The L3b review found and fixed a kernel bug (a kernel copy kept
+  the live run, so a search fork's death spawn advanced the live run's stream; fork test added). The switch (R7) stays off: its
+  checks list holds about twenty old-against-game items, each to be closed with a test, plus one new blocker (a forked combat
+  has no run view, so the run deck's listeners would answer empty in search forks); it does not fit the night's remaining
+  rounds and waits for the owner's next allowance.
 
 ## D29 · 2026-10-24 · Overnight decisions under the owner's delegation (reversible in the morning)
 
