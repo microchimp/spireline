@@ -348,3 +348,17 @@ every character.**
 - Decided by the orchestrator; reversible by the owner. Owner actions still open: allow `builds.dotnet.microsoft.com` in the
   cloud environment's network settings and add a setup script that installs the .NET 9 SDK (until then sessions use the
   registry-image or the 10.0 roll-forward route `docs/CLOUD_ENV.md` records).
+
+## D27 · 2026-10-24 · A GPU lane: batched inference for self-play, the value head, sweeps in quiet windows
+
+- The PC's GPU idles between train jobs while self-play, the generation loop's bottleneck, pays the policy prior's cost on the
+  CPU in every worker (1.4x of the plain search, measured in week 3). A new lane builds one GPU inference server that all
+  self-play workers share (Windows-safe transport, batching by deadline, CPU fallback, kill switch), designed in
+  `docs/rl/GPU_INFERENCE.md` on the fork and reviewed before code; acceptance is decisions per second with and without it on
+  the same seeds and unchanged sample quality as the promotion judge sees it. The same lane trains the run-value head harder
+  (ensembles, longer schedules, the completed-Q target; adopted only if the dev-set skill CI excludes 0) and runs the sweeps in
+  the quiet windows when the CPU is reserved for game blocks.
+- Budget: at most 25 reviewed rounds this week, Opus for design and review, Sonnet workers for implementation.
+- Why: the owner asked how idle GPU time could speed the project and approved these three uses; the emulator stays on the CPU
+  (the win is in inference, not simulation).
+- Decided 2026-10-24 by the owner, in chat.
