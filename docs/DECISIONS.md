@@ -410,6 +410,10 @@ every character.**
   switch, the final report; the completed-Q A/B only if it fits), GPU 10 (window 1, the 2,000-run block; pieces 2 and 3
   wait for the owner). Each lane stops at its cap and leaves the rest queued; the orchestrator re-reads the page at each
   wake and stops everything but landings at 65%.
+- Addendum 3 (2026-10-24 19:40Z): the page read 54% at 19:35Z, up 4 points on about 20 rounds (0.2 a round), so the
+  kernel lane, stopped at its 18 with the port gate at 0 and R7b (fifteen switched-on failures, triaged) next, gets 8 more
+  rounds for R7b, the remaining R7 checks and the switch-on proof; the switch flips only if the proof passes. Expected
+  finish under 65%; the 65% stop rule stands.
 
 ## D23 addendum · 2026-10-24 · The by-family table now reads Tier 1 decisively; the migration order is set
 
