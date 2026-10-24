@@ -372,3 +372,13 @@ every character.**
 - The compliance list of the research's section 5 still applies to the mod itself: free, recommend-only, `affects_gameplay:
   false`, displayed state only, no game text, assets or decompiled code shipped, version-pinned, Workshop distribution.
 - Decided 2026-10-24 by the owner, in chat.
+
+## D25 addendum · 2026-10-24 · The week's allowance may reach 70% by 2026-10-25
+
+- The owner allows the subscription's weekly usage to reach 70% by 2026-10-25 ~13:00Z (39% at 13:00Z on 2026-10-24).
+  Allocation for the 24 hours: kernel lane up to 45 more rounds (the fixed pilot pattern, R4/R4c, the F08 review's two
+  oracles, R7 switch-on behind the proof); week-3 session up to 35 (land the five open cloud PRs, the re-ranked by-family
+  table, placement rules for the unassigned weight, five to eight kits, re-anchor paths 3/6/turn_advanced, the week-3
+  review); GPU lane cap 25 to 50 (the inference server implemented and measured); the rest reserve. The gate stays serial;
+  landings queue after the 15:45Z quiet window.
+- Decided 2026-10-24 by the owner, in chat.
