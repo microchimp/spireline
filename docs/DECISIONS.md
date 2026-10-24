@@ -418,6 +418,11 @@ every character.**
   kernel lane, stopped at its 18 with the port gate at 0 and R7b (fifteen switched-on failures, triaged) next, gets 8 more
   rounds for R7b, the remaining R7 checks and the switch-on proof; the switch flips only if the proof passes. Expected
   finish under 65%; the 65% stop rule stands.
+- Addendum 4 (2026-10-24 22:50Z): the page read 56% at 22:48Z. The R7 proof on `a42c41a3` did not pass (corpus 122 fights
+  worse of 4,392, 113 of them one mechanism: under the switch the old combat ending fires at the kill and clears the piles,
+  while the game ends the combat after its action queue drains; the strict step test lacks AfterAttack after the kill), so
+  nothing is switched on. The kernel lane gets 5 more rounds for R7d (the ending in the game's shape, AfterAttack after a
+  killing attack, the fewer-fields cases) and the proof rerun; the switch flips only if every gate passes.
 
 ## D23 addendum · 2026-10-24 · The by-family table now reads Tier 1 decisively; the migration order is set
 
