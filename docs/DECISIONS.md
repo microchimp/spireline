@@ -362,3 +362,13 @@ every character.**
 - Why: the owner asked how idle GPU time could speed the project and approved these three uses; the emulator stays on the CPU
   (the win is in inference, not simulation).
 - Decided 2026-10-24 by the owner, in chat.
+
+## D28 · 2026-10-24 · Lane F proceeds on the assumption that modding is allowed
+
+- The derivative-work question in `docs/research/MODDING.md` (a policy network trained in an emulator built from decompiled
+  source, uploaded under the Workshop warranty) is closed by the owner: assume it is allowed. Mega Crit openly supports
+  modding, links modders to guides that decompile the game, and comparable advisor and overlay mods already exist on the
+  Workshop and Nexus. No lawyer, no publisher query before F2.
+- The compliance list of the research's section 5 still applies to the mod itself: free, recommend-only, `affects_gameplay:
+  false`, displayed state only, no game text, assets or decompiled code shipped, version-pinned, Workshop distribution.
+- Decided 2026-10-24 by the owner, in chat.

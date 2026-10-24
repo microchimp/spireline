@@ -216,7 +216,7 @@ Spireline's referee is the game's own code run headless under the terms recorded
 - Does the official loader run mods in a Windows `--headless` process? Only upstream's own use of STS2MCP and a macOS project say so.
 - Does the Harmony library ship with the game, or must the mod bundle it? Not found.
 - Does the game record the active mod list in run files or leaderboard submissions? Not found; the `affects_gameplay` reporting suggests it records at least the gameplay-affecting set.
-- The distilled policy is trained on an emulator derived from decompiled source. Whether a network trained that way counts as a derivative work under SSA 2.G is a legal question the sources do not answer; the owner decides before F2.
+- The distilled policy is trained on an emulator derived from decompiled source. Whether a network trained that way counts as a derivative work under SSA 2.G is a legal question the sources do not answer. **Closed by the owner on 2026-10-24 (D28): assume it is allowed; Mega Crit openly supports modding and comparable mods exist.**
 - Which branch to target first: the main branch (v0.107.1, the referee's version) or the beta (v0.111.0, where the Workshop's active modders are).
 
 ---
