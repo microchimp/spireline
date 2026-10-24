@@ -50,6 +50,11 @@ the intended effort per item, not a setting, so the estimates are approximate.
 | 11 | Reserve | | $30 |
 | | **total** | | **$250** |
 
+**Re-priced 2026-10-24 ~13:40Z on the first usage-page reading:** a delivered session costs about $12, not $5-8, so the $147 left buys
+about twelve sessions. Order from here: C2-C6 (five, after the fixed pilot lands), the next Lane B mechanism batches (two or three),
+confirming tests (one or two), documentation (one), reserve (one or two). Cloud reviews of PRs stop: the PC lanes review on the
+subscription, which has its own weekly limit but no expiry. The table above keeps the intended shares; the counts are the rule.
+
 Items 2 and 4 float: they take what the others leave. The usage page is the only cost signal (cloud sessions do not report per
 session), so the table is re-priced after the first three readings.
 
@@ -89,7 +94,7 @@ day here, with what landed.
 
 | date | items run | landed | usage-page total |
 |---|---|---|---|
-| 2026-10-24 | 1, 6, 7 (three reviews), 4 (C1 pilot, C7, C8), then at ~13:30Z 2 (`cloud/run-flow-1`, `cloud/combat-core-1`) and 10 (D24 guard, `cloud/d24-guard`); the pilot's cloud review waits for the kernel lane's fixed push; every session requested before ~11:00Z died at clone (the GitHub app install was not registered with the Claude account until the claude.ai callback at ~10:55Z); all eight re-requested at ~11:00Z and all eight delivered PRs by 11:37Z | fork PRs #1 env proof, #2 lockstep review, #3 C8, #4 F08 review, #5 C7, #6 C1 pilot (gating on the PC); spireline PRs #1 modding, #2 plan review merged | not read |
+| 2026-10-24 | 1, 6, 7 (three reviews), 4 (C1 pilot, C7, C8), then at ~13:30Z 2 (`cloud/run-flow-1`, `cloud/combat-core-1`) and 10 (D24 guard, `cloud/d24-guard`); the pilot's cloud review waits for the kernel lane's fixed push; every session requested before ~11:00Z died at clone (the GitHub app install was not registered with the Claude account until the claude.ai callback at ~10:55Z); all eight re-requested at ~11:00Z and all eight delivered PRs by 11:37Z | fork PRs #1 env proof, #2 lockstep review, #3 C8, #4 F08 review, #5 C7, #6 C1 pilot (gating on the PC); spireline PRs #1 modding, #2 plan review merged | **$103 spent, $147 left at ~13:40Z** (usage page): eight delivered sessions plus three just started, so about $12 per delivered session, two to three times the table's estimates |
 
 ## 5. What the credit does not buy
 
