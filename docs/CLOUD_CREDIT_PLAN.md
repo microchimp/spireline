@@ -13,6 +13,9 @@ research**, and the PC's subscription sessions keep **kit writing, the corpus ga
 **Pace:** the owner asked for half spent by the end of Wednesday 2026-10-28 ($125) and the rest before expiry. Spend
 on quality, never on idle calls: Opus reviewers, confirming tests, a second implementer on a hard kit.
 
+**Model note (2026-10-24):** a cloud session runs on the account's default model; the Sonnet/Opus split in the table is
+the intended effort per item, not a setting, so the estimates are approximate.
+
 ## 1. The pipeline
 
 1. **Kit (local, subscription, cheap).** A Sonnet subagent on the PC writes a kit per single-site group into the fork at
@@ -68,7 +71,7 @@ day here, with what landed.
 
 | date | items run | landed | usage-page total |
 |---|---|---|---|
-| 2026-10-24 | | | $0 |
+| 2026-10-24 | 1 (env proof; the first request failed on repository access until the Claude GitHub app was installed on `microchimp` for `spireline` and `spireline-sim`), 6 (modding research), 7 (three reviews: lockstep bridge and ranking, F08 migration design, this plan and the week-3 briefs; inputs on fork branch `review/input-2026-10-24` and `docs/review-input/`) | nothing yet | not read |
 
 ## 5. What the credit does not buy
 
