@@ -19,9 +19,9 @@ whether a cloud container of this environment can install .NET 9 and run the for
    reading the session's transcript, not the owner checking a UI.
 2. **The next stall is the environment.** This container has no .NET SDK, the official installer's download hosts
    are blocked by the network policy, and no reachable package repository carries a .NET 9 SDK (Ubuntu's archive
-   has 8.0 and 10.0; Microsoft's repository for Ubuntu 24.04 has none). The fork targets .NET 9. Without a
-   network-policy change (one allowed domain) the env proof cannot deliver what the plan assumes; appendix B records
-   what was tried and the one fallback that was measured.
+   has 8.0 and 10.0; Microsoft's repository for Ubuntu 24.04 has none). The fork targets .NET 9. The measured way
+   through today is the 10.0 SDK with major roll-forward: both suites green from a bare container in under three
+   minutes (appendix B). One allowed domain in the environment's network settings makes it the 9.0 SDK the PC uses.
 3. **The kits are not too thin; three of twelve are not cloud work at all** (probe-first: they need the game), and
    the rest lack four header lines that would let the local gate reject mechanically and the cloud self-check:
    base sha, allowed-file footprint, expected corpus footprint, stop rules. Batch by mechanism, not by count.
@@ -80,9 +80,9 @@ costs nothing in credit and is an owner action: allow `builds.dotnet.microsoft.c
 settings (the steps are in the cloud-environments documentation; the "Allow package managers" box stays ticked),
 and put the installer call and the two restores in the environment's setup script, so the SDK is present before
 a session's first command. `docs/CLOUD_ENV.md` then records the commands, the suite durations and the Python
-baseline. Until the policy changes, the only fallback is the 10.0 SDK with major roll-forward (appendix B), which
-runs the tests on a runtime the PC does not use and is acceptable for unit tests only because the PC's gate stays
-the arbiter.
+baseline. Until the policy changes, the fallback is the 10.0 SDK with major roll-forward (appendix B: both suites
+green in under three minutes from a bare container), which runs the tests on a runtime the PC does not use and is
+acceptable for unit tests only because the PC's gate stays the arbiter.
 
 ### 1.3 Kits: too thin for an implementer with no game?
 
@@ -390,6 +390,9 @@ managers box left ticked.
 **The fallback, measured here:** `apt-get install dotnet-sdk-10.0` from Ubuntu's archive took 15 s; with
 `DOTNET_ROLL_FORWARD=Major`, `dotnet restore` of the emulator test project took 13 s (NuGet supplied the 9.0
 targeting pack) and `dotnet build` 27 s with 24 warnings and no error, so a `net9.0` project builds under the 10.0
-SDK. The emulator suite was still running on the 10.0 runtime when this document was committed; its pass count and
-duration are appended below once it finishes. A suite that passes there is evidence for unit-test work only: the PC
-gates on .NET 9, and any difference between the runtimes is the PC's to see.
+SDK. On the 10.0 runtime the emulator suite passed 6,864 of 6,871 tests (7 skipped, 0 failed) in 1 min 23 s, and
+the EmuDump suite 281 of 281 in 17 s, on 4 cores. From a bare container to both suites green is under three
+minutes, so a cloud session's test cost is small and the suites are not the bottleneck. Two notes: the counts are
+the fork's main at `4a4b15fa` (the kits still say 6,755 and 246, which is the drift of 1.3 item 2); and a pass on
+the 10.0 runtime is evidence for unit-test work only, since the PC gates on .NET 9 and any difference between the
+runtimes is the PC's to see. The env proof should record both numbers and prefer the 9.0 SDK once the host is allowed.
