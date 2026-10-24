@@ -362,6 +362,13 @@ every character.**
 - Why: the owner asked how idle GPU time could speed the project and approved these three uses; the emulator stays on the CPU
   (the win is in inference, not simulation).
 - Decided 2026-10-24 by the owner, in chat.
+- Addendum 2026-10-24 ~14:00Z (the GPU lane's reviewed design, `docs/rl/GPU_INFERENCE.md` on fork branch
+  `gpu/prior-server`): the honest ceiling is about +25-30% decisions/s on the self-play job, not a multiple, because the
+  prior costs 1.38-1.44x of the plain search in CPU time and an eager CUDA forward costs 3.5 ms of host CPU per batch
+  on this PC (as much as today's CPU forward). The server therefore replays CUDA graphs per shape bucket and starts
+  with a go/no-go self-test (at most 1.2 ms host CPU per batch, at least 1,000 batches/s) before any plumbing. Safety:
+  logits over a local-only authenticated named pipe, per-process CPU fallback, the kill file `LAB/GPU_OFF`, the judge on
+  the CPU path until a 1,000-seed equivalence check passes, `jobs.json` only after a 2,000-run server block passes.
 
 ## D28 · 2026-10-24 · Lane F proceeds on the assumption that modding is allowed
 
