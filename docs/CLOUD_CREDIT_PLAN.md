@@ -74,6 +74,10 @@ session), so the table is re-priced after the first three readings.
   locked Python environment, with the registry-image route of `docs/CLOUD_ENV.md` as the fallback; the result is cached.
 - **Starting a cloud session:** the app starts one only on a message the owner types (or clicks) in the desktop app, never from
   a session-to-session note or over Remote Control; so the orchestrator prepares the briefs and asks for one click per batch.
+- **Overnight 2026-10-24/25:** the owner delegated the decisions until morning ("I trust you to do what you think") and
+  cannot click; the orchestrator holds the owner's last turn open and starts C2-C6 from it once the kernel lane pushes the
+  fixed pilot, and the next Lane B batches if kits K5-K7 publish, within the re-priced counts; a refused start waits for
+  the morning click. No new spending route (routines, other repositories) is tried unasked.
 - **Liveness rule:** no branch within the time box (60 minutes for a proof, 90 for a batch or review) means the orchestrator
   opens the session at claude.ai/code in the browser pane, reads its transcript, and restarts it or reports; nobody waits
   longer. Day 1 lost six hours to a GitHub access failure nobody could see from the PC.
