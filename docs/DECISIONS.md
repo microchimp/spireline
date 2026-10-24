@@ -316,3 +316,16 @@ every character.**
 - Why decided by the orchestrator, not the owner: the change follows from the test's power, not from the
   result, and it mirrors the registered wins clause. The owner can reverse it; then generation 1 stays rejected.
 - Supersedes: the co-primary clause in D5/D6 as written in `DESIGN.md` section 5.4.
+
+## D25 · 2026-10-24 · The rebuild lane runs uncapped this week; the API credit starts, $100 by 2026-10-28
+
+- The rebuild lane does not pause at its 25-round weekly cap until 2026-10-30. It continues at once with the F08
+  migration (damage and the kill sequence: kill, death hooks and removal inside each Damage call, as the game does),
+  the one mechanism behind the top group (32% of agent weight) and half of the damage family. The Tier 1 stop line
+  of 120 total rounds and the C1-style re-estimate stand.
+- The API credit is started: `API_CREDIT_PLAN.md` runs from today, with the owner's deadline of $100 spent by the
+  end of Wednesday 2026-10-28. It owns Lane B's single-site fixes (HANDOFF week-3 brief B1, F08 excluded); the
+  subscription session keeps A2c, C2, the leak tests, D and the weekly review.
+- Why: after the lockstep fixes the remaining divergence is one ordering mechanism plus routine single-site bugs,
+  both cheap; the ceiling, not difficulty, was holding them. Decided by the owner, in chat.
+- Supersedes: D23's 25-round weekly cap for this week; the on-hold addendum to D23.

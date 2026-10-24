@@ -269,11 +269,11 @@ forward or reallocated without a yield that justifies it.
 | lane | P0 (week 1) | P1 (weeks 2-4), per week | P2 (weeks 5-8), per week | model |
 |---|---|---|---|---|
 | A agent | 6-8 rounds | 12-15 while the rebuild lane runs | 15-20 | Sonnet; Opus for A3 and search changes |
-| B fidelity on demand | 1-2 (ranking only) | 3-5 while the API credit is held back (the by-family report, repros, the top single-site kits); 12-15 if the credit runs Lane B | 10-15, or the rebuild's lane at its own cap | Sonnet; Opus for named mechanism classes and amends |
+| B fidelity on demand | 1-2 (ranking only) | on the API credit from 2026-10-24 (D25), about 20 rounds in four days; 3-5 on the subscription when the credit is not running | 10-15, or the rebuild's lane at its own cap | Sonnet; Opus for named mechanism classes and amends |
 | C referee env | 2-3 | 5-8 | 2-4 | Sonnet |
 | D scheduler | 2-3 | 1-2 | 1 | Sonnet, Haiku |
 | F public mod | 0 | 0 | 3-5 (from week 6) | Sonnet; Opus for the state reader |
-| R rebuild lane (Tier 1 kernel stage, D23) | 0 | 20-25, taking most of Lane B's share (the credit plan is on hold since 2026-10-23) | per G1 | Opus for the dispatcher and queue; Sonnet for adapters, tables, tests |
+| R rebuild lane (Tier 1 kernel stage, D23) | 0 | 20-25; uncapped in the week of 2026-10-24 through the F08 migration (D25) | per G1 | Opus for the dispatcher and queue; Sonnet for adapters, tables, tests |
 | orchestration and weekly review | 2 | 4 | 4 | Opus |
 | **total** | **13-18 (~3-5%)** | **at the 52-round ceiling (15%)** | **32-44 (~9-13%)** | |
 
