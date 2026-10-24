@@ -63,6 +63,10 @@ session), so the table is re-priced after the first three readings.
 - **Division of the week-3 briefs:** the week-3 subscription session owns A2c, C2, the leak tests, D and the weekly
   review, plus the local half of this pipeline for Lane B (kits, gate, landing); the rebuild lane owns the kernel, F08
   and local tables, and gates item 4; cloud sessions own implementation, review and research only.
+- **Environment (set 2026-10-24 by the orchestrator in the owner's browser session):** the Default cloud environment allows the
+  .NET installer hosts (`builds.dotnet.microsoft.com`, `download.visualstudio.microsoft.com`, `dotnetcli.azureedge.net`,
+  `dot.net`, `ci.dot.net`, `aka.ms`) and runs a setup script that installs the .NET 9 SDK, restores the tools and syncs the
+  locked Python environment, with the registry-image route of `docs/CLOUD_ENV.md` as the fallback; the result is cached.
 - **Starting a cloud session:** the app starts one only on a message the owner types (or clicks) in the desktop app, never from
   a session-to-session note or over Remote Control; so the orchestrator prepares the briefs and asks for one click per batch.
 - **Liveness rule:** no branch within the time box (60 minutes for a proof, 90 for a batch or review) means the orchestrator
@@ -85,7 +89,7 @@ day here, with what landed.
 
 | date | items run | landed | usage-page total |
 |---|---|---|---|
-| 2026-10-24 | 1, 6, 7 (three reviews), 4 (C1 pilot, C7, C8); every session requested before ~11:00Z died at clone (the GitHub app install was not registered with the Claude account until the claude.ai callback at ~10:55Z); all eight re-requested at ~11:00Z and all eight delivered PRs by 11:37Z | fork PRs #1 env proof, #2 lockstep review, #3 C8, #4 F08 review, #5 C7, #6 C1 pilot (gating on the PC); spireline PRs #1 modding, #2 plan review merged | not read |
+| 2026-10-24 | 1, 6, 7 (three reviews), 4 (C1 pilot, C7, C8), then at ~13:30Z 2 (`cloud/run-flow-1`, `cloud/combat-core-1`) and 10 (D24 guard, `cloud/d24-guard`); the pilot's cloud review waits for the kernel lane's fixed push; every session requested before ~11:00Z died at clone (the GitHub app install was not registered with the Claude account until the claude.ai callback at ~10:55Z); all eight re-requested at ~11:00Z and all eight delivered PRs by 11:37Z | fork PRs #1 env proof, #2 lockstep review, #3 C8, #4 F08 review, #5 C7, #6 C1 pilot (gating on the PC); spireline PRs #1 modding, #2 plan review merged | not read |
 
 ## 5. What the credit does not buy
 
