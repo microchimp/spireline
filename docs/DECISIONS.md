@@ -399,3 +399,19 @@ every character.**
 - Family order for the migration: F10 and F08 (in progress), then F06, F11, F15. G1 at the end of week 4 confirms or
   escalates per 8.3; it no longer has to choose the tier.
 - Decided by the orchestrator on the week-3 session's numbers (HANDOFF 2026-10-24 13:00Z line); reversible by the owner.
+
+## D29 · 2026-10-24 · Overnight decisions under the owner's delegation (reversible in the morning)
+
+- The owner was away overnight (from 2026-10-24 ~13:20Z) and delegated the decisions ("I trust you to do what you think").
+  The orchestrator decided the week-3 review's open items as follows; the owner may reverse any of them.
+- **D24 guard flip:** week-3 runs the per-seed pairing check of `docs/PROMOTION_GUARD.md` section 4 on the S3 block
+  (discordant pairs below the independence bound; the floor-difference SD well below the root of the summed variances). If it
+  passes, `SPIRELINE_REVIEW_GUARD` goes on for the next promotion and the result is recorded here as a D24 addendum; if it
+  fails, the flag stays off and the failure is reported. Why: the guard only blocks promotions, so switching it on is the
+  conservative direction, and the check is cheap.
+- **Completed-Q target:** the E-block A/B of one T=1 completed-Q candidate against visits is approved as the cheap decider,
+  within week-3's remaining allowance, after landing 4, with its training scheduled outside the GPU lane's measurement
+  windows; the default stays visits until the A/B separates them.
+- **Recycle-60:** one warm-start quiet window of about 45 minutes on 2026-10-25, timed by week-3 and announced in HANDOFF
+  under `QUIET.lock`, not overlapping the GPU lane's measurement window; the recycle decision follows its result.
+- Not decided overnight: anything that changes the plan of record, the week's caps or the credit plan's counts.
