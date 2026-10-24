@@ -71,7 +71,7 @@ day here, with what landed.
 
 | date | items run | landed | usage-page total |
 |---|---|---|---|
-| 2026-10-24 | 1 (env proof; the first request failed on repository access until the Claude GitHub app was installed on `microchimp` for `spireline` and `spireline-sim`), 6 (modding research), 7 (three reviews: lockstep bridge and ranking, F08 migration design, this plan and the week-3 briefs; inputs on fork branch `review/input-2026-10-24` and `docs/review-input/`), 4 (the F08 pilot `cloud/f08-pilot` and the cleanups `cloud/f08-tooling-nits`, `cloud/f08-scenario-setters` from the fork's `docs/rebuild/CLOUD_BRIEFS.md`, started ~08:15Z before the env proof reported: they need only `dotnet test`, the risk is bounded to three sessions, and the credit must move; C2-C6 wait for the pilot's landing) | nothing yet | not read |
+| 2026-10-24 | 1 (env proof; the first request failed on repository access until the Claude GitHub app was installed on `microchimp` for `spireline` and `spireline-sim`), 6 (modding research), 7 (three reviews: lockstep bridge and ranking, F08 migration design, this plan and the week-3 briefs; inputs on fork branch `review/input-2026-10-24` and `docs/review-input/`), 4 (the F08 pilot `cloud/f08-pilot` and the cleanups `cloud/f08-tooling-nits`, `cloud/f08-scenario-setters` from the fork's `docs/rebuild/CLOUD_BRIEFS.md`: requested ~08:15Z before the env proof reported, since they need only `dotnet test` and the risk is bounded to three sessions, but the app refused the starts because the owner was on Remote Control; they start on the owner's next message typed in the desktop app; C2-C6 wait for the pilot's landing) | nothing yet | not read |
 
 ## 5. What the credit does not buy
 
