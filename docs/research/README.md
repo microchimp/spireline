@@ -9,5 +9,6 @@ Background research behind the [design](../DESIGN.md), gathered on 10–12 Octob
 | [SPIRE_CODEX.md](SPIRE_CODEX.md) | The Spire Codex v0.107.1 export as a run-layer test corpus: source, filtering, and aggregate counts (56,137 vanilla A10 runs, 11,350 Defect) |
 | [ENEMY_AI.md](ENEMY_AI.md) | Which enemies choose moves at random (18 of 111) and which follow fixed patterns, including every act boss found |
 | [COMPUTE.md](COMPUTE.md) | Workload sizes and what they cost on a home PC versus rented CPUs |
+| [MODDING.md](MODDING.md) | How Slay the Spire 2 is modded and what the rules allow: the official loader and Workshop, the community frameworks and what they can read and do, the Content Policy and Steam Subscriber Agreement, practical constraints, and a verdict for a recommend-only public mod (compiled 2026-10-24) |
 | [IDEAS.md](IDEAS.md) | Unverified ideas for making the pipeline more efficient, grouped by stage, with the question to check first for each |
 | [dossiers/](dossiers/) | The six raw research dossiers (JSON): tooling, the game, simulators and RL, LLM agents, theory, and Jev. Each fact carries a source URL and a confidence level. |
