@@ -333,3 +333,18 @@ every character.**
   API credit; there is no API key and no key session. `API_CREDIT_PLAN.md` is replaced by `CLOUD_CREDIT_PLAN.md`:
   cloud sessions on the GitHub clones implement against unit tests, review and research; the PC's sessions write
   the kits and run the corpus gate, byte proof and landing. The owner's pace, half by 2026-10-28, stands.
+
+## D26 · 2026-10-24 · The cloud plan is revised on the independent review
+
+- `CLOUD_CREDIT_PLAN.md` section 2 is re-priced (Lane B $45, kernel batches $70, reviews $35, lab items $8; new lines for
+  confirming tests $15, documentation $8, the D24 statistics follow-up $8; reserve $30) and section 3 gains the liveness rule,
+  the default rule (unit-test acceptance means cloud), the kit header, one mechanism per session, and the gate rules (tip
+  once, bisect on red, two landing windows a day, no second read of a cloud-reviewed PR, every rejection exported as a
+  scenario). C2-C6 start from the pilot branch once the pilot's cloud review posts, not after its landing.
+- Why: the review (`docs/reviews/2026-10-24-cloud-plan-and-week3.md`) measured day 1: six hours lost to a GitHub access
+  failure invisible from the PC, a Lane B queue worth about 4% of agent weight after the comparer artefacts, no reserve under
+  the old ceilings, and the local gate as the binding constraint. Once the access was fixed, all eight cloud sessions delivered
+  in about 35 minutes.
+- Decided by the orchestrator; reversible by the owner. Owner actions still open: allow `builds.dotnet.microsoft.com` in the
+  cloud environment's network settings and add a setup script that installs the .NET 9 SDK (until then sessions use the
+  registry-image or the 10.0 roll-forward route `docs/CLOUD_ENV.md` records).
