@@ -61,6 +61,12 @@ share, and C2-C6 cost about $65. Order from here: one Lane B C# batch (the lone-
 whichever week-3 publishes first), one confirming-tests session once the gate has exported rejections as scenarios, and one
 reserve. Documentation (item 9) moves to the subscription. Nothing starts without the owner's click in the morning.
 
+**Morning click item (set 17:20Z):** no C# kit clears the bar yet (the energy rows need per-step traces; the F08 C/D/E rules
+agree in isolation), so the first of the three remaining sessions is the Python batch `docs/kits/ranking-provenance-1.md`
+(fork main `5289f6f5`; branch `cloud/ranking-1`, base `b163b4cc` or later; the lockstep review's recommendations 5, 6 and 11
+plus the lone-End-Turn bucket on `turn_advanced`; allowed files under `tools/lab` and the lockstep record context only; one
+commit per item). The other two wait for a C# batch once the exact-fight trace tool exists, and for confirming tests.
+
 Items 2 and 4 float: they take what the others leave. The usage page is the only cost signal (cloud sessions do not report per
 session), so the table is re-priced after the first three readings.
 

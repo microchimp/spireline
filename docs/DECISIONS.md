@@ -316,6 +316,14 @@ every character.**
 - Why decided by the orchestrator, not the owner: the change follows from the test's power, not from the
   result, and it mirrors the registered wins clause. The owner can reverse it; then generation 1 stays rejected.
 - Supersedes: the co-primary clause in D5/D6 as written in `DESIGN.md` section 5.4.
+- Addendum 2026-10-24 17:20Z (D29 item 1): the per-seed pairing check (`tools/lab/pairing_check.py`, landed with week-3's
+  landing 4 at `26c19ef2`) passes on every finished promotion block: identical seed sets and configs, 0 crashes; discordant
+  kill pairs 331 against the independence bound 454 pooled over E1-E4 and E3-r1 (E1 53 against 65.9 reproduces D24's figure);
+  the paired floor-difference SD is 0.62-0.65 of the independent root, floor correlation 0.58-0.61, permutation p < 0.001 in
+  every block; S3's emulator/real pair passes the same bounds. So `--review-guard` goes onto the lab's train job for the next
+  promotion (automatic once the lab tree reaches `d0187715`). Caveat: the power table's independence assumption overstates
+  power (a 2% to 1% kill drop is caught with 68% at one-sided 0.05, not 81%); the damage guard stays inert until the
+  records carry `boss_damage`. The owner may switch the guard off again.
 
 ## D25 · 2026-10-24 · The rebuild lane runs uncapped this week; the API credit starts, $100 by 2026-10-28
 
