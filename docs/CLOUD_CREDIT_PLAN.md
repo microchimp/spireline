@@ -55,6 +55,12 @@ about twelve sessions. Order from here: C2-C6 (five, after the fixed pilot lands
 confirming tests (one or two), documentation (one), reserve (one or two). Cloud reviews of PRs stop: the PC lanes review on the
 subscription, which has its own weekly limit but no expiry. The table above keeps the intended shares; the counts are the rule.
 
+**Second reading 2026-10-24 17:05Z: $44 left** after sixteen delivered sessions ($206 spent, about $12.9 each), so three
+sessions remain, not seven: the three Lane B and D24 sessions that had only just started at the first reading cost their full
+share, and C2-C6 cost about $65. Order from here: one Lane B C# batch (the lone-End-Turn kit or the F08 single-site rules,
+whichever week-3 publishes first), one confirming-tests session once the gate has exported rejections as scenarios, and one
+reserve. Documentation (item 9) moves to the subscription. Nothing starts without the owner's click in the morning.
+
 Items 2 and 4 float: they take what the others leave. The usage page is the only cost signal (cloud sessions do not report per
 session), so the table is re-priced after the first three readings.
 
@@ -99,6 +105,7 @@ day here, with what landed.
 | date | items run | landed | usage-page total |
 |---|---|---|---|
 | 2026-10-24 | 1, 6, 7 (three reviews), 4 (C1 pilot, C7, C8), then at ~13:30Z 2 (`cloud/run-flow-1`, `cloud/combat-core-1`) and 10 (D24 guard, `cloud/d24-guard`); the pilot's cloud review waits for the kernel lane's fixed push; every session requested before ~11:00Z died at clone (the GitHub app install was not registered with the Claude account until the claude.ai callback at ~10:55Z); all eight re-requested at ~11:00Z and all eight delivered PRs by 11:37Z; at ~13:40Z, three minutes after the fixed pilot push, 4 (C2 `cloud/f08-power-1`, C3 `cloud/f08-power-2`, C4 `cloud/f08-power-3`, C5 `cloud/f08-power-4`, C6 `cloud/f08-relic-1`) from the fixed pilot tip fcda318e, requested from the owner's held turn under the overnight delegation (C4 needed one retry past the classifier); all five delivered PRs #10-#14 by 14:17Z (22-36 minutes each), with Thorns, Flame Barrier (C2), Surprise (C3), Crab Rage and Surrounded (C4) skipped under the stop rule (re-entry or per-owner split: local items) | fork PRs #1 env proof, #2 lockstep review, #3 C8, #4 F08 review, #5 C7, #6 C1 pilot (#3, #5, #6 landed on fork main `3bbdd191` at 13:51Z after the local gate: C# 6921 green, byte proof 0 differ in all 11 modes); spireline PRs #1 modding, #2 plan review merged | **$103 spent, $147 left at ~13:40Z** (usage page): eight delivered sessions plus three just started, so about $12 per delivered session, two to three times the table's estimates |
+| 2026-10-24 17:05Z | the five C2-C6 batches and the three ~13:30Z sessions all delivered (sixteen delivered in all) | fork PRs #3, #5, #6 landed (`3bbdd191`); #7, #8, #9 landed in week-3's landing 3 (`d0187715`, PR #8 behind its flag) or queued for the night's second window; #10-#14 under the kernel lane's gate | **$206 spent, $44 left** (usage page): about $12.9 per delivered session; three sessions remain |
 
 ## 5. What the credit does not buy
 
