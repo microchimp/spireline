@@ -382,3 +382,13 @@ every character.**
   review); GPU lane cap 25 to 50 (the inference server implemented and measured); the rest reserve. The gate stays serial;
   landings queue after the 15:45Z quiet window.
 - Decided 2026-10-24 by the owner, in chat.
+
+## D23 addendum · 2026-10-24 · The by-family table now reads Tier 1 decisively; the migration order is set
+
+- With the ranking's classification fix (the lockstep review's finding) and placement rules for the unassigned records, the
+  week-2 block re-ranks to an architectural share of 87.1% (was 54.8%) with 1.5% unassigned (was 55.2%); the top five hook
+  families hold 97-99% of the architectural weight, so `PLAN.md` 8.3's Tier 1 rule fires under the primary reading. The same
+  block re-run under the landed comparer: 0.53% of decisions diverge, architectural 94.1%.
+- Family order for the migration: F10 and F08 (in progress), then F06, F11, F15. G1 at the end of week 4 confirms or
+  escalates per 8.3; it no longer has to choose the tier.
+- Decided by the orchestrator on the week-3 session's numbers (HANDOFF 2026-10-24 13:00Z line); reversible by the owner.
