@@ -435,4 +435,8 @@ every character.**
   windows; the default stays visits until the A/B separates them.
 - **Recycle-60:** one warm-start quiet window of about 45 minutes on 2026-10-25, timed by week-3 and announced in HANDOFF
   under `QUIET.lock`, not overlapping the GPU lane's measurement window; the recycle decision follows its result.
+- Item 2 result (19:00Z, block `E5-ab-2026-10-24`, 2,000 paired seeds, both arms from one saved generation-3 set): completed-Q
+  at T=1 minus visits is -0.04 floors paired (95% CI -0.22 to +0.15), boss kills 41 against 50 (McNemar p 0.17), no wins either
+  side; under D24 the candidate would not promote. No separation: the default stays visits; the option stays for a later A/B
+  against a stronger labelled benchmark. Nothing written to the lineage.
 - Not decided overnight: anything that changes the plan of record, the week's caps or the credit plan's counts.
