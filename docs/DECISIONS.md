@@ -395,6 +395,13 @@ every character.**
   review); GPU lane cap 25 to 50 (the inference server implemented and measured); the rest reserve. The gate stays serial;
   landings queue after the 15:45Z quiet window.
 - Decided 2026-10-24 by the owner, in chat.
+- Addendum 2 (2026-10-24 17:10Z, orchestrator under the overnight delegation): the usage page read 50% at 17:05Z, up 11
+  points in four hours on about 26 lane rounds (about 0.4 points a round), so the round caps above would pass 70% by
+  about midnight. The remaining allowance to 13:00Z is cut to about 40 rounds in all, leaving a margin under 70%: kernel
+  18 (gate C2-C6, landing 8, the O1 rerun; R7's switch-on only if it fits), week-3 12 (PRs 7 and 9, B7's probe, the guard
+  switch, the final report; the completed-Q A/B only if it fits), GPU 10 (window 1, the 2,000-run block; pieces 2 and 3
+  wait for the owner). Each lane stops at its cap and leaves the rest queued; the orchestrator re-reads the page at each
+  wake and stops everything but landings at 65%.
 
 ## D23 addendum · 2026-10-24 · The by-family table now reads Tier 1 decisively; the migration order is set
 
