@@ -383,6 +383,10 @@ every character.**
   difference 1.9e-6, no argmax flips); a two-worker smoke beside the running lab gives 14.6 against 12.0 decisions per
   CPU-second. Window 1 (lab paused) at 21:00Z measures throughput at 16-24 workers and the 1,000-seed block; `jobs.json`
   switches only after the 2,000-run server block passes.
+- Addendum 2026-10-24 ~22:00Z: window 1 (lab paused) is landed in the design doc on fork main `8052d140`: at 20 workers the
+  server gives +21.6% wall decisions/s and +24.7% decisions per hour over the CPU path, and the 1,000-seed block is identical
+  decision for decision on both paths. Open before the lab switches: the memory headroom at 20 workers, measured by the
+  2,000-run server block at 01:15Z.
 
 ## D28 · 2026-10-24 · Lane F proceeds on the assumption that modding is allowed
 
