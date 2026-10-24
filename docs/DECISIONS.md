@@ -329,3 +329,7 @@ every character.**
 - Why: after the lockstep fixes the remaining divergence is one ordering mechanism plus routine single-site bugs,
   both cheap; the ceiling, not difficulty, was holding them. Decided by the owner, in chat.
 - Supersedes: D23's 25-round weekly cap for this week; the on-hold addendum to D23.
+- Corrected 2026-10-24, later: the credit is $250 of Claude Code cloud-session credit, expiring 2026-11-05, not
+  API credit; there is no API key and no key session. `API_CREDIT_PLAN.md` is replaced by `CLOUD_CREDIT_PLAN.md`:
+  cloud sessions on the GitHub clones implement against unit tests, review and research; the PC's sessions write
+  the kits and run the corpus gate, byte proof and landing. The owner's pace, half by 2026-10-28, stands.
