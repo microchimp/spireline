@@ -566,6 +566,15 @@ every character.**
   whether the agent trains on core2 is the owner's call on the S3 re-rank (running now on `--engine core2`, doubling as the smoke)
   against that cost. Open for week 4: the corpus-wide native-against-EmuDump parity harness, a post-turn-one snapshot test, a core2
   re-anchor test. The rebuild lane is stopped for the week except the F11 diagnosis after the S3 table, usage permitting.
+- Post-switch re-rank 2026-10-25 (S3, 500 seeds, generation 3, lockstep on `--engine core2` against the old engine, report
+  `W4-B12-report.md`): divergence 0.59% -> 0.30% of the AI's decisions (333 -> 174); total agent weight 7,808 -> 3,027 (-61%);
+  architectural share 89.8% -> 81.3%; F10 weight -93%, F08 -62%, F06 -79% (partly the Fairy in a Bottle fix), F11 -7% (its share
+  rises to 26.3% and is partly a lockstep reading until its diagnosis), F15 10.4%; the top five families still hold 95-100% of the
+  architectural weight, so Tier 1 holds. Mean floor on the real game 12.98 against 12.72 (within noise); paired gap real minus
+  copy +0.14 (-0.26 to +0.54); 0 crashes, neither known refusal hit; 3 failed re-anchors and one `screen:None` loss for the kernel
+  lane's week-4 list. The F11 diagnosis runs now (usage 75%). **Owner's call:** whether self-play and the promotion arms move to
+  core2 now, against bench-emu's -31% search simulations per second (the orchestrator recommends the kernel's speed work first,
+  since the old core's measured harm to real-game play is within noise while the pace cost is certain).
 
 ## D32 · 2026-10-25 · The week's line is 80%, then everything waits for the reset; potion discard is approved
 
