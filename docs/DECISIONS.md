@@ -530,3 +530,19 @@ every character.**
   inference server (both arms on one transport; the 1,000-seed equivalence rule passed). Piece 3: the arm sweep is complete; its
   quiet-window runner (one Sonnet round plus review, section 7) is deferred until a sweep is queued, decided by the orchestrator.
   Lane total about 17.5 rounds.
+
+## D31 · 2026-10-25 · Tier 1 continues on a new line: the native step first, then families one at a time on measured share
+
+- The kernel rebuild (D23) reached D25's 120-round stop line with F08 and F10 switched on (`cf74c742`) but not yet reachable by
+  the agent: the native runtime the agent and the lab use builds no kernel. The owner sets a new line: the native step now, within
+  the 68% usage stop (the kernel in the native library, the search's combat handles stepped through it, its state carried through
+  clones and forks; 4-6 reviewed rounds, behind an explicit engine option, the lab's defaults unchanged until the re-rank and a
+  paired check); then the post-switch re-rank on S3 with `--engine core2`; then at most one further family at a time, each approved
+  by the owner on its measured kernel share after a diagnosis. F06 is not migrated (its diagnosis: 85% one Lane B rule, already
+  fixed).
+- Why: the kernel itself was worth building and is built; what was not worth doing was migrating F06. Without the native step the
+  rounds already spent never reach the agent, and nothing measures the switch by agent weight. Further families are judged one by
+  one on measured numbers rather than on the family tags, which have twice been overturned by a diagnosis.
+- Decided 2026-10-25 ~07:00Z by the owner, in chat, accepting the orchestrator's recommendation.
+- Supersedes: D25's 120-round stop line for Tier 1 (the lane stopped and reported at it, as D25 required); the D23 addendum's
+  family order F06, F11, F15 (replaced by measured share after the re-rank).
