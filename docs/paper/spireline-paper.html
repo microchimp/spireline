@@ -156,7 +156,7 @@ dd{margin:0}
 <p><strong>How.</strong> Search plus two learned networks. At each decision the AI imagines many possible hidden states, plays each forward on a copy of the game, and picks the move that does best on average. A policy network tells the search which moves to look at first; a value network estimates how a run is going. There is no language model anywhere in the player, and no end-to-end reinforcement learning: the search is the player, the networks only make it faster and sharper.</p>
 <p><strong>Why a copy of the game.</strong> The search needs to play millions of imagined fights an hour. The real game manages about a hundred decisions a second on this PC and cannot be forked. The copy is our own fork of an open-source re-implementation of the game's combat and run logic in C#. It is exact on 97% of combat steps and plays about a thousand decisions a second per core.</p>
 <p><strong>Why the real game still matters.</strong> A copy that is slightly wrong teaches slightly wrong play. So the real game, run headless with no window, is the judge. Every stage the current AI plays a fixed block of 500 real games. Its win rate and how far it gets are the headline numbers. Every real game it plays is also replayed on the copy, step by step. Where the two disagree, the disagreement is weighed by how often the AI meets it, and only the heavy disagreements get fixed. The copy is improved on demand, never on principle.</p>
-<p><strong>Where we are (2026-10-25).</strong> The loop runs unattended around the clock. Three generations of the AI have been promoted; on real games the mean floor reached moved from 11.3 to 12.7, with no wins yet at Ascension 10 (the Act 1 boss is beaten about 2% of the time). The lockstep comparison shows the copy disagrees with the game on 0.6% of the AI's decisions, and nine tenths of that disagreement sits in a few ordering mechanisms of the copy's combat core. That core is being rebuilt in the game's own shape; its first two mechanism families are migrated and switched on as of fork main cf74c742, with the proof passing every gate; the runtime the agent itself plays on does not run the new core yet (4 to 6 rounds). The diagnosis of the next family in line found that most of its weight was one single-site bug already fixed by the fix lane, so it is not migrated. The rebuild reached its 120-round stop line, and the owner set a new one: the native step first, so the AI plays on the new core, then a re-rank, then any further family only on a measured number. A GPU inference server lifted self-play throughput by a fifth. The GPU lane then found that the AI's run-value head, written off in week 3 as having no skill, has real skill once a duplication bug in the self-play records was fixed; the fix and the better training recipe are landed. A paired test then put that value head in charge of the run-level decisions (which path, rest or shop) and the same AI reached four more floors on average and killed the Act 1 boss five times as often, on 2,000 fresh seeds. The owner switched it on for every new candidate; the next generation to beat generation 3 on paired seeds will carry it onto the real game.</p>
+<p><strong>Where we are (2026-10-25).</strong> The loop runs unattended around the clock. Four generations of the AI have been promoted; on real games the mean floor reached moved from 11.3 to 18.4, and the Act 1 boss is now beaten in a quarter of runs (it was 2% two days ago), with 31 of 500 runs reaching the Act 2 boss and no wins yet at Ascension 10. The lockstep comparison shows the copy disagrees with the game on 0.6% of the AI's decisions, and nine tenths of that disagreement sits in a few ordering mechanisms of the copy's combat core. That core is being rebuilt in the game's own shape; its first two mechanism families are migrated and switched on as of fork main cf74c742, with the proof passing every gate; the runtime the agent itself plays on does not run the new core yet (4 to 6 rounds). The diagnosis of the next family in line found that most of its weight was one single-site bug already fixed by the fix lane, so it is not migrated. The rebuild reached its 120-round stop line, and the owner set a new one: the native step first, so the AI plays on the new core, then a re-rank, then any further family only on a measured number. A GPU inference server lifted self-play throughput by a fifth. The GPU lane then found that the AI's run-value head, written off in week 3 as having no skill, has real skill once a duplication bug in the self-play records was fixed; the fix and the better training recipe are landed. A paired test then put that value head in charge of the run-level decisions (which path, rest or shop) and the same AI reached four more floors on average and killed the Act 1 boss five times as often, on 2,000 fresh seeds. The owner switched it on for every new candidate; the next generation to beat generation 3 on paired seeds will carry it onto the real game.</p>
 <p><strong>What comes next.</strong> Put the kernel into the native library so that self-play, promotion and the lockstep run on the new core (4 to 6 rounds, under way), re-rank the divergences with the switch on, and take any further family one at a time by its measured kernel share with a diagnosis first. The fix lane and the agent lane keep turning, and gate G1 falls at the end of week 4 on the re-ranked table.</p>
 <div class="callout small"><strong>Reading the plan's calendar.</strong> The plan is written in "weeks" (week 1 foundations, weeks 2 to 4 the flywheel, and so on). At the current pace a plan week has taken about one calendar day: week 2 ran on 2026-10-23, week 3 on 2026-10-24, and week 4 starts on 2026-10-25. The word "week" below is a stage name, not seven days.</div>
 </section>
@@ -281,34 +281,44 @@ dd{margin:0}
 <div class="board">
 <h3>Headline metric: how far the AI gets</h3>
 <div class="scroll" style="--mw:620px">
-<svg viewBox="0 0 620 215" role="img" aria-label="Mean floor reached per generation on 500 real-game seeds with 95% intervals: generation 0 11.31, generation 1 12.02, generation 3 12.72 on the real game and 12.81 on the emulator." style="min-width:560px">
-  <line class="axis" x1="230" y1="20" x2="230" y2="178"/>
-  <line class="axis" x1="291.7" y1="20" x2="291.7" y2="178"/>
-  <line class="axis" x1="415" y1="20" x2="415" y2="178"/>
-  <line class="axis" x1="538.3" y1="20" x2="538.3" y2="178"/>
-  <text class="tick" x="291.7" y="196" text-anchor="middle">11</text>
-  <text class="tick" x="415" y="196" text-anchor="middle">12</text>
-  <text class="tick" x="538.3" y="196" text-anchor="middle">13</text>
-  <text class="tick" x="600" y="196" text-anchor="end">mean floor</text>
+<svg viewBox="0 0 620 295" role="img" aria-label="Mean floor reached per generation on 500 real-game seeds with 95% intervals: generation 0 11.31, generation 1 12.02, generation 3 12.72 on the real game and 12.81 on the emulator, generation 5 18.36 on the real game and 17.74 on the emulator." style="min-width:560px">
+  <line class="axis" x1="230" y1="20" x2="230" y2="258"/>
+  <line class="axis" x1="291.7" y1="20" x2="291.7" y2="258"/>
+  <line class="axis" x1="373.9" y1="20" x2="373.9" y2="258"/>
+  <line class="axis" x1="456.1" y1="20" x2="456.1" y2="258"/>
+  <line class="axis" x1="538.3" y1="20" x2="538.3" y2="258"/>
+  <text class="tick" x="291.7" y="276" text-anchor="middle">12</text>
+  <text class="tick" x="373.9" y="276" text-anchor="middle">14</text>
+  <text class="tick" x="456.1" y="276" text-anchor="middle">16</text>
+  <text class="tick" x="538.3" y="276" text-anchor="middle">18</text>
+  <text class="tick" x="610" y="276" text-anchor="end">mean floor</text>
 
   <text class="rowlab" x="10" y="44">Gen 0, real game</text>
-  <line class="ci" x1="280.6" y1="40" x2="379.2" y2="40"/><circle class="pt" cx="329.9" cy="40" r="5"/>
-  <text class="val" x="329.9" y="28" text-anchor="middle">11.31</text>
+  <line class="ci" x1="246.9" y1="40" x2="279.7" y2="40"/><circle class="pt" cx="263.3" cy="40" r="5"/>
+  <text class="val" x="263.3" y="28" text-anchor="middle">11.31</text>
 
   <text class="rowlab" x="10" y="84">Gen 1, real game</text>
-  <line class="ci" x1="364.4" y1="80" x2="471.7" y2="80"/><circle class="pt" cx="417.5" cy="80" r="5"/>
-  <text class="val" x="417.5" y="68" text-anchor="middle">12.02</text>
+  <line class="ci" x1="274.8" y1="80" x2="310.6" y2="80"/><circle class="pt" cx="292.5" cy="80" r="5"/>
+  <text class="val" x="292.5" y="68" text-anchor="middle">12.02</text>
 
   <text class="rowlab" x="10" y="124">Gen 3, real game</text>
-  <line class="ci" x1="449.5" y1="120" x2="558.1" y2="120"/><circle class="pt" cx="503.8" cy="120" r="5"/>
-  <text class="val" x="503.8" y="108" text-anchor="middle">12.72</text>
+  <line class="ci" x1="303.2" y1="120" x2="339.4" y2="120"/><circle class="pt" cx="321.3" cy="120" r="5"/>
+  <text class="val" x="321.3" y="108" text-anchor="middle">12.72</text>
 
   <text class="rowlab" x="10" y="164">Gen 3, emulator</text>
-  <line class="ci" x1="463.1" y1="160" x2="566.7" y2="160"/><circle class="pt hollow" cx="514.9" cy="160" r="5"/>
-  <text class="val" x="514.9" y="148" text-anchor="middle">12.81</text>
+  <line class="ci" x1="307.7" y1="160" x2="342.2" y2="160"/><circle class="pt hollow" cx="325.0" cy="160" r="5"/>
+  <text class="val" x="325.0" y="148" text-anchor="middle">12.81</text>
+
+  <text class="rowlab" x="10" y="204">Gen 5, real game</text>
+  <line class="ci" x1="531.7" y1="200" x2="574.9" y2="200"/><circle class="pt" cx="553.1" cy="200" r="5"/>
+  <text class="val" x="553.1" y="188" text-anchor="middle">18.36</text>
+
+  <text class="rowlab" x="10" y="244">Gen 5, emulator</text>
+  <circle class="pt hollow" cx="527.6" cy="240" r="5"/>
+  <text class="val" x="527.6" y="228" text-anchor="middle">17.74</text>
 </svg>
 </div>
-<p class="cap">Mean floor reached on 500 Ascension 10 Ironclad seeds, 95% intervals. Filled dot: the real game. Hollow dot: the same AI on the copy, same seeds. Wins: 0 of 500 for every row, so the win-rate line is still flat at zero. Gens 0 and 1 are block S2 (2026-10-23), gen 3 is block S3 (2026-10-24); the blocks differ, so the comparison across them is indicative. The two gen 3 rows are paired: the copy over-estimates the AI by 0.08 floors, with an interval that includes zero.</p>
+<p class="cap">Mean floor reached on 500 Ascension 10 Ironclad seeds, 95% intervals. Filled dot: the real game. Hollow dot: the same AI on the copy, same seeds. Wins: 0 of 500 for every row, so the win-rate line is still flat at zero. Gens 0 and 1 are block S2 (2026-10-23); gens 3 and 5 are block S3 (2026-10-24 and 2026-10-25), so those two are paired on the same seeds: +5.4 floors. Generation 5 passes the Act 1 boss in 24.4% of runs against 5.4%, and 31 runs reached the Act 2 boss floor against 1. For generation 5 the real game reaches further than the copy (paired gap −0.62, interval −1.19 to −0.05), the first time the copy has been the harsher of the two.</p>
 </div>
 
 <div class="board">
@@ -360,7 +370,7 @@ dd{margin:0}
 <div class="tablewrap"><table>
 <thead><tr><th>Lane</th><th>What it delivers</th><th>State on 2026-10-25</th><th>Kill rule</th></tr></thead>
 <tbody>
-<tr><td><strong>A, the agent</strong></td><td>The searching player, generations that improve it, the weekly real-game score; later an offline run review.</td><td>Gen 3 promoted; gen 4's retrain on deduplicated records (a resumed self-play block had re-appended its records, 19.7% duplicates, fixed 2026-10-25) was judged and rejected normally, so gen 3 stands. Mean floor 11.3 to 12.7 on real games in three generations. The paired macro A/B (2026-10-25, 2,000 emulator seeds, same generation-3 search in both arms): value-head macro 16.31 floors against 12.33 for rules, +3.98 paired (interval +3.67 to +4.30); Act 1 boss kills 249 against 46; wins 0 and 0. On that result the owner switched the value-head macro on for new candidates (D33, landed a0f3f55b); generation 5, generation 3's prior with the value-head macro, is written at the next training slot and judged against generation 3 about three hours later. The replay readout shows where the floors come from: fewer monster and elite nodes per floor (0.37 against 0.50), 13% of card rewards skipped against under 1%, rests spent on upgrades rather than healing (21% heals against 75%), and boss damage 0.35 of the boss's health against 0.14. Boss damage and cards, nodes and rests per floor are now in every record.</td><td>If six generations do not beat gen 0 on real games, stop training and spend on search quality.</td></tr>
+<tr><td><strong>A, the agent</strong></td><td>The searching player, generations that improve it, the weekly real-game score; later an offline run review.</td><td>Generation 5 promoted 2026-10-25 (generation 3's prior with the value-head macro): +5.00 floors on the copy's gate, and on the real game 18.36 against 12.72, 24.4% past the Act 1 boss, 31 runs at the Act 2 boss floor, 1 crash. Self-play costs 11% more wall time per run with the new macro but 20% less per floor. Two real-side record fields (boss damage, rest type) read wrong on real runs; a week-4 fix. The paired macro A/B (2026-10-25, 2,000 emulator seeds, same generation-3 search in both arms): value-head macro 16.31 floors against 12.33 for rules, +3.98 paired (interval +3.67 to +4.30); Act 1 boss kills 249 against 46; wins 0 and 0. On that result the owner switched the value-head macro on for new candidates (D33, landed a0f3f55b); generation 5, generation 3's prior with the value-head macro, is written at the next training slot and judged against generation 3 about three hours later. The replay readout shows where the floors come from: fewer monster and elite nodes per floor (0.37 against 0.50), 13% of card rewards skipped against under 1%, rests spent on upgrades rather than healing (21% heals against 75%), and boss damage 0.35 of the boss's health against 0.14. Boss damage and cards, nodes and rests per floor are now in every record.</td><td>If six generations do not beat gen 0 on real games, stop training and spend on search quality.</td></tr>
 <tr><td><strong>B, fidelity on demand</strong></td><td>The weekly ranked divergence list, fixes for its top, the measured transfer gap, the G1 decision.</td><td>Ranking method landed and re-run per landing; architectural share 90%. The exact-fight trace tool landed 2026-10-25; its first use found the old engine applying Pen Nib's doubling before Strength (game 16 damage, copy 14). The fix landed the same day at the shared damage site (base plus Strength plus Vigor, then the multipliers), and 14 corpus fights now match the game. The same class remains on Accuracy, Claw, card bonus damage and Calcify; one kit is approved. This matters because the old engine path is what the lab, the arms and the lockstep actually run until the native step lands. Still queued: the ranking-provenance kit and the three probe-first items.</td><td>Gate G1 (below).</td></tr>
 <tr><td><strong>C, the referee as environment</strong></td><td>A hardened real-game environment: recycling, crash handling, missing action types, other characters.</td><td>The ten-minute slowdown is named (per-game memory growth) and removed by recycling every 60 runs, which becomes the default at week 4's first landing. Run API can start any of the five characters. Potion discard on closed-belt screens landed 2026-10-25 (mask version 2, in force from the next candidate; generation 3 stays the baseline). Potion use on those screens is still closed, pending the owner. A nightly 2,000-seed real-game block as a lab job (lockstep arm on the new core) landed 2026-10-25 (d0950be5); the first night runs after the next training slot. The referee driver's pick-order fault behind most of F11 is fixed (d857c286).</td><td>Under 50 decisions/s or over 5% crashes: smaller, rarer blocks; no new host built on that alone.</td></tr>
 <tr><td><strong>D, the CPU scheduler</strong></td><td>The lab's priority ladder of jobs, weights, utilisation report.</td><td>Running unattended. Measured 2026-10-25: 31.8% busy over 48 hours against a 90% target, the fights strategies getting no slots because a presort ran on every main move. Fixed the same day: one presort per batch of main moves, runner restarted; the after-figure is due 2026-10-26. Also found and fixed the same day: the presort's reference-set score had been refused for days because block seed files dirtied the lab tree; it runs again (realistic set 62.5% identical, coverage 72.5%, regression 89.1%).</td><td>None; mechanical.</td></tr>
@@ -474,7 +484,7 @@ dd{margin:0}
 <div class="tablewrap"><table>
 <thead><tr><th>Risk</th><th>What follows</th></tr></thead>
 <tbody>
-<tr><td>The AI has no wins at Ascension 10 yet; almost every run ends in Act 1.</td><td>Expected at this stage: three generations in, the floor is rising about half a floor per generation. The kill rule fires only if six generations do not beat gen 0 on real games. The value head's apparent weakness was a measurement on duplicated records; on clean data it has skill, and the next retrain uses the better recipe.</td></tr>
+<tr><td>The AI has no wins at Ascension 10 yet; three quarters of runs still end in Act 1.</td><td>The floor rose from 11.3 to 18.4 in four promotions and the Act 1 boss falls in a quarter of runs, so the climb is under way; Act 2 is where the copy's untested content and the remaining divergence weight now sit, and the nightly real-game block ranks it as the AI gets there. The kill rule fires only if six generations do not beat gen 0 on real games.</td></tr>
 <tr><td>Optimising for floors reached could teach floor-greedy play that loses to the boss (taking too many cards, for example).</td><td>The owner's concern, recorded under D11. The promotion rule keeps the boss-kill guard (a candidate may not get worse at killing the Act 1 boss), and every record now carries boss damage and cards, nodes and rests per floor. First evidence runs the other way: the value-head macro's four extra floors came with five times the boss kills, and the replay readout shows it skipping 13% of card rewards (the rules macro skipped under 1%), fighting fewer elites, and spending rests on upgrades rather than healing, with two and a half times the boss damage. That is a tighter deck, not a fatter one. No lower-ascension curriculum: Ascension 10 is a different game.</td></tr>
 <tr><td>The new core is slower in the agent's runtime: 31% fewer search simulations per second.</td><td>Training on it would cut self-play pace by about a third unless the kernel is sped up. The owner weighs that against what the re-rank shows the new core removes; the kernel's speed is a priced week-4 item if the trade is worth it.</td></tr>
 <tr><td>Switching the rebuilt core on exposes behaviour no gate covers.</td><td>The lockstep comparison on the next real-game block is the measure; the old engine stays usable and the switch is one line in a config file.</td></tr>
@@ -525,8 +535,8 @@ dd{margin:0}
 <script>
 // Everything that changes between editions is in STATE. Edit here, then republish.
 const STATE = {
-  updated: "2026-10-25 13:45Z",
-  edition: 17,
+  updated: "2026-10-25 14:45Z",
+  edition: 18,
   phases: [
     {key:"P0", name:"Foundations", weeks:"week 1", state:"done", note:"Measured the machine; AI runs on both engines."},
     {key:"P1", name:"The flywheel", weeks:"weeks 2 to 4", state:"now", note:"Week 4 starting. Generations, real-game blocks, ranked fixes, kernel stage."},
@@ -570,6 +580,7 @@ const STATE = {
     {state:"pass", text:"Recorded corpus: 71 better, 4,321 same, 0 worse of 4,392, 0 on fewer fields (122 worse on 2026-10-24)."}
   ],
   changelog: [
+    {when:"2026-10-25 14:45Z", what:"Edition 18. Generation 5 (the value-head macro) is promoted and scored on the real game: mean floor 18.36 against generation 3's 12.72 on the same 500 seeds, 24.4% of runs past the Act 1 boss against 5.4%, 31 runs at the Act 2 boss floor, no wins yet, one crash. The headline chart gains its row. Two real-side record fields (boss damage, rest type) read wrong on real runs and are a week-4 fix."},
     {when:"2026-10-25 13:45Z", what:"Edition 17. Day's end. Landed: the nightly 2,000-seed real-game job (d0950be5) and the driver's pick-order fix with the re-anchor carrying the run deck's order (d857c286). The lab's reference-set gate runs again. Usage 77%, at the stop; every lane idles until Wednesday's reset except a wake on generation 5's verdict and the first nightly block."},
     {when:"2026-10-25 13:20Z", what:"Edition 16. F11's diagnosis: 86% of the piles family is a measurement artefact in the referee driver (it sorts two kept cards at one event where the game keeps pick order, and the re-anchor never repairs the run deck's order), so F11 is not migrated and the driver fix is approved. With F06 and F11 both ruled out, no further family is indicated for the rebuild: Tier 1 stands at F08 and F10 unless the next re-rank says otherwise. The rebuild lane is stopped for the week."},
     {when:"2026-10-25 12:55Z", what:"Edition 15. The macro switch is landed (fork main a0f3f55b) with the damage-order class fix and the seed-file fix; generation 5 (generation 3's prior with the value-head macro) is written at the lab's next training slot and judged about three hours later. The replay readout of the A/B shows how the value head gains its floors: fewer fights and elites, 13% of card rewards skipped, rests spent on upgrades rather than healing, and two and a half times the boss damage. The nightly real-game job is in its gate."},
