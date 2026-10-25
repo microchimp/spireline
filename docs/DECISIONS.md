@@ -573,3 +573,11 @@ every character.**
 - Clarified 2026-10-25 ~09:00Z (owner, in chat): the 80% line is **this week only**. The weekly allowance resets Wednesday
   2026-10-28 at 08:00 local time; next week's ceiling is the owner's call at the reset (the orchestrator's recommendation is an
   explicit lower ceiling, re-priced at G1). Usage read 68% at 09:00Z.
+- Addendum 2026-10-25 ~09:30Z (owner, in chat: "do everything but other characters"): the rest of this week's line goes to, in
+  priority order after the native step, potion discard and the re-rank: (1) the paired A/B of the rules macro against the value-head
+  macro on a fresh E-block under the guard, the owner deciding the switch on its result; (2) boss damage and cards taken per floor in
+  the records and the review tables; (3) the memory-aware fallback for the inference server; (4) the lab utilisation check and
+  re-weight; (5) the exact-fight trace tool, then the probe-first kits if the traces name their rules; (6) the F11 diagnosis under the
+  diagnosis-only rule, after the re-rank; (7) the single-site kits (event gold, the selection:left_open mapping gap, reward hp). About
+  13-14 rounds, expected to end the week near 75-77%. Not approved: the other characters end to end in the environment. New rounds
+  stop at a 78% reading.
