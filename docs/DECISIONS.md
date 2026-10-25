@@ -570,3 +570,6 @@ every character.**
   finish them this week than leave them half done. Decided 2026-10-25 ~08:30Z by the owner, in chat ("change the budget to 80%,
   then wait until the reset, do 3").
 - Supersedes: D30's 70% line and 68% stop; the open owner call on potion discard.
+- Clarified 2026-10-25 ~09:00Z (owner, in chat): the 80% line is **this week only**. The weekly allowance resets Wednesday
+  2026-10-28 at 08:00 local time; next week's ceiling is the owner's call at the reset (the orchestrator's recommendation is an
+  explicit lower ceiling, re-priced at G1). Usage read 68% at 09:00Z.
