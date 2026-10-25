@@ -488,3 +488,12 @@ every character.**
 - Week-3 stopped at its cap at 01:00Z with its final report in HANDOFF section 0 (about 25 Sonnet-equivalent rounds since
   13:00Z, nothing rejected, no cloud session started by it).
 - Not decided overnight: anything that changes the plan of record, the week's caps or the credit plan's counts.
+
+## D30 · 2026-10-25 · The cloud credit stops; the week's allowance runs to 70%
+
+- Decided 2026-10-25 ~02:15Z by the owner, in chat: no more cloud sessions on the credit. $44 of the $250 stays unspent (sixteen
+  sessions delivered: the environment proof, the modding research, three independent reviews, the C1 pilot and C2-C8 handler
+  batches, two Lane B batches, the D24 guard). The ranking-provenance kit published for a morning click becomes a local item.
+- The subscription's weekly usage may run to 70% (continuing D25's line, now without the 13:00Z bound): the kernel lane
+  continues to the F08+F10 switch-on under the proof rule, the orchestrator reads the page at each wake, and every lane stops
+  at a 68% reading. Pieces 2 and 3 of the GPU lane and the week-4 briefs are the owner's call.

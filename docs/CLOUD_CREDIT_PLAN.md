@@ -16,6 +16,9 @@ on quality, never on idle calls: Opus reviewers, confirming tests, a second impl
 **Model note (2026-10-24):** a cloud session runs on the account's default model; the Sonnet/Opus split in the table is
 the intended effort per item, not a setting, so the estimates are approximate.
 
+**Stopped 2026-10-25 ~02:15Z by the owner (D30):** no further cloud sessions; $44 of the $250 stays unspent. Sixteen sessions
+delivered sixteen PRs, all landed. The morning click item (`cloud/ranking-1`) is withdrawn and becomes a local kit.
+
 ## 1. The pipeline
 
 1. **Kit (local, subscription, cheap).** A Sonnet subagent on the PC writes a kit per single-site group into the fork at
