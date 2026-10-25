@@ -387,6 +387,15 @@ every character.**
   server gives +21.6% wall decisions/s and +24.7% decisions per hour over the CPU path, and the 1,000-seed block is identical
   decision for decision on both paths. Open before the lab switches: the memory headroom at 20 workers, measured by the
   2,000-run server block at 01:15Z.
+- Addendum 2026-10-25 ~02:00Z, piece 1 complete (fork main `0128f9cd`, `GPU_INFERENCE.md` section 9): throughput with the lab
+  paused 157.8 decisions/s on the CPU path at 16 workers against 191.9 on the server at 20 (+21.6%; +29% per CPU-second with the
+  server's own 4% counted); the 15-minute full-run A/B gives 6,024 against 4,871 runs/h (x1.25). The 1,000-seed block is
+  identical decision for decision on both paths; the 2,000-run server block (19.7 minutes, 0 crashes, p99 5.8 ms) is recorded
+  as generation 3 and the pending train judges generation 4's candidate from a window holding it. `jobs.json` is switched
+  (backup kept): self-play and the promotion arms at `--prior-server auto`, 20 workers, the brake `LAB/GPU_OFF`, automatic
+  fallback to the CPU path when anything is missing. RAM: a double server death at 20 workers peaks at 31.2 GB commit against
+  a 37.8 GB limit; accepted with the brake, a memory-aware fallback queued. Pieces 2 and 3 wait for the owner. Rounds about
+  11.3 of the lane's 10 since the cut (the block's judging line ran over).
 
 ## D28 · 2026-10-24 · Lane F proceeds on the assumption that modding is allowed
 
