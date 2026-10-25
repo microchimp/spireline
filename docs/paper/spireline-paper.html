@@ -406,7 +406,7 @@ dd{margin:0}
 
 <section class="prose" id="week4">
 <h2>Next: week 4 of the plan</h2>
-<p>Week 4 ends at gate G1. Its briefs are drafted from the week-3 review and the night's results. By the owner's decision (D32) the week-4 session starts at the weekly reset; until then only the native step, the re-rank and the potion-discard item run, within the 80% line. In order of priority:</p>
+<p>Week 4 ends at gate G1. By the owner's decision (D32) the week-4 session proper starts at the weekly reset on Wednesday 2026-10-28. Before then, within this week's 80% line, the open sessions run the native step, potion discard and the re-rank, and then the owner's approved bundle: the rules-against-value-head macro A/B (the owner decides the switch on its result), boss damage and cards taken per floor in the records and the review, the inference server's memory fallback, a lab utilisation re-weight, the exact-fight trace tool, the F11 diagnosis after the re-rank, and three single-site kits. Not approved: the other characters end to end. The week-4 lanes in order of priority:</p>
 <ol>
 <li><strong>Kernel lane (D31, under way):</strong> the kernel in the native library (4 to 6 rounds: build it in the native library, step the search's combat handles through it and carry its state through clones and forks), which lets self-play, promotion and the lockstep run on the new core and lets the switch be measured by agent weight; then the post-switch re-rank on a build with the Fairy in a Bottle fix; then at most one further family chosen by its measured kernel share, diagnosis first. F06 is not migrated.</li>
 <li><strong>Lane B:</strong> the exact-fight trace tool (lockstep decision to a traced real fight, so a divergence can be seen in its run context); the ranking-provenance kit as a local job; the probe-first items once their traces name them; re-rank after each landing.</li>
@@ -522,8 +522,8 @@ dd{margin:0}
 <script>
 // Everything that changes between editions is in STATE. Edit here, then republish.
 const STATE = {
-  updated: "2026-10-25 08:50Z",
-  edition: 8,
+  updated: "2026-10-25 09:35Z",
+  edition: 9,
   phases: [
     {key:"P0", name:"Foundations", weeks:"week 1", state:"done", note:"Measured the machine; AI runs on both engines."},
     {key:"P1", name:"The flywheel", weeks:"weeks 2 to 4", state:"now", note:"Week 4 starting. Generations, real-game blocks, ranked fixes, kernel stage."},
@@ -539,7 +539,7 @@ const STATE = {
     {label:"GPU lane piece 1: shared inference server", pct:100, value:"complete", note:"+21.6% decisions/s at 20 workers, 1,000 seeds identical on both paths, lab switched over 2026-10-25 02:00Z."},
     {label:"GPU lane piece 2: value head trained harder", pct:100, value:"complete", note:"Landed 7477ebb3 (2026-10-25 03:49Z). On deduplicated data and a large enough evaluation the value head has real pre-kill skill: Brier skill +0.044 (interval 0.028 to 0.060) with 4 rows per run per epoch, adopted. Week 3's 'no skill' reading was 38 kills on duplicated data."},
     {label:"GPU lane piece 3: sweeps in quiet windows", pct:70, value:"sweep done, runner deferred", note:"The arm sweep ran on the GPU and is complete. The quiet-window runner (one round) waits until a sweep is queued; nothing is queued this week."},
-    {label:"Weekly allowance used", pct:66, value:"66% at 08:15Z", marks:[{at:78,label:"new rounds stop 78%"},{at:80,label:"owner's line 80%"}], warnAt:78, note:"Read on the usage page at each wake. New rounds stop at a 78% reading and a landing in progress finishes; the owner's line is 80% (D32). After that every lane waits for the weekly reset."},
+    {label:"Weekly allowance used", pct:68, value:"68% at 09:00Z", marks:[{at:78,label:"new rounds stop 78%"},{at:80,label:"owner's line 80%"}], warnAt:78, note:"Read on the usage page at each wake. New rounds stop at a 78% reading and a landing in progress finishes; the owner's line is 80% for this week only (D32). The allowance resets Wednesday 2026-10-28 at 08:00; next week's ceiling is set then."},
     {label:"Cloud-session credit", pct:82, value:"$206 of $250, closed", note:"Sixteen sessions delivered; $44 unspent by the owner's decision (D30). No further cloud sessions."}
   ],
   fidelity: [
@@ -564,6 +564,7 @@ const STATE = {
     {state:"pass", text:"Recorded corpus: 71 better, 4,321 same, 0 worse of 4,392, 0 on fewer fields (122 worse on 2026-10-24)."}
   ],
   changelog: [
+    {when:"2026-10-25 09:35Z", what:"Edition 9. The owner approved a bundle for the rest of this week's line: the rules-against-value-head macro A/B, boss damage and cards per floor in the records, the inference server's memory fallback, a lab utilisation re-weight, the exact-fight trace tool, the F11 diagnosis after the re-rank, and three single-site kits; not the other characters. The 80% line is this week only; the allowance resets Wednesday 2026-10-28 08:00. Usage 68%."},
     {when:"2026-10-25 08:50Z", what:"Edition 8. Two owner rules recorded: a family migration is priced only from a diagnosis that names the mechanism and counts the handler pairs, never from a tag; and no lower-ascension curriculum, since Ascension 10 is a different game and floor-optimising can hurt boss kills, so the boss-kill guard stays and the weekly review adds cards per floor and boss damage."},
     {when:"2026-10-25 08:35Z", what:"Edition 7. D32: the week's usage line is 80% (new rounds stop at 78%, landings finish), then every lane waits for the weekly reset and week 4 starts at the reset; potion discard on closed-belt screens approved. The lab's judge rejected generation 4's deduplicated retrain normally; generation 3 stays promoted. Native step: N1 in review fixes and its landing gate."},
     {when:"2026-10-25 07:10Z", what:"Edition 6. The owner set a new Tier 1 line (D31): the native step runs now within the 68% stop, then the post-switch re-rank, then any further family one at a time on its measured kernel share after a diagnosis. The kernel lane has started the native step."},
