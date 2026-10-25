@@ -463,6 +463,16 @@ every character.**
   checks list holds about twenty old-against-game items, each to be closed with a test, plus one new blocker (a forked combat
   has no run view, so the run deck's listeners would answer empty in search forks); it does not fit the night's remaining
   rounds and waits for the owner's next allowance.
+- Switched on 2026-10-25 ~05:45Z: fork main `cf74c742` sets `migrated_families.json` to F08, F10. The R7 proof passes every gate:
+  old suites 0 tests fail only when on; traced against the game 8 better, 69 same, 0 worse, 0 on fewer fields; corpus 71 better,
+  4,321 same, 0 worse of 4,392, 0 on fewer fields (identical with the default switches); strict step test 4 of 4; port gate 0 with
+  unreached pairs; fuzz 0 ending disagreements. Switch-commit gate: C# 7,383 (0 failed), EmuDump 335, Python 256 OK, old-engine byte
+  proof 0 differ, scenarios 0 unexpected. On the way: R7g `bcb64c9b`, R7h+R7i `0d3a9feb` (the aim leak, turn-end effects in the
+  game's order after the hand flush, the kernel bound before setup so a turn-one kill removes its corpse). Scope: the switch is live
+  in the EmuDump core2 engine and the comparer's core2 mode; the native runtime the agent and the lab use builds no kernel and is
+  unchanged, so the agent gains from the rebuild only once that runtime runs the new core (the kernel lane prices that step next).
+  Next: the post-switch re-rank on S3 with `--engine core2` (week-3 session), the F06 diagnosis (one Opus round) and the Tier 1
+  re-estimate; G1 on the re-ranked table. About 9 kernel rounds since D30; usage 64% at 05:45Z.
 
 ## D29 · 2026-10-24 · Overnight decisions under the owner's delegation (reversible in the morning)
 
