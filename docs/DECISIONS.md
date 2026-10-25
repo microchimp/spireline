@@ -575,6 +575,18 @@ every character.**
   lane's week-4 list. The F11 diagnosis runs now (usage 75%). **Owner's call:** whether self-play and the promotion arms move to
   core2 now, against bench-emu's -31% search simulations per second (the orchestrator recommends the kernel's speed work first,
   since the old core's measured harm to real-game play is within noise while the pace cost is certain).
+- F11 diagnosis 2026-10-25 ~13:10Z (`D:/spireline/referee/rebuild/f11-diagnosis-s3.md`, diagnosis only): F11 holds 797 of 3,027
+  agent weight (26.3%; 32.4% of the architectural weight) in 51 records. 86.4% is a measurement artefact in the referee driver: at
+  the Room Full of Cheese Gorge event the driver sorts the two kept cards into grid order before handing them to the game, while
+  the game and the emulator add them in pick order, so the run deck differs by one swapped pair, and the fight-start re-anchor
+  never repairs the run deck's order, so the same swap breaks later fights (41% of the family); the same pattern is 84.1% of F11
+  on the old engine, which is why its weight moved only -7%. 9.8% follows earlier F15 deck divergences (Lane B); the rest is
+  single-record trace targets; F08/F10 residue 0%. The kernel addresses 0% measured, at most 3.5%: **F11 is not migrated** (49
+  pairs, 9 open). Fix approved on the P1 lane: keep the pick order in the driver, carry the run deck's order through the re-anchor,
+  re-measure on the nightly block. **G1 reading:** F06 (85% a fixed single-site rule) and F11 (86% a driver artefact) are not kernel
+  work, and no further Tier 1 family is indicated by the measured weight; Tier 1 stands at F08+F10 unless the re-rank after the
+  driver fix shows otherwise. The rebuild lane is stopped for the week; week-4 items (parity harness, snapshot and re-anchor tests,
+  the kernel's speed, the 3 failed re-anchors and the `screen:None` loss) are in HANDOFF section 0 with estimates.
 
 ## D32 · 2026-10-25 · The week's line is 80%, then everything waits for the reset; potion discard is approved
 
