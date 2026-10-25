@@ -651,3 +651,13 @@ every character.**
   two-attempt cap applies to it afresh, and the guard's state is not reset by hand. The lineage records the macro as the
   difference. Generation 4's two refused attempts stand. Self-play before the switch: 77.8 runs per hour over 24 h (5,490 per
   active hour at 20 workers); expected 57-76% of that once a V_run-macro agent is promoted.
+- Result 2026-10-25 14:35Z: generation 5 (gen 3's prior with the V_run macro, the A/B fit as seed) promoted at 13:48Z on block E5
+  (+5.00 floors paired against gen 3, lower bound +4.64; boss kills 269 against 68; both guards ok). **On the real game (S3, 500
+  seeds, lockstep on core2, driver with the pick-order fix): mean floor 18.36 (17.84-18.89) against generation 3's 12.72, +5.4
+  floors on the same seeds; past the Act-1 boss 122 of 500 (24.4%) against 27 (5.4%); 31 runs reached the Act-2 boss floor against
+  1; wins 0 and 0; 1 game crash (499 scored).** Emulator arm 17.74; paired gap real minus copy -0.62 (-1.19 to -0.05): the real game
+  now reaches further than the copy for this agent. Divergence 0.59% (422 decisions; the runs go deeper, into Act 2), weight 6,844,
+  F08 46.4%, F06 15.0%, F11 12.1%, F15 9.4%; Tier 1 holds. Real-side macro proxies: monster+elite nodes 0.42 against 0.62 per
+  floor, rests 3.0 against 1.5 per run, card skips 8.7% against 0.55%. Throughput after the switch: +11% wall per run, -20% per
+  floor (less than feared). Two real-side record fields fail their live check (boss_damage reads 0.0 on real runs; every real rest
+  reads as heal): one week-4 round against the gen-5 block as fixture; the guard's damage check is inert on real records until then.
