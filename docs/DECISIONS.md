@@ -473,6 +473,17 @@ every character.**
   unchanged, so the agent gains from the rebuild only once that runtime runs the new core (the kernel lane prices that step next).
   Next: the post-switch re-rank on S3 with `--engine core2` (week-3 session), the F06 diagnosis (one Opus round) and the Tier 1
   re-estimate; G1 on the re-ranked table. About 9 kernel rounds since D30; usage 64% at 05:45Z.
+- F06 diagnosis 2026-10-25 ~06:40Z (`D:/spireline/referee/rebuild/f06-diagnosis.md`): F06 holds 23.7% of agent weight on
+  `rank-s2-w3-v2`, all placed by shape, none by hook; nearly every record is a whole-turn offset (one side took the lone End Turn
+  the other did not). 85.3% is Fairy in a Bottle offered as a combat action, a Lane B rule fixed on main by B7b `ee7dc2e6` after the
+  block ran; 6.1% an extra energy point after the same play, source unknown; the rest F08/F10 echoes and small Lane B items. The
+  kernel addresses 0% measured, at most 6.1%: **F06 is not migrated** (about 20-27 rounds, 125 pairs, for no measured gain); the
+  re-rank comes first, on a build with B7b. **Tier 1 re-estimate against D25's stop line of 120:** spent about 120-125 (the kernel
+  stage ~42; F08+F10 ~75-85 against an estimate of 15, the overrun the R7 proof surfacing cross-cutting kernel defects); left: the
+  native step 4-6 (the critical path: nothing measures the switch by agent weight before it), then at most one family after a
+  re-rank, +10-40; central 130-165. Per D25 the lane has stopped and reported. **Owner's call:** a new Tier 1 line (the native step,
+  the re-rank, then one family at a time by measured kernel share, diagnosis first) or stopping Tier 1 at F08+F10. Usage 64% at
+  06:45Z.
 
 ## D29 · 2026-10-24 · Overnight decisions under the owner's delegation (reversible in the morning)
 
