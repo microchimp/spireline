@@ -606,3 +606,11 @@ every character.**
   stop: (1) the A/B arms re-read with the new per-floor fields (cards, nodes, rests, boss damage); (2) the real-game score on S3 of
   the first candidate promoted with the V_run macro, paired against generation 3's 12.72; (3) the three probe-first kits if rounds
   remain. Not this week: a lookahead-cost sweep, the sub-1.5% single-site kits, the week-4 review before the re-rank.
+- Addendum 2 2026-10-25 ~10:30Z (owner, in chat, "do what you think" on filling the machine's idle compute): queued this week
+  after the replay readout and before the probe-first kits: a nightly 2,000-seed real-game block as a lab job (incumbent and each
+  new promotion, lockstep on, recycle-60, fresh seeds, under the lab's quiet lock; feeds readiness.json and the ranking), and a
+  measurement of self-play throughput after the macro switch with a three-size lookahead sweep only if runs per hour fell by more
+  than a quarter (adopt the smallest size whose paired floor loss has an interval including zero). The lookahead sweep is no longer
+  excluded. For week 4 (at the reset): the GPU quiet-window runner plus one sweep of a larger policy prior within the inference
+  server's headroom (2.7x demand), judged by the promotion gate; the value head refits every generation on the full window under
+  the adopted recipe. Not now: the real game as a training environment (a P2 question that changes the security posture).
