@@ -581,3 +581,7 @@ every character.**
   diagnosis-only rule, after the re-rank; (7) the single-site kits (event gold, the selection:left_open mapping gap, reward hp). About
   13-14 rounds, expected to end the week near 75-77%. Not approved: the other characters end to end in the environment. New rounds
   stop at a 78% reading.
+- Clock note (orchestrator, 08:15Z by `date -u`): the orchestrator's own time stamps in the 2026-10-25 entries from the dedupe
+  landing onward (the D23, D27, D31 and D32 addenda stamped 05:05Z to 09:35Z) ran one to two hours ahead of UTC; the order of
+  events and the lane-reported times (piece 2 03:49Z, the memory fallback 07:47Z) are right. Stamps from here on are read from
+  the clock.
