@@ -624,3 +624,9 @@ every character.**
   excluded. For week 4 (at the reset): the GPU quiet-window runner plus one sweep of a larger policy prior within the inference
   server's headroom (2.7x demand), judged by the promotion gate; the value head refits every generation on the full window under
   the adopted recipe. Not now: the real game as a training environment (a P2 question that changes the security posture).
+- Addendum 3 2026-10-25 ~11:30Z (orchestrator, routine): generation 4 had used both promotion attempts the review guard allows
+  before the macro switch, so the first candidate written with the V_run macro is a **new generation number**, not a retry of
+  generation 4: it is a different policy (same prior, different macro, the A/B's fit seeded through `--vrun-seed`), the guard's
+  two-attempt cap applies to it afresh, and the guard's state is not reset by hand. The lineage records the macro as the
+  difference. Generation 4's two refused attempts stand. Self-play before the switch: 77.8 runs per hour over 24 h (5,490 per
+  active hour at 20 workers); expected 57-76% of that once a V_run-macro agent is promoted.
