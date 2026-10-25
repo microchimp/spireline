@@ -585,3 +585,20 @@ every character.**
   landing onward (the D23, D27, D31 and D32 addenda stamped 05:05Z to 09:35Z) ran one to two hours ahead of UTC; the order of
   events and the lane-reported times (piece 2 03:49Z, the memory fallback 07:47Z) are right. Stamps from here on are read from
   the clock.
+
+## D33 · 2026-10-25 · The value head becomes the run macro for new candidates; its keep test is out-of-fold on the full window
+
+- From now every candidate the lab writes uses V_run for its run-level decisions (map route, rest, shop, rewards) instead of the
+  rules macro. Generation 3 stays the incumbent, with the rules macro, until a candidate beats it on paired seeds under the
+  promotion rule as written (mean floor primary, the boss-kill not-worse guard of D24, the F7 audit).
+- The V_run keep test is out-of-fold Brier skill on the full deduplicated self-play window with the interval excluding zero; the
+  held-out-tenth test (37 Act-1 kills on the current window) is reported, not gating. The adopted recipe passes (+0.044, 0.028 to
+  0.060 on 13,769 runs); the fit used in the A/B ships with the first vrun candidate, and later fits must pass the new test.
+- Why: the paired macro A/B of 2026-10-25 (`E6-macro-2026-10-25`, 2,000 fresh seeds, generation-3 search in both arms, A10, guard on)
+  gives the V_run macro +3.98 floors paired (95% +3.67 to +4.30; 16.31 against 12.33) and Act-1 boss kills 249 against 46 (12.5%
+  against 2.3%, McNemar p 1e-38), wins 0 and 0, crashes 0. The held-out-tenth keep test has no power at 37 events, the same fault D24
+  removed from the boss-kill test. The gain is not floor-greedy: boss kills rose fivefold. Cost: more wall time per run from the
+  macro's lookahead (the A/B's 20.1 s against 11.5 s overstates it; a kernel-lane score overlapped the vrun arm's first 25 minutes).
+- Decided 2026-10-25 ~09:30Z by the owner, in chat, accepting the orchestrator's recommendation.
+- Supersedes: the rules macro as the default for new candidates (`SPIRELINE_MACRO_VRUN` off, D27 addendum); the held-out keep
+  test for V_run as the gate (DESIGN 5.3 as applied in week 3).
