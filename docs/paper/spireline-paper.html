@@ -418,6 +418,7 @@ dd{margin:0}
 
 <section class="prose" id="week4">
 <h2>Next: week 4 of the plan</h2>
+<div class="callout"><strong>Proposed use of the leftover allowance before the reset, held for the owner's go.</strong> In order of importance: (1) fix the two record fields that read wrong on real runs, 1 round; (2) the G1 review on the nightly tables, about 2 rounds, on Tuesday with two nights of data; (3) the fix lane on the nightly ranking's top groups, from kits, up to 8 rounds, since the copy now underestimates the AI by 0.6 floors; (4) the kernel's speed work, about 4 rounds, then a paired test of training on the new core if the cost comes down; (5) the GPU prior sweep in quiet windows, about 1.5; (6) potion use on the closed-belt screens if approved, about 1.5; (7) the three probe-first kits, 3; (8) the parity harness and re-anchor tests, 3; (9) a reserve of about 5 rounds for whatever the nightly blocks reveal. About 29 rounds in all. Nothing starts before the owner says go.</div>
 <p>Week 4 ends at gate G1. By the owner's decision (D32) the week-4 session proper starts at the weekly reset on Wednesday 2026-10-28. Before then, within this week's 80% line, the open sessions run the native step, potion discard and the re-rank, and then the owner's approved bundle: the rules-against-value-head macro A/B (the owner decides the switch on its result), boss damage and cards taken per floor in the records and the review, the inference server's memory fallback, a lab utilisation re-weight, the exact-fight trace tool, the F11 diagnosis after the re-rank, and three single-site kits. Not approved: the other characters end to end. The week-4 lanes in order of priority:</p>
 <ol>
 <li><strong>Kernel lane (D31, under way):</strong> the kernel in the native library (4 to 6 rounds: build it in the native library, step the search's combat handles through it and carry its state through clones and forks), which lets self-play, promotion and the lockstep run on the new core and lets the switch be measured by agent weight; then the post-switch re-rank on a build with the Fairy in a Bottle fix; then at most one further family chosen by its measured kernel share, diagnosis first. F06 is not migrated.</li>
@@ -535,8 +536,8 @@ dd{margin:0}
 <script>
 // Everything that changes between editions is in STATE. Edit here, then republish.
 const STATE = {
-  updated: "2026-10-25 14:45Z",
-  edition: 18,
+  updated: "2026-10-25 15:15Z",
+  edition: 19,
   phases: [
     {key:"P0", name:"Foundations", weeks:"week 1", state:"done", note:"Measured the machine; AI runs on both engines."},
     {key:"P1", name:"The flywheel", weeks:"weeks 2 to 4", state:"now", note:"Week 4 starting. Generations, real-game blocks, ranked fixes, kernel stage."},
@@ -580,6 +581,7 @@ const STATE = {
     {state:"pass", text:"Recorded corpus: 71 better, 4,321 same, 0 worse of 4,392, 0 on fewer fields (122 worse on 2026-10-24)."}
   ],
   changelog: [
+    {when:"2026-10-25 15:15Z", what:"Edition 19. A plan for the allowance the owner expects to remain before Wednesday's reset, in order of importance, held until the owner says go; nothing has started."},
     {when:"2026-10-25 14:45Z", what:"Edition 18. Generation 5 (the value-head macro) is promoted and scored on the real game: mean floor 18.36 against generation 3's 12.72 on the same 500 seeds, 24.4% of runs past the Act 1 boss against 5.4%, 31 runs at the Act 2 boss floor, no wins yet, one crash. The headline chart gains its row. Two real-side record fields (boss damage, rest type) read wrong on real runs and are a week-4 fix."},
     {when:"2026-10-25 13:45Z", what:"Edition 17. Day's end. Landed: the nightly 2,000-seed real-game job (d0950be5) and the driver's pick-order fix with the re-anchor carrying the run deck's order (d857c286). The lab's reference-set gate runs again. Usage 77%, at the stop; every lane idles until Wednesday's reset except a wake on generation 5's verdict and the first nightly block."},
     {when:"2026-10-25 13:20Z", what:"Edition 16. F11's diagnosis: 86% of the piles family is a measurement artefact in the referee driver (it sorts two kept cards at one event where the game keeps pick order, and the re-anchor never repairs the run deck's order), so F11 is not migrated and the driver fix is approved. With F06 and F11 both ruled out, no further family is indicated for the rebuild: Tier 1 stands at F08 and F10 unless the next re-rank says otherwise. The rebuild lane is stopped for the week."},
