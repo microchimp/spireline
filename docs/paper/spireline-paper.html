@@ -156,7 +156,7 @@ dd{margin:0}
 <p><strong>How.</strong> Search plus two learned networks. At each decision the AI imagines many possible hidden states, plays each forward on a copy of the game, and picks the move that does best on average. A policy network tells the search which moves to look at first; a value network estimates how a run is going. There is no language model anywhere in the player, and no end-to-end reinforcement learning: the search is the player, the networks only make it faster and sharper.</p>
 <p><strong>Why a copy of the game.</strong> The search needs to play millions of imagined fights an hour. The real game manages about a hundred decisions a second on this PC and cannot be forked. The copy is our own fork of an open-source re-implementation of the game's combat and run logic in C#. It is exact on 97% of combat steps and plays about a thousand decisions a second per core.</p>
 <p><strong>Why the real game still matters.</strong> A copy that is slightly wrong teaches slightly wrong play. So the real game, run headless with no window, is the judge. Every stage the current AI plays a fixed block of 500 real games. Its win rate and how far it gets are the headline numbers. Every real game it plays is also replayed on the copy, step by step. Where the two disagree, the disagreement is weighed by how often the AI meets it, and only the heavy disagreements get fixed. The copy is improved on demand, never on principle.</p>
-<p><strong>Where we are (2026-10-25).</strong> The loop runs unattended around the clock. Three generations of the AI have been promoted; on real games the mean floor reached moved from 11.3 to 12.7, with no wins yet at Ascension 10 (the Act 1 boss is beaten about 2% of the time). The lockstep comparison shows the copy disagrees with the game on 0.6% of the AI's decisions, and nine tenths of that disagreement sits in a few ordering mechanisms of the copy's combat core. That core is being rebuilt in the game's own shape; its first two mechanism families are ported and one fix away from switching on. A GPU inference server lifted self-play throughput by a fifth; the GPU lane is now designing a harder-trained value head.</p>
+<p><strong>Where we are (2026-10-25).</strong> The loop runs unattended around the clock. Three generations of the AI have been promoted; on real games the mean floor reached moved from 11.3 to 12.7, with no wins yet at Ascension 10 (the Act 1 boss is beaten about 2% of the time). The lockstep comparison shows the copy disagrees with the game on 0.6% of the AI's decisions, and nine tenths of that disagreement sits in a few ordering mechanisms of the copy's combat core. That core is being rebuilt in the game's own shape; its first two mechanism families are ported, their last three divergence mechanisms are fixed, and the switch-on commit is in its final gate. A GPU inference server lifted self-play throughput by a fifth. The GPU lane then found that the AI's run-value head, written off in week 3 as having no skill, has real skill once a duplication bug in the self-play records was fixed; the fix and the better training recipe are landed.</p>
 <p><strong>What comes next.</strong> Switch on the rebuilt core for the first two families once every proof gate passes; then week 4 of the plan: migrate the next three families in ranked order, keep the fix lane and the agent lane turning, and hold gate G1 at the end of the week on the re-ranked table.</p>
 <div class="callout small"><strong>Reading the plan's calendar.</strong> The plan is written in "weeks" (week 1 foundations, weeks 2 to 4 the flywheel, and so on). At the current pace a plan week has taken about one calendar day: week 2 ran on 2026-10-23, week 3 on 2026-10-24, and week 4 starts on 2026-10-25. The word "week" below is a stage name, not seven days.</div>
 </section>
@@ -193,7 +193,7 @@ dd{margin:0}
   <text class="n-title" x="706" y="222">Kernel rebuild, Tier 1</text>
   <text class="n-sub" x="706" y="242">Combat core in the game's shape;</text>
   <text class="n-sub" x="706" y="258">families migrated in ranked order.</text>
-  <circle class="n-dot wait" cx="712" cy="276" r="4"/><text class="n-st" x="722" y="280">F08+F10 PORTED · switch pending</text>
+  <circle class="n-dot wait" cx="712" cy="276" r="4"/><text class="n-st" x="722" y="280">F08+F10 · switch commit in final gate</text>
 
   <rect class="n-box" x="690" y="318" width="230" height="92" rx="8"/>
   <text class="n-title" x="706" y="344">Fix lane (Lane B)</text>
@@ -224,7 +224,7 @@ dd{margin:0}
   <text class="n-title" x="56" y="466">Training on the GPU</text>
   <text class="n-sub" x="56" y="486">Policy prior (expert iteration);</text>
   <text class="n-sub" x="56" y="502">run value head (GPU lane piece 2).</text>
-  <circle class="n-dot run" cx="62" cy="520" r="4"/><text class="n-st" x="72" y="524">RUNNING · value head in design</text>
+  <circle class="n-dot run" cx="62" cy="520" r="4"/><text class="n-st" x="72" y="524">RUNNING · value head has skill (piece 2)</text>
 
   <rect class="n-box side" x="690" y="440" width="230" height="92" rx="8"/>
   <text class="n-title" x="706" y="466">Distilled network, public mod</text>
@@ -315,7 +315,7 @@ dd{margin:0}
 <h3>Switch-on proof for F08 and F10</h3>
 <p class="small muted">The rebuilt core takes over damage and death handling only when all seven gates pass at once. State at fork main bcb64c9b, 2026-10-25 03:00Z.</p>
 <div class="gates" id="gates"></div>
-<p class="cap">The two open fights are diagnosed. In one, a target chosen by an earlier card play leaks into the search's world copies. In the other, the game runs the Parrying Shield relic after it flushes the hand at turn end, where the old copy ran it before. Round R7h is fixing both and rerunning the whole table.</p>
+<p class="cap">The two open fights were diagnosed and fixed in R7h: a target chosen by an earlier card play leaked into the search's world copies, and the game runs the Parrying Shield relic after it flushes the hand at turn end, where the old copy ran it before. The rerun uncovered one more mechanism, fixed at the root in R7i: a creature killed at the start of turn one stayed in the enemy roster. The switch-on commit now sits on a local branch while the final gate runs.</p>
 </div>
 </div>
 
@@ -360,14 +360,14 @@ dd{margin:0}
 <div class="tablewrap"><table>
 <thead><tr><th>Lane</th><th>What it delivers</th><th>State on 2026-10-25</th><th>Kill rule</th></tr></thead>
 <tbody>
-<tr><td><strong>A, the agent</strong></td><td>The searching player, generations that improve it, the weekly real-game score; later an offline run review.</td><td>Gen 3 promoted; gen 4 rejected once, retraining. Mean floor 11.3 to 12.7 on real games in three generations. The value head fails its keep conditions; the GPU lane trains it harder.</td><td>If six generations do not beat gen 0 on real games, stop training and spend on search quality.</td></tr>
+<tr><td><strong>A, the agent</strong></td><td>The searching player, generations that improve it, the weekly real-game score; later an offline run review.</td><td>Gen 3 promoted; gen 4 rejected once; the retrain resumes on deduplicated records (a resumed self-play block had re-appended its records, 19.7% duplicates, fixed 2026-10-25). Mean floor 11.3 to 12.7 on real games in three generations. The value head has real skill on clean data; the run macro stays on rules until a paired A/B and the owner's decision.</td><td>If six generations do not beat gen 0 on real games, stop training and spend on search quality.</td></tr>
 <tr><td><strong>B, fidelity on demand</strong></td><td>The weekly ranked divergence list, fixes for its top, the measured transfer gap, the G1 decision.</td><td>Ranking method landed and re-run per landing; architectural share 90%. Kit queue ready for week 4 (ranking provenance, exact-fight trace tool, three probe-first items).</td><td>Gate G1 (below).</td></tr>
 <tr><td><strong>C, the referee as environment</strong></td><td>A hardened real-game environment: recycling, crash handling, missing action types, other characters.</td><td>The ten-minute slowdown is named (per-game memory growth) and removed by recycling every 60 runs, which becomes the default at week 4's first landing. Run API can start any of the five characters.</td><td>Under 50 decisions/s or over 5% crashes: smaller, rarer blocks; no new host built on that alone.</td></tr>
 <tr><td><strong>D, the CPU scheduler</strong></td><td>The lab's priority ladder of jobs, weights, utilisation report.</td><td>Running unattended; the loop's share of CPU is ramping toward 50%. Utilisation was 26% over 7 days against a 90% target before the ladder changes.</td><td>None; mechanical.</td></tr>
 <tr><td><strong>E, security and ops</strong></td><td>Owner actions: firewall rule, profile check, patch list.</td><td>H6 approved 2026-10-23. No open security item.</td><td>Any HALT, connection or touched profile stops everything.</td></tr>
 <tr><td><strong>F, the public mod</strong></td><td>A mod carrying only the distilled policy network, released when its gate passes.</td><td>Research done; modding assumed allowed (D28). ONNX export packages installed 2026-10-25. Code starts in P2.</td><td>Never shipped weaker than the human median in fights.</td></tr>
 <tr><td><strong>R, the kernel rebuild</strong></td><td>Tier 1: the combat core in the game's shape, families migrated in ranked order.</td><td>Core built; F08+F10 ported, switch pending on two fights. Next F06, F11, F15.</td><td>Stop line 120 rounds; escalate to Tier 2 only by the G1 rules.</td></tr>
-<tr><td><strong>GPU lane</strong></td><td>Shared inference server, harder-trained value head, sweeps in quiet windows.</td><td>Piece 1 complete and switched on (+22% decisions/s). Piece 2 design in review. Piece 3 waits for piece 2's result.</td><td>Judge stays on the CPU path until equivalence is proven; kill file stops the server.</td></tr>
+<tr><td><strong>GPU lane</strong></td><td>Shared inference server, harder-trained value head, sweeps in quiet windows.</td><td>Piece 1 complete and switched on (+22% decisions/s). Piece 2 complete: the value head trained with 4 rows per run has Brier skill +0.044 on 13,769 held-out runs; adopted for the lab's next fit. Piece 3's sweep done; its quiet-window runner waits for a queued sweep. About 17.5 rounds in all.</td><td>Judge stays on the CPU path until equivalence is proven; kill file stops the server.</td></tr>
 </tbody></table></div>
 
 <h3>Gates</h3>
@@ -399,7 +399,7 @@ dd{margin:0}
 </ol>
 <h3>What has happened</h3>
 <p>The core (dispatcher and queue) landed in week 2 and week 3 with its own tests. F08 and F10 were taken together because the kill sequence binds them: the game kills, runs death hooks and removes the creature inside each damage call. All their handlers were ported between 2026-10-24 and 2026-10-25: a cloud pilot batch and five cloud batches for powers and relics, local batches for monsters and the models that needed the game's context, a review that found and fixed a kernel bug (a search fork could advance the live run's random stream), and finally the eleven pairs no recorded fight reaches.</p>
-<p>The switch-on proof then failed in four rounds of narrowing, each time finding a mechanism: the old combat ending fired at the kill while the game ends combat after its queue drains (113 fights); the game's two turn-start win checks had never run under the old turn start; a comparer census fault; two relics whose damage folds had never been ported. The corpus count of worse fights went 122, 3, 2. Two remain, both diagnosed, under repair.</p>
+<p>The switch-on proof then failed in four rounds of narrowing, each time finding a mechanism: the old combat ending fired at the kill while the game ends combat after its queue drains (113 fights); the game's two turn-start win checks had never run under the old turn start; a comparer census fault; two relics whose damage folds had never been ported. The corpus count of worse fights went 122, 3, 2, and R7h and R7i closed the last two plus a third mechanism the rerun exposed. The switch-on commit is ready on a local branch and its final gate (the full C# suite, the byte proof, the corpus and the Codex walk) is running; it lands only if that gate is green.</p>
 <p>Next in the ranked order: F06 (card-play hooks, 21% of the weight), then F11 (piles, 11%) and F15 (rewards, 9%), each with its Opus diagnosis first. The escalation rules stand: Tier 2 only if the architectural share has not halved once the top five are migrated, or if a migrated family's divergence returns through an unmigrated one more than twice.</p>
 </section>
 
@@ -409,7 +409,7 @@ dd{margin:0}
 <ol>
 <li><strong>Kernel lane:</strong> R7h closes the two fights and reruns the proof; the switch flips only with every gate passing; then the post-switch by-family table and traced set; then F06's diagnosis and migration, then F11, F15.</li>
 <li><strong>Lane B:</strong> the exact-fight trace tool (lockstep decision to a traced real fight, so a divergence can be seen in its run context); the ranking-provenance kit as a local job; the probe-first items once their traces name them; re-rank after each landing.</li>
-<li><strong>Lane A:</strong> score the promoted generation on block S3 each promotion under the review guard; judge the GPU lane's value head against the keep conditions (the dev-set skill interval must exclude zero).</li>
+<li><strong>Lane A:</strong> score the promoted generation on block S3 each promotion under the review guard; the generation-3 retrain on deduplicated records; a paired A/B of the rules macro against the value-head macro on a fresh block, whose result goes to the owner.</li>
 <li><strong>Lane C:</strong> recycle-60 as the default for real-game blocks; the other four characters end to end; potion discard on closed-belt screens, which is the owner's call because it changes the action masks the policies see.</li>
 <li><strong>GPU lane:</strong> piece 2 (the value head) after its design review; piece 3 (sweeps) only in quiet windows after piece 2 has a measured result.</li>
 <li><strong>Weekly review:</strong> G1 on the re-ranked table after the switch.</li>
@@ -418,6 +418,7 @@ dd{margin:0}
 <ul>
 <li>When to write and start the week-4 session: now, or after the F08+F10 switch lands.</li>
 <li>Potion discard on closed-belt screens (changes the policies' masks).</li>
+<li>Whether the run macro switches from rules to the value head, once the paired A/B has a result.</li>
 <li>Reversible decisions taken under delegation overnight (D29, D24's guard, D23's family order, D26's cloud-plan revision): all stand unless the owner reverses one.</li>
 </ul>
 </section>
@@ -466,7 +467,7 @@ dd{margin:0}
 <div class="tablewrap"><table>
 <thead><tr><th>Risk</th><th>What follows</th></tr></thead>
 <tbody>
-<tr><td>The AI has no wins at Ascension 10 yet; almost every run ends in Act 1.</td><td>Expected at this stage: three generations in, the floor is rising about half a floor per generation. The kill rule fires only if six generations do not beat gen 0 on real games. The value head's weakness (it fails its keep conditions) is the GPU lane's piece 2.</td></tr>
+<tr><td>The AI has no wins at Ascension 10 yet; almost every run ends in Act 1.</td><td>Expected at this stage: three generations in, the floor is rising about half a floor per generation. The kill rule fires only if six generations do not beat gen 0 on real games. The value head's apparent weakness was a measurement on duplicated records; on clean data it has skill, and the next retrain uses the better recipe.</td></tr>
 <tr><td>The switch-on proof keeps finding one more mechanism.</td><td>Each round has closed most of what it found (122, 3, 2 fights). If R7h leaves a new class open, the kernel lane stops and the switch waits for a diagnosis round rather than a hot fix.</td></tr>
 <tr><td>Switching the rebuilt core on exposes behaviour no gate covers.</td><td>The lockstep comparison on the next real-game block is the measure; the old engine stays usable and the switch is one line in a config file.</td></tr>
 <tr><td>The weekly allowance reaches its line before the switch lands.</td><td>Lanes stop at 68%; the CPU jobs keep producing; the switch waits for the next allowance. Nothing is lost, only delayed.</td></tr>
@@ -516,8 +517,8 @@ dd{margin:0}
 <script>
 // Everything that changes between editions is in STATE. Edit here, then republish.
 const STATE = {
-  updated: "2026-10-25 03:20Z",
-  edition: 1,
+  updated: "2026-10-25 05:30Z",
+  edition: 2,
   phases: [
     {key:"P0", name:"Foundations", weeks:"week 1", state:"done", note:"Measured the machine; AI runs on both engines."},
     {key:"P1", name:"The flywheel", weeks:"weeks 2 to 4", state:"now", note:"Week 4 starting. Generations, real-game blocks, ranked fixes, kernel stage."},
@@ -527,11 +528,11 @@ const STATE = {
   bars: [
     {label:"Plan phase P1 (weeks 2 to 4)", pct:67, value:"2 of 3 stages", note:"Weeks 2 and 3 reviewed (2026-10-23, 2026-10-24); week 4 begins 2026-10-25 and ends at gate G1."},
     {label:"Kernel rebuild: handlers ported for F08 and F10", pct:100, value:"port gate 0", note:"Every (model, hook) pair has a handler on the new core, including the 11 no recorded fight reaches. Fork main bcb64c9b."},
-    {label:"Kernel rebuild: switch-on proof for F08 and F10", pct:71, value:"5 of 7 gates", note:"Two gates open: 2 corpus fights worse of 4,392, and 1 traced fight compared on fewer fields. Both diagnosed; R7h in flight."},
+    {label:"Kernel rebuild: switch-on proof for F08 and F10", pct:86, value:"5 of 7 passed, 2 in the final gate", note:"R7h fixed the two diagnosed fights and R7i a third mechanism it uncovered (a creature killed at combat start stayed in the roster). The switch-on commit is ready on a local branch; the final gate runs on it. Nothing pushed yet."},
     {label:"Tier 1 by the AI's weight: families switched on", pct:0, value:"0% switched, 54% ported", note:"F08+F10 carry 54% of the divergence weight and switch on together. Stop rule: under 10% left unmigrated."},
     {label:"GPU lane piece 1: shared inference server", pct:100, value:"complete", note:"+21.6% decisions/s at 20 workers, 1,000 seeds identical on both paths, lab switched over 2026-10-25 02:00Z."},
-    {label:"GPU lane piece 2: value head trained harder", pct:15, value:"design in review", note:"Design written 2026-10-25; code starts after the Opus review; adopted only if the dev-set skill interval excludes zero."},
-    {label:"GPU lane piece 3: sweeps in quiet windows", pct:0, value:"waiting", note:"Starts only after piece 2 has a measured result."},
+    {label:"GPU lane piece 2: value head trained harder", pct:100, value:"complete", note:"Landed 7477ebb3 (2026-10-25 03:49Z). On deduplicated data and a large enough evaluation the value head has real pre-kill skill: Brier skill +0.044 (interval 0.028 to 0.060) with 4 rows per run per epoch, adopted. Week 3's 'no skill' reading was 38 kills on duplicated data."},
+    {label:"GPU lane piece 3: sweeps in quiet windows", pct:70, value:"sweep done, runner deferred", note:"The arm sweep ran on the GPU and is complete. The quiet-window runner (one round) waits until a sweep is queued; nothing is queued this week."},
     {label:"Weekly allowance used", pct:61, value:"61% at 03:00Z", marks:[{at:68,label:"lanes stop 68%"},{at:70,label:"owner's line 70%"}], warnAt:68, note:"Read on the usage page at each wake. Sessions stop at a 68% reading; the owner's line is 70% (D30)."},
     {label:"Cloud-session credit", pct:82, value:"$206 of $250, closed", note:"Sixteen sessions delivered; $44 unspent by the owner's decision (D30). No further cloud sessions."}
   ],
@@ -553,10 +554,11 @@ const STATE = {
     {state:"pass", text:"Old test suites with the switch on: 0 tests fail only when on (215 pass both, 76 not covered)."},
     {state:"pass", text:"Strict step-order test: 4 of 4 pass."},
     {state:"pass", text:"Fuzzer: 0 disagreements on how a combat ends."},
-    {state:"open", text:"Fights traced against the real game: 8 better, 69 same, 0 worse, but 1 fight compared on fewer fields."},
-    {state:"open", text:"Recorded corpus: 63 better, 4,327 same, 2 worse of 4,392 (was 122 on 2026-10-24)."}
+    {state:"open", text:"Fights traced against the real game: 8 better, 69 same, 0 worse; the 1 fight on fewer fields is fixed in R7h's comparer change, pending the final gate."},
+    {state:"open", text:"Recorded corpus: the 2 worse fights of 4,392 (was 122 on 2026-10-24) are fixed in R7h and R7i, pending the final gate's rerun."}
   ],
   changelog: [
+    {when:"2026-10-25 05:30Z", what:"Edition 2. Self-play records deduplicated (fork main 68cf5759: a resumed block had re-appended its records, 19.7% duplicates). GPU piece 2 complete (7477ebb3): the value head has real skill on clean data; piece 3's sweep done, its runner deferred. Kernel: R7h and R7i fixed the last three mechanisms; the switch-on commit is ready and in its final gate. Allowance 62%."},
     {when:"2026-10-25 03:20Z", what:"Edition 1. Written at the owner's request as the standing plain-language record. State: R7g landed (bcb64c9b), R7h in flight; GPU piece 2 design in review; allowance 61%."}
   ]
 };
