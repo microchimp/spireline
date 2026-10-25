@@ -157,7 +157,7 @@ dd{margin:0}
 <p><strong>Why a copy of the game.</strong> The search needs to play millions of imagined fights an hour. The real game manages about a hundred decisions a second on this PC and cannot be forked. The copy is our own fork of an open-source re-implementation of the game's combat and run logic in C#. It is exact on 97% of combat steps and plays about a thousand decisions a second per core.</p>
 <p><strong>Why the real game still matters.</strong> A copy that is slightly wrong teaches slightly wrong play. So the real game, run headless with no window, is the judge. Every stage the current AI plays a fixed block of 500 real games. Its win rate and how far it gets are the headline numbers. Every real game it plays is also replayed on the copy, step by step. Where the two disagree, the disagreement is weighed by how often the AI meets it, and only the heavy disagreements get fixed. The copy is improved on demand, never on principle.</p>
 <p><strong>Where we are (2026-10-25).</strong> The loop runs unattended around the clock. Three generations of the AI have been promoted; on real games the mean floor reached moved from 11.3 to 12.7, with no wins yet at Ascension 10 (the Act 1 boss is beaten about 2% of the time). The lockstep comparison shows the copy disagrees with the game on 0.6% of the AI's decisions, and nine tenths of that disagreement sits in a few ordering mechanisms of the copy's combat core. That core is being rebuilt in the game's own shape; its first two mechanism families are migrated and switched on as of fork main cf74c742, with the proof passing every gate; the runtime the agent itself plays on does not run the new core yet, and that step is being priced. A GPU inference server lifted self-play throughput by a fifth. The GPU lane then found that the AI's run-value head, written off in week 3 as having no skill, has real skill once a duplication bug in the self-play records was fixed; the fix and the better training recipe are landed.</p>
-<p><strong>What comes next.</strong> Re-rank the divergences with the switch on (a real-game block replayed on the new core), diagnose and migrate F06 and then F11 and F15 in ranked order, price the step that lets the agent's own runtime use the new core, keep the fix lane and the agent lane turning, and hold gate G1 at the end of week 4 on the re-ranked table.</p>
+<p><strong>What comes next.</strong> Put the kernel into the native library so that self-play, promotion and the lockstep run on the new core (4 to 6 rounds, the owner's call), then re-rank the divergences with the switch on, diagnose and migrate F06 and then F11 and F15 in ranked order, keep the fix lane and the agent lane turning, and hold gate G1 at the end of week 4 on the re-ranked table.</p>
 <div class="callout small"><strong>Reading the plan's calendar.</strong> The plan is written in "weeks" (week 1 foundations, weeks 2 to 4 the flywheel, and so on). At the current pace a plan week has taken about one calendar day: week 2 ran on 2026-10-23, week 3 on 2026-10-24, and week 4 starts on 2026-10-25. The word "week" below is a stage name, not seven days.</div>
 </section>
 
@@ -407,7 +407,7 @@ dd{margin:0}
 <h2>Next: week 4 of the plan</h2>
 <p>Week 4 ends at gate G1. Its briefs are drafted from the week-3 review and the night's results; the owner has not yet said when to start the week-4 session. In order of priority:</p>
 <ol>
-<li><strong>Kernel lane:</strong> the post-switch re-rank (a real-game block replayed on the new core, running now); F06's diagnosis as one Opus round, then its migration, then F11 and F15; the Tier 1 re-estimate; the price of moving the agent's native runtime onto the new core.</li>
+<li><strong>Kernel lane:</strong> the kernel in the native library (4 to 6 rounds: build it in the native library, step the search's combat handles through it and carry its state through clones and forks), which is what lets self-play, promotion and the lockstep run on the new core and lets the switch be measured by agent weight; then the post-switch re-rank; then F06's diagnosis as one Opus round, its migration, then F11 and F15; the Tier 1 re-estimate.</li>
 <li><strong>Lane B:</strong> the exact-fight trace tool (lockstep decision to a traced real fight, so a divergence can be seen in its run context); the ranking-provenance kit as a local job; the probe-first items once their traces name them; re-rank after each landing.</li>
 <li><strong>Lane A:</strong> score the promoted generation on block S3 each promotion under the review guard; the generation-3 retrain on deduplicated records; a paired A/B of the rules macro against the value-head macro on a fresh block, whose result goes to the owner.</li>
 <li><strong>Lane C:</strong> recycle-60 as the default for real-game blocks; the other four characters end to end; potion discard on closed-belt screens, which is the owner's call because it changes the action masks the policies see.</li>
@@ -416,7 +416,8 @@ dd{margin:0}
 </ol>
 <h3>Open owner calls</h3>
 <ul>
-<li>When to write and start the week-4 session: now, or after the F08+F10 switch lands.</li>
+<li>Whether the kernel-in-the-native-library step (4 to 6 rounds) runs now within the 68% line, ahead of the F06 diagnosis, or waits for the next allowance. Until it lands nothing measures the switch by agent weight.</li>
+<li>When to write and start the week-4 session.</li>
 <li>Potion discard on closed-belt screens (changes the policies' masks).</li>
 <li>Whether the run macro switches from rules to the value head, once the paired A/B has a result.</li>
 <li>Reversible decisions taken under delegation overnight (D29, D24's guard, D23's family order, D26's cloud-plan revision): all stand unless the owner reverses one.</li>
@@ -517,8 +518,8 @@ dd{margin:0}
 <script>
 // Everything that changes between editions is in STATE. Edit here, then republish.
 const STATE = {
-  updated: "2026-10-25 06:00Z",
-  edition: 3,
+  updated: "2026-10-25 06:25Z",
+  edition: 4,
   phases: [
     {key:"P0", name:"Foundations", weeks:"week 1", state:"done", note:"Measured the machine; AI runs on both engines."},
     {key:"P1", name:"The flywheel", weeks:"weeks 2 to 4", state:"now", note:"Week 4 starting. Generations, real-game blocks, ranked fixes, kernel stage."},
@@ -529,7 +530,7 @@ const STATE = {
     {label:"Plan phase P1 (weeks 2 to 4)", pct:67, value:"2 of 3 stages", note:"Weeks 2 and 3 reviewed (2026-10-23, 2026-10-24); week 4 begins 2026-10-25 and ends at gate G1."},
     {label:"Kernel rebuild: handlers ported for F08 and F10", pct:100, value:"port gate 0", note:"Every (model, hook) pair has a handler on the new core, including the 11 no recorded fight reaches. Fork main bcb64c9b."},
     {label:"Kernel rebuild: switch-on proof for F08 and F10", pct:100, value:"7 of 7, switched on", note:"Passed at fork main cf74c742 (2026-10-25 05:45Z): corpus 71 better, 4,321 same, 0 worse of 4,392; traced 8 better, 0 worse; 7,383 C# tests, 0 failed."},
-    {label:"Tier 1 by the AI's weight: families switched on", pct:54, value:"54% switched on", note:"F08 and F10 run on the new core in the test engine and the comparer. The runtime the agent plays on does not build the kernel yet; that step is being priced. Stop rule: under 10% left unmigrated."},
+    {label:"Tier 1 by the AI's weight: families switched on", pct:54, value:"54% switched on", note:"F08 and F10 run on the new core in the test engine and the comparer. The runtime the agent plays on does not build the kernel yet, so self-play, promotion and lockstep still run the old engine; the step that changes that is priced at 4 to 6 rounds and waits for the owner. Stop rule: under 10% left unmigrated."},
     {label:"GPU lane piece 1: shared inference server", pct:100, value:"complete", note:"+21.6% decisions/s at 20 workers, 1,000 seeds identical on both paths, lab switched over 2026-10-25 02:00Z."},
     {label:"GPU lane piece 2: value head trained harder", pct:100, value:"complete", note:"Landed 7477ebb3 (2026-10-25 03:49Z). On deduplicated data and a large enough evaluation the value head has real pre-kill skill: Brier skill +0.044 (interval 0.028 to 0.060) with 4 rows per run per epoch, adopted. Week 3's 'no skill' reading was 38 kills on duplicated data."},
     {label:"GPU lane piece 3: sweeps in quiet windows", pct:70, value:"sweep done, runner deferred", note:"The arm sweep ran on the GPU and is complete. The quiet-window runner (one round) waits until a sweep is queued; nothing is queued this week."},
@@ -558,6 +559,7 @@ const STATE = {
     {state:"pass", text:"Recorded corpus: 71 better, 4,321 same, 0 worse of 4,392, 0 on fewer fields (122 worse on 2026-10-24)."}
   ],
   changelog: [
+    {when:"2026-10-25 06:25Z", what:"Edition 4. The post-switch re-rank cannot run yet: the native runtime refuses a switched-on run and the lockstep has no engine option, so self-play, promotion and lockstep still play the old engine. The kernel-in-the-native-library step is priced at 4 to 6 rounds and is the owner's call; both lanes hold."},
     {when:"2026-10-25 06:00Z", what:"Edition 3. F08 and F10 are switched on at fork main cf74c742: the proof passed every gate (corpus 71 better, 0 worse of 4,392; traced 8 better, 0 worse; 7,383 C# tests). The switch is live in the test engine and the comparer; the agent's own runtime does not build the kernel yet, and that step is being priced. Post-switch re-rank and the F06 diagnosis requested. Allowance 64%."},
     {when:"2026-10-25 05:30Z", what:"Edition 2. Self-play records deduplicated (fork main 68cf5759: a resumed block had re-appended its records, 19.7% duplicates). GPU piece 2 complete (7477ebb3): the value head has real skill on clean data; piece 3's sweep done, its runner deferred. Kernel: R7h and R7i fixed the last three mechanisms; the switch-on commit is ready and in its final gate. Allowance 62%."},
     {when:"2026-10-25 03:20Z", what:"Edition 1. Written at the owner's request as the standing plain-language record. State: R7g landed (bcb64c9b), R7h in flight; GPU piece 2 design in review; allowance 61%."}
