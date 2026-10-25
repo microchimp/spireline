@@ -616,6 +616,15 @@ every character.**
   landing onward (the D23, D27, D31 and D32 addenda stamped 05:05Z to 09:35Z) ran one to two hours ahead of UTC; the order of
   events and the lane-reported times (piece 2 03:49Z, the memory fallback 07:47Z) are right. Stamps from here on are read from
   the clock.
+- Proposal 2026-10-25 ~15:10Z (orchestrator, **held for the owner's go**; the owner expects about 15 points of allowance to
+  remain usable before the Wednesday reset): in order of importance, (1) fix the two real-side record fields (boss damage, rest
+  type), 1 round; (2) the G1 review on the nightly tables, Opus, about 2 rounds, on Tuesday with two nights of data, setting the fix
+  order and re-pricing the budget table; (3) the fix lane on the nightly ranking's top groups, kits first, up to 8 rounds (the copy
+  now underestimates the AI by 0.6 floors, with damage at 46% of the weight in Act 2 content); (4) the kernel's speed work, about 4
+  Opus rounds, then a paired training-on-core2 A/B if it recovers most of the -31%; (5) the GPU prior sweep in quiet windows, about
+  1.5 rounds; (6) potion use on the closed-belt screens if approved, about 1.5; (7) the three probe-first kits, 3; (8) the parity
+  harness and the re-anchor tests, 3; (9) a reserve of about 5 rounds for what the nightly blocks reveal. About 29 rounds, 7-12
+  points. Runs on the existing sessions; the week-4 session still starts at the reset. Nothing starts before the owner's go.
 
 ## D33 · 2026-10-25 · The value head becomes the run macro for new candidates; its keep test is out-of-fold on the full window
 
