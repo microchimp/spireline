@@ -423,6 +423,14 @@ every character.**
   while the game ends the combat after its action queue drains; the strict step test lacks AfterAttack after the kill), so
   nothing is switched on. The kernel lane gets 5 more rounds for R7d (the ending in the game's shape, AfterAttack after a
   killing attack, the fewer-fields cases) and the proof rerun; the switch flips only if every gate passes.
+- Addendum 5 (2026-10-25 ~01:00Z): R7d and R7e landed on fork main `2e62216a`. The triage corrected itself: the regressions
+  were the game's two turn-start win checks, which the old turn start under F10 never ran (a kill or loss there was dropped),
+  plus two crashes (the Demise loop, the AfterAttack bridge after a kill) and Damage's zero result for a target removed inside
+  its own hit. Proof with the switch on: old suites 0 switch-only failures, traced 8 better / 69 same / 0 worse, corpus 63
+  better / 4,326 same / 3 worse of 4,392 (from 122), strict step test passes, fuzz 0 ending disagreements. Two gates open: the
+  3 worse fights, unread, and a census fault in `struct_compare.py` (8 corpus and 3 traced fights compared on fewer fields;
+  a comparer fault, the review confirms). The kernel lane gets 3 more rounds for R7f: the census, the 3 fights, the rerun,
+  and the switch only with every gate passing.
 
 ## D23 addendum · 2026-10-24 · The by-family table now reads Tier 1 decisively; the migration order is set
 
