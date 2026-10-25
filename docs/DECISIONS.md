@@ -467,4 +467,9 @@ every character.**
   at T=1 minus visits is -0.04 floors paired (95% CI -0.22 to +0.15), boss kills 41 against 50 (McNemar p 0.17), no wins either
   side; under D24 the candidate would not promote. No separation: the default stays visits; the option stays for a later A/B
   against a stronger labelled benchmark. Nothing written to the lineage.
+- Item 3 result (2026-10-25 ~01:00Z, warm-start window 00:30Z-01:15Z): with `--recycle 60` at 12 game processes there is no
+  cliff (118-135 decisions/s throughout, memory steady); the un-recycled cliff is per-game memory growth. So recycling becomes
+  the default for real-game env blocks at week 4's first landing (reversible by the owner); numbers in `readiness.json`.
+- Week-3 stopped at its cap at 01:00Z with its final report in HANDOFF section 0 (about 25 Sonnet-equivalent rounds since
+  13:00Z, nothing rejected, no cloud session started by it).
 - Not decided overnight: anything that changes the plan of record, the week's caps or the credit plan's counts.
