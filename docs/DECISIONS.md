@@ -546,3 +546,17 @@ every character.**
 - Decided 2026-10-25 ~07:00Z by the owner, in chat, accepting the orchestrator's recommendation.
 - Supersedes: D25's 120-round stop line for Tier 1 (the lane stopped and reported at it, as D25 required); the D23 addendum's
   family order F06, F11, F15 (replaced by measured share after the re-rank).
+
+## D32 · 2026-10-25 · The week's line is 80%, then everything waits for the reset; potion discard is approved
+
+- The subscription's weekly usage may run to 80% (was 70%, D30). New rounds stop at a 78% reading; a landing in progress finishes.
+  Once the line is reached, every lane waits for the weekly reset; the week-4 session starts at the reset, not before.
+- Potion discard on the closed-belt screens is approved (the week-3 review's Lane C item): implemented behind the gates, the masks
+  the policies see versioned so saved generations still load, in force for the next generation; generation 3 stays the promotion
+  baseline.
+- Order for the remaining allowance: the native step to its landing (D31), then the post-switch re-rank, with the potion-discard
+  item in parallel on the week-3 session since it does not depend on the kernel.
+- Why: the native step and the re-rank are what make the rebuild reach the agent and give G1 its table; the owner would rather
+  finish them this week than leave them half done. Decided 2026-10-25 ~08:30Z by the owner, in chat ("change the budget to 80%,
+  then wait until the reset, do 3").
+- Supersedes: D30's 70% line and 68% stop; the open owner call on potion discard.
