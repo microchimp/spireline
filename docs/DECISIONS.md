@@ -500,3 +500,12 @@ every character.**
 - Addendum 2026-10-25 ~02:30Z, owner in chat: GPU pieces 2 and 3 start now within the 70% line; piece 2 (the value head
   trained harder, judged against DESIGN 5.3's keep conditions) first, piece 3 (sweeps) only in quiet windows after piece 2
   has a measured result; design reviewed before code, as for piece 1.
+- Addendum 2026-10-25 ~05:20Z, piece 2 complete (fork main `7477ebb3`, `docs/rl/VRUN_SWEEP.md` section 5): V_run has a small real
+  pre-kill skill once the self-play window is deduplicated (the lab's own fix, `68cf5759`) and the evaluation is large enough: out of
+  fold on 13,769 runs (373 Act-1 kills) the lab recipe scores Brier skill +0.027 (CI 0.002 to 0.051), and sampling 4 rows per run per
+  epoch +0.044 (0.028 to 0.060); the week-3 "no skill" reading was a 38-kill evaluation on a duplicated window. Adopted under the
+  pre-registered rule: `rows_per_run = 4` for the lab's next V_run fit. The run macro stays rules: `SPIRELINE_MACRO_VRUN` is off
+  until a paired rules-against-vrun A/B on a fresh E-block (week 4, Lane A) and the owner's decision. The promotion arms run on the
+  inference server (both arms on one transport; the 1,000-seed equivalence rule passed). Piece 3: the arm sweep is complete; its
+  quiet-window runner (one Sonnet round plus review, section 7) is deferred until a sweep is queued, decided by the orchestrator.
+  Lane total about 17.5 rounds.
