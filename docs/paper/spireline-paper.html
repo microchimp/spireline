@@ -1,0 +1,604 @@
+<title>Spireline Living Paper</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,600&family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one reading column (about 68 characters) for the prose; wider figure boards for the map, the road map and the progress bars; a thin sticky contents bar. */
+:root{
+  --bg:#f4f6f5; --surface:#ffffff; --fg:#17272a; --muted:#56696b; --line:#cfd9d8; --track:#e2e9e8;
+  --accent:#1f7a6d; --accent-2:#5aa89b; --accent-3:#9ccdc3; --accent-soft:#dcefea;
+  --copper:#b4612a; --copper-soft:#f5e6d8;
+  --good:#2e7d4f; --warn:#a86d12; --bad:#b3392c;
+  --display:"Newsreader",Georgia,"Times New Roman",serif;
+  --body:"Atkinson Hyperlegible",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#111a1b; --surface:#192425; --fg:#e4ecea; --muted:#9fb1af; --line:#2c3b3c; --track:#243233;
+    --accent:#5cc2b0; --accent-2:#3f8f81; --accent-3:#2d6559; --accent-soft:#1c3733;
+    --copper:#e2925a; --copper-soft:#3b2a1d;
+    --good:#6cc08f; --warn:#e0b253; --bad:#e07a6e;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#111a1b; --surface:#192425; --fg:#e4ecea; --muted:#9fb1af; --line:#2c3b3c; --track:#243233;
+  --accent:#5cc2b0; --accent-2:#3f8f81; --accent-3:#2d6559; --accent-soft:#1c3733;
+  --copper:#e2925a; --copper-soft:#3b2a1d;
+  --good:#6cc08f; --warn:#e0b253; --bad:#e07a6e;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{
+  background:var(--bg); color:var(--fg); font-family:var(--body); font-size:17px; line-height:1.55;
+  padding-left:max(16px,env(safe-area-inset-left,0px)); padding-right:max(16px,env(safe-area-inset-right,0px)); padding-block:0 64px;
+}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
+.page{max-width:1080px;margin:0 auto}
+h1,h2,h3{font-family:var(--display);font-weight:500;line-height:1.15;text-wrap:balance;margin:0}
+h1{font-size:clamp(34px,6vw,54px);letter-spacing:-0.01em}
+h2{font-size:clamp(26px,3.6vw,34px);margin-top:64px;padding-top:12px;border-top:1px solid var(--line)}
+h3{font-size:21px;margin-top:32px;font-weight:600}
+p,ul,ol,table{margin:0}
+.prose{max-width:68ch}
+.prose p+p,.prose p+ul,.prose ul+p,.prose p+ol,.prose ol+p,.prose p+table,.prose table+p,.prose ul+ul{margin-top:14px}
+.prose h3+p,.prose h3+ul,.prose h3+ol,.prose h3+table,.prose h2+p,.prose h2+ul{margin-top:12px}
+.prose li+li{margin-top:6px}
+.prose ul,.prose ol{padding-left:1.3em}
+a{color:var(--accent)}
+a:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted)}
+.mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.muted{color:var(--muted)}
+.small{font-size:14px}
+strong{font-weight:700}
+.masthead{padding-block:40px 20px;display:grid;gap:14px}
+.masthead .stamp{display:flex;flex-wrap:wrap;gap:8px 22px;font-family:var(--mono);font-size:13px;color:var(--muted)}
+.abstract{font-size:19px;max-width:68ch}
+nav.toc{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);border-top:1px solid var(--line);border-bottom:1px solid var(--line);overflow-x:auto;white-space:nowrap;margin-top:12px}
+nav.toc a{display:inline-block;padding:10px 14px 10px 0;margin-right:10px;font-family:var(--mono);font-size:13px;text-decoration:none;color:var(--muted)}
+nav.toc a:hover{color:var(--accent)}
+.board{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:20px;margin-top:22px}
+.board+.board{margin-top:16px}
+.board h3{margin-top:0}
+.board .cap{margin-top:12px;font-size:14px;color:var(--muted);max-width:80ch}
+.scroll{overflow-x:auto;padding-bottom:4px}
+.scroll svg{display:block;min-width:720px;width:100%;height:auto}
+svg text{font-family:var(--body)}
+.n-box{fill:var(--surface);stroke:var(--accent);stroke-width:1.5}
+.n-box.real{stroke:var(--copper);stroke-width:2}
+.n-box.side{stroke:var(--muted);stroke-dasharray:4 4}
+.n-title{font-size:15px;font-weight:700;fill:var(--fg)}
+.n-sub{font-size:12px;fill:var(--muted)}
+.n-st{font-family:var(--mono);font-size:11px;fill:var(--muted);letter-spacing:0.04em}
+.n-dot.run{fill:var(--good)} .n-dot.wait{fill:var(--warn)} .n-dot.done{fill:var(--accent)} .n-dot.later{fill:var(--muted)}
+.edge{fill:none;stroke:var(--muted);stroke-width:1.5;marker-end:url(#arr)}
+.edge.dash{stroke-dasharray:5 5}
+.e-label{font-size:12px;fill:var(--muted)}
+.arrhead{fill:var(--muted)}
+.axis{stroke:var(--line);stroke-width:1}
+.tick{font-family:var(--mono);font-size:12px;fill:var(--muted)}
+.ci{stroke:var(--muted);stroke-width:2;stroke-linecap:round}
+.pt{fill:var(--accent)} .pt.hollow{fill:var(--surface);stroke:var(--accent);stroke-width:2}
+.val{font-family:var(--mono);font-size:12px;fill:var(--fg)}
+.rowlab{font-size:14px;fill:var(--fg)}
+/* progress bars */
+.bars{display:grid;gap:18px}
+.bar-head{display:flex;justify-content:space-between;gap:12px;align-items:baseline;font-size:15px}
+.bar-head .v{font-family:var(--mono);font-variant-numeric:tabular-nums;font-size:14px;color:var(--fg)}
+.bar-track{position:relative;height:10px;border-radius:5px;background:var(--track);margin-top:6px;overflow:visible}
+.bar-fill{position:absolute;left:0;top:0;bottom:0;border-radius:5px;background:var(--accent);min-width:0}
+.bar-fill.warn{background:var(--warn)}
+.bar-mark{position:absolute;top:-5px;bottom:-5px;width:2px;background:var(--fg);opacity:0.65}
+.bar-mark span{position:absolute;top:100%;left:50%;transform:translateX(-50%);margin-top:3px;font-family:var(--mono);font-size:11px;color:var(--muted);white-space:nowrap}
+.bar-note{margin-top:6px;font-size:13.5px;color:var(--muted)}
+.bar.has-marks .bar-note{margin-top:22px}
+/* stacked bar */
+.stack{display:flex;gap:2px;height:22px;border-radius:5px;overflow:hidden;margin-top:8px}
+.stack div{min-width:0}
+.seg-a{background:var(--accent)} .seg-b{background:var(--accent-2)} .seg-c{background:var(--accent-3)} .seg-d{background:var(--track)}
+.legend{display:flex;flex-wrap:wrap;gap:8px 18px;margin-top:10px;font-size:13.5px;color:var(--muted)}
+.legend span::before{content:"";display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:6px;vertical-align:-2px;background:var(--sw)}
+/* gates checklist */
+.gates{display:grid;gap:8px;margin-top:10px}
+.gate{display:grid;grid-template-columns:auto 1fr;gap:12px;align-items:start;font-size:15px}
+.pill{font-family:var(--mono);font-size:11.5px;letter-spacing:0.05em;text-transform:uppercase;padding:2px 8px;border-radius:4px;border:1px solid var(--line);white-space:nowrap;margin-top:2px}
+.pill.pass{color:var(--good);border-color:var(--good)} .pill.open{color:var(--warn);border-color:var(--warn)} .pill.wait{color:var(--muted)} .pill.done{color:var(--accent);border-color:var(--accent)} .pill.run{color:var(--good);border-color:var(--good)}
+/* road map */
+.road{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:2px;margin-top:14px}
+.ph{background:var(--track);padding:12px 12px 14px;min-width:0}
+.ph:first-child{border-radius:6px 0 0 6px}.ph:last-child{border-radius:0 6px 6px 0}
+.ph.done{background:var(--accent-soft)} .ph.now{background:var(--accent);color:#fff} .ph.now .eyebrow,.ph.now .small{color:rgba(255,255,255,0.85)}
+.ph .nm{font-weight:700;font-size:15px;margin-top:2px}
+.ph .small{margin-top:6px;display:block}
+.gatesrow{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:2px;margin-top:6px}
+.gatesrow div{font-family:var(--mono);font-size:11.5px;color:var(--muted);text-align:left;padding-right:6px;min-width:0}
+@media (max-width:640px){.road,.gatesrow{grid-template-columns:1fr 1fr}.ph:first-child,.ph:last-child{border-radius:6px}}
+/* tables */
+table{border-collapse:collapse;width:100%;font-size:15px}
+th,td{text-align:left;vertical-align:top;padding:8px 10px 8px 0;border-bottom:1px solid var(--line)}
+th{font-family:var(--mono);font-size:12px;letter-spacing:0.06em;text-transform:uppercase;color:var(--muted);font-weight:500}
+td.num{font-family:var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.tablewrap{overflow-x:auto;margin-top:12px}
+.tablewrap table{min-width:560px}
+/* timeline */
+.tl{display:grid;gap:12px;margin-top:12px}
+.tl-item{display:grid;grid-template-columns:92px 1fr;gap:14px;align-items:start}
+.tl-item .d{font-family:var(--mono);font-size:12.5px;color:var(--muted);padding-top:3px}
+.tl-item .t{font-weight:700}
+@media (max-width:520px){.tl-item{grid-template-columns:1fr;gap:2px}}
+.callout{border-left:3px solid var(--copper);background:var(--copper-soft);padding:12px 16px;border-radius:0 6px 6px 0;margin-top:16px}
+.two{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px;margin-top:16px}
+.two .board{margin-top:0}
+dl{margin:12px 0 0;display:grid;grid-template-columns:max-content 1fr;gap:6px 16px}
+dt{font-weight:700}
+dd{margin:0}
+@media (max-width:520px){dl{grid-template-columns:1fr}dd{margin-bottom:6px}}
+.log li{font-size:15px}
+@media (prefers-reduced-motion:no-preference){.bar-fill{transition:width .5s ease}}
+</style>
+
+<div class="page">
+<header class="masthead">
+  <div class="eyebrow">Spireline · the living paper</div>
+  <h1>An AI for Slay the Spire 2, judged by the real game</h1>
+  <p class="abstract">Spireline is building an AI that plays Slay the Spire 2 better than the best human players, Ironclad at Ascension 10 first. The AI learns on a fast copy of the game and is judged on the real game running headless on one PC. This paper is the plain-language record of what the project is, why it is built this way, where it stands, and what comes next. It is updated whenever the state changes.</p>
+  <div class="stamp"><span>Updated <span id="updated">2026-10-25 03:20Z</span></span><span>Edition <span id="edition">1</span></span><span>Plan of record: docs/PLAN.md (2026-10-22)</span><span>Decisions: D1 to D30</span></div>
+</header>
+
+<nav class="toc" aria-label="Contents">
+  <a href="#onepage">In one page</a><a href="#map">The map</a><a href="#progress">Progress</a><a href="#plan">The plan</a><a href="#kernel">The kernel rebuild</a><a href="#week4">Next: week 4</a><a href="#decisions">Decisions</a><a href="#risks">Risks</a><a href="#rules">Rules</a><a href="#log">Change log</a>
+</nav>
+
+<section class="prose" id="onepage">
+<h2>In one page</h2>
+<p><strong>What.</strong> A program that chooses the best move in Slay the Spire 2, a card game of hidden information: you do not know the draw order, the enemy's next move, or what the next room holds. The target is play better than the best human players at Ascension 10 (the game's hard mode with all ten modifiers), Acts 1 to 3, Ironclad first and then every character. A small public mod that shows the best in-fight play is a side product.</p>
+<p><strong>How.</strong> Search plus two learned networks. At each decision the AI imagines many possible hidden states, plays each forward on a copy of the game, and picks the move that does best on average. A policy network tells the search which moves to look at first; a value network estimates how a run is going. There is no language model anywhere in the player, and no end-to-end reinforcement learning: the search is the player, the networks only make it faster and sharper.</p>
+<p><strong>Why a copy of the game.</strong> The search needs to play millions of imagined fights an hour. The real game manages about a hundred decisions a second on this PC and cannot be forked. The copy is our own fork of an open-source re-implementation of the game's combat and run logic in C#. It is exact on 97% of combat steps and plays about a thousand decisions a second per core.</p>
+<p><strong>Why the real game still matters.</strong> A copy that is slightly wrong teaches slightly wrong play. So the real game, run headless with no window, is the judge. Every stage the current AI plays a fixed block of 500 real games. Its win rate and how far it gets are the headline numbers. Every real game it plays is also replayed on the copy, step by step. Where the two disagree, the disagreement is weighed by how often the AI meets it, and only the heavy disagreements get fixed. The copy is improved on demand, never on principle.</p>
+<p><strong>Where we are (2026-10-25).</strong> The loop runs unattended around the clock. Three generations of the AI have been promoted; on real games the mean floor reached moved from 11.3 to 12.7, with no wins yet at Ascension 10 (the Act 1 boss is beaten about 2% of the time). The lockstep comparison shows the copy disagrees with the game on 0.6% of the AI's decisions, and nine tenths of that disagreement sits in a few ordering mechanisms of the copy's combat core. That core is being rebuilt in the game's own shape; its first two mechanism families are ported and one fix away from switching on. A GPU inference server lifted self-play throughput by a fifth; the GPU lane is now designing a harder-trained value head.</p>
+<p><strong>What comes next.</strong> Switch on the rebuilt core for the first two families once every proof gate passes; then week 4 of the plan: migrate the next three families in ranked order, keep the fix lane and the agent lane turning, and hold gate G1 at the end of the week on the re-ranked table.</p>
+<div class="callout small"><strong>Reading the plan's calendar.</strong> The plan is written in "weeks" (week 1 foundations, weeks 2 to 4 the flywheel, and so on). At the current pace a plan week has taken about one calendar day: week 2 ran on 2026-10-23, week 3 on 2026-10-24, and week 4 starts on 2026-10-25. The word "week" below is a stage name, not seven days.</div>
+</section>
+
+<section id="map">
+<h2>The map: how the machine works</h2>
+<div class="prose"><p>Everything in the project is one loop. The real game produces truth, the copy produces volume, and the comparison between them decides what to fix. The status dot on each box is today's state.</p></div>
+<div class="board">
+<div class="scroll">
+<svg viewBox="0 0 960 560" role="img" aria-label="The Spireline loop: the real game scores the AI and feeds the lockstep comparer; disagreements are ranked by hook family; the ranking directs the kernel rebuild and the fix lane, which improve the emulator; the emulator runs self-play with a GPU inference server; training on the GPU produces candidates; the promotion gate promotes a generation, which the real game then scores. A distilled network for the public mod branches off training.">
+  <defs><marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="arrhead"/></marker></defs>
+
+  <!-- Row 1 -->
+  <rect class="n-box real" x="40" y="40" width="230" height="92" rx="8"/>
+  <text class="n-title" x="56" y="66">Real game, headless</text>
+  <text class="n-sub" x="56" y="86">The judge. 500 real seeds per stage.</text>
+  <text class="n-sub" x="56" y="102">Exact by definition. ~120 decisions/s.</text>
+  <circle class="n-dot run" cx="62" cy="120" r="4"/><text class="n-st" x="72" y="124">RUNNING · lockstep on</text>
+
+  <rect class="n-box" x="365" y="40" width="230" height="92" rx="8"/>
+  <text class="n-title" x="381" y="66">Lockstep comparer</text>
+  <text class="n-sub" x="381" y="86">Replays every real decision on the copy,</text>
+  <text class="n-sub" x="381" y="102">compares state hashes. 0.59% disagree.</text>
+  <circle class="n-dot run" cx="387" cy="120" r="4"/><text class="n-st" x="397" y="124">RUNNING · per score block</text>
+
+  <rect class="n-box" x="690" y="40" width="230" height="92" rx="8"/>
+  <text class="n-title" x="706" y="66">Ranking by hook family</text>
+  <text class="n-sub" x="706" y="86">Disagreements weighed by AI decisions.</text>
+  <text class="n-sub" x="706" y="102">90% architectural; top five 97%.</text>
+  <circle class="n-dot run" cx="712" cy="120" r="4"/><text class="n-st" x="722" y="124">RUNNING · re-ranked per landing</text>
+
+  <!-- Row 2 -->
+  <rect class="n-box" x="690" y="196" width="230" height="92" rx="8"/>
+  <text class="n-title" x="706" y="222">Kernel rebuild, Tier 1</text>
+  <text class="n-sub" x="706" y="242">Combat core in the game's shape;</text>
+  <text class="n-sub" x="706" y="258">families migrated in ranked order.</text>
+  <circle class="n-dot wait" cx="712" cy="276" r="4"/><text class="n-st" x="722" y="280">F08+F10 PORTED · switch pending</text>
+
+  <rect class="n-box" x="690" y="318" width="230" height="92" rx="8"/>
+  <text class="n-title" x="706" y="344">Fix lane (Lane B)</text>
+  <text class="n-sub" x="706" y="364">Single-site fixes from prepared kits,</text>
+  <text class="n-sub" x="706" y="380">one commit each, behind the gates.</text>
+  <circle class="n-dot wait" cx="712" cy="398" r="4"/><text class="n-st" x="722" y="402">QUEUE READY · week 4</text>
+
+  <rect class="n-box" x="365" y="256" width="230" height="92" rx="8"/>
+  <text class="n-title" x="381" y="282">Emulator (our fork)</text>
+  <text class="n-sub" x="381" y="302">The copy. 97% of combat steps exact,</text>
+  <text class="n-sub" x="381" y="318">~1,000 decisions/s per core.</text>
+  <circle class="n-dot run" cx="387" cy="336" r="4"/><text class="n-st" x="397" y="340">7,370 TESTS · corpus 0 regressed</text>
+
+  <rect class="n-box" x="40" y="256" width="230" height="92" rx="8"/>
+  <text class="n-title" x="56" y="282">Promotion gate</text>
+  <text class="n-sub" x="56" y="302">2,000 paired seeds on the copy; mean</text>
+  <text class="n-sub" x="56" y="318">floor must improve; boss-kill guard.</text>
+  <circle class="n-dot run" cx="62" cy="336" r="4"/><text class="n-st" x="72" y="340">GEN 3 PROMOTED · gen 4 retraining</text>
+
+  <!-- Row 3 -->
+  <rect class="n-box" x="365" y="440" width="230" height="92" rx="8"/>
+  <text class="n-title" x="381" y="466">Self-play on the CPU</text>
+  <text class="n-sub" x="381" y="486">20 workers, search with resampling;</text>
+  <text class="n-sub" x="381" y="502">GPU inference server, +22% decisions/s.</text>
+  <circle class="n-dot run" cx="387" cy="520" r="4"/><text class="n-st" x="397" y="524">RUNNING · ~6,000 runs/h</text>
+
+  <rect class="n-box" x="40" y="440" width="230" height="92" rx="8"/>
+  <text class="n-title" x="56" y="466">Training on the GPU</text>
+  <text class="n-sub" x="56" y="486">Policy prior (expert iteration);</text>
+  <text class="n-sub" x="56" y="502">run value head (GPU lane piece 2).</text>
+  <circle class="n-dot run" cx="62" cy="520" r="4"/><text class="n-st" x="72" y="524">RUNNING · value head in design</text>
+
+  <rect class="n-box side" x="690" y="440" width="230" height="92" rx="8"/>
+  <text class="n-title" x="706" y="466">Distilled network, public mod</text>
+  <text class="n-sub" x="706" y="486">Lane F. A few MB, no search, no copy.</text>
+  <text class="n-sub" x="706" y="502">Ships only when its own gate passes.</text>
+  <circle class="n-dot later" cx="712" cy="520" r="4"/><text class="n-st" x="722" y="524">LATER · export packages ready</text>
+
+  <!-- Edges -->
+  <path class="edge" d="M270,86 L365,86"/><text class="e-label" x="282" y="78">real decisions</text>
+  <path class="edge" d="M595,86 L690,86"/><text class="e-label" x="604" y="78">disagreements</text>
+  <path class="edge" d="M805,132 L805,196"/><text class="e-label" x="812" y="168">what to rebuild</text>
+  <path class="edge" d="M690,364 C640,364 620,302 595,302"/><text class="e-label" x="608" y="352">landed fixes</text>
+  <path class="edge" d="M690,242 C650,242 630,286 595,286"/>
+  <path class="edge" d="M920,288 C950,288 950,318 920,318" style="marker-end:none"/>
+  <path class="edge" d="M805,288 L805,318"/><text class="e-label" x="812" y="308">shares the gates</text>
+  <path class="edge dash" d="M480,256 L480,132"/><text class="e-label" x="488" y="200">the copy replays</text>
+  <path class="edge" d="M480,348 L480,440"/><text class="e-label" x="488" y="398">search runs on the copy</text>
+  <path class="edge" d="M365,486 L270,486"/><text class="e-label" x="282" y="478">self-play data</text>
+  <path class="edge" d="M155,440 L155,348"/><text class="e-label" x="162" y="398">candidate</text>
+  <path class="edge" d="M155,256 L155,132"/><text class="e-label" x="162" y="200">promoted agent plays</text>
+  <path class="edge dash" d="M270,500 C520,560 600,560 690,500"/><text class="e-label" x="430" y="553">export the prior</text>
+</svg>
+</div>
+<p class="cap">Status dots: green running, amber waiting on a result or a decision, grey later. Numbers on the boxes are the latest measured values (block S3 of 2026-10-24 for the comparer and the ranking; fork main bcb64c9b for the tests; the GPU lane's window of 2026-10-25 for self-play).</p>
+</div>
+
+<div class="prose">
+<h3>Reading the map</h3>
+<p><strong>The real game</strong> is the game's own code from the archived v0.107.1 build, run headless through a decision channel. It plays whole Ascension 10 runs at about 120 decisions a second across 12 processes. It never touches a player profile, never connects to the network, and runs only because the security review recorded a GO for it.</p>
+<p><strong>The lockstep comparer</strong> starts the copy from the same seed and feeds it every decision the AI made in the real game. After each step it compares the two states. A mismatch is logged as a divergence, weighed by how many AI decisions it touched and whether the run's outcome changed, and the copy is re-anchored from the real record so the comparison can continue.</p>
+<p><strong>The ranking</strong> groups divergences by the mechanism behind them and by hook family: the game's combat is a set of hooks (damage, death, card play, turn start, piles, rewards) that content listens to in a fixed order. On the latest block, 90% of the AI's divergence weight sits in those ordering families rather than in one-off bugs, and the top five families hold 97% of it. That number is what decided the shape of the rebuild.</p>
+<p><strong>The kernel rebuild and the fix lane</strong> both improve the copy, behind the same gates: 7,370 C# tests, a 4,392-fight recorded corpus that may never regress, a replay of 20,294 public Ironclad runs, a byte-for-byte proof that the rebuilt core and the old one produce identical states until a family is switched on, and one reviewer per change.</p>
+<p><strong>Self-play, training and the promotion gate</strong> are the flywheel. Twenty worker processes play the current AI against itself on the copy, with a shared GPU inference server answering the policy network's queries. The GPU trains the next candidate from that data. A candidate is promoted only if it reaches a better mean floor than the current generation on 2,000 fresh paired seeds, with a one-sided test at 1%, a guard that the Act 1 boss-kill rate did not get worse, and an audit. The promoted generation then plays the real game, and the loop closes.</p>
+</div>
+</section>
+
+<section id="progress">
+<h2>Progress</h2>
+<div class="prose"><p>Every number carries its date and source. Bars are shares of a stated whole; where the whole is a line we must stay under, the line is drawn on the bar.</p></div>
+
+<div class="board">
+<h3>Road map</h3>
+<div class="road" id="road"></div>
+<div class="gatesrow"><div>G0 passed 2026-10-23</div><div>G1 at the end of week 4</div><div>G2 at the end of week 8</div><div>per character</div></div>
+<p class="cap">P0 measured the machine and got the AI running on both engines. P1 is the flywheel: nightly generations, weekly real-game blocks, ranked fixes, and the kernel's first stage. P2 scales and judges: the value head fine-tuned on real outcomes, the labelled benchmark, the distilled network and the mod built. P3 is the other characters and the public proof.</p>
+</div>
+
+<div class="board">
+<h3>Where things stand</h3>
+<div class="bars" id="bars"></div>
+</div>
+
+<div class="two">
+<div class="board">
+<h3>Headline metric: how far the AI gets</h3>
+<div class="scroll" style="--mw:620px">
+<svg viewBox="0 0 620 215" role="img" aria-label="Mean floor reached per generation on 500 real-game seeds with 95% intervals: generation 0 11.31, generation 1 12.02, generation 3 12.72 on the real game and 12.81 on the emulator." style="min-width:560px">
+  <line class="axis" x1="230" y1="20" x2="230" y2="178"/>
+  <line class="axis" x1="291.7" y1="20" x2="291.7" y2="178"/>
+  <line class="axis" x1="415" y1="20" x2="415" y2="178"/>
+  <line class="axis" x1="538.3" y1="20" x2="538.3" y2="178"/>
+  <text class="tick" x="291.7" y="196" text-anchor="middle">11</text>
+  <text class="tick" x="415" y="196" text-anchor="middle">12</text>
+  <text class="tick" x="538.3" y="196" text-anchor="middle">13</text>
+  <text class="tick" x="600" y="196" text-anchor="end">mean floor</text>
+
+  <text class="rowlab" x="10" y="44">Gen 0, real game</text>
+  <line class="ci" x1="280.6" y1="40" x2="379.2" y2="40"/><circle class="pt" cx="329.9" cy="40" r="5"/>
+  <text class="val" x="329.9" y="28" text-anchor="middle">11.31</text>
+
+  <text class="rowlab" x="10" y="84">Gen 1, real game</text>
+  <line class="ci" x1="364.4" y1="80" x2="471.7" y2="80"/><circle class="pt" cx="417.5" cy="80" r="5"/>
+  <text class="val" x="417.5" y="68" text-anchor="middle">12.02</text>
+
+  <text class="rowlab" x="10" y="124">Gen 3, real game</text>
+  <line class="ci" x1="449.5" y1="120" x2="558.1" y2="120"/><circle class="pt" cx="503.8" cy="120" r="5"/>
+  <text class="val" x="503.8" y="108" text-anchor="middle">12.72</text>
+
+  <text class="rowlab" x="10" y="164">Gen 3, emulator</text>
+  <line class="ci" x1="463.1" y1="160" x2="566.7" y2="160"/><circle class="pt hollow" cx="514.9" cy="160" r="5"/>
+  <text class="val" x="514.9" y="148" text-anchor="middle">12.81</text>
+</svg>
+</div>
+<p class="cap">Mean floor reached on 500 Ascension 10 Ironclad seeds, 95% intervals. Filled dot: the real game. Hollow dot: the same AI on the copy, same seeds. Wins: 0 of 500 for every row, so the win-rate line is still flat at zero. Gens 0 and 1 are block S2 (2026-10-23), gen 3 is block S3 (2026-10-24); the blocks differ, so the comparison across them is indicative. The two gen 3 rows are paired: the copy over-estimates the AI by 0.08 floors, with an interval that includes zero.</p>
+</div>
+
+<div class="board">
+<h3>Switch-on proof for F08 and F10</h3>
+<p class="small muted">The rebuilt core takes over damage and death handling only when all seven gates pass at once. State at fork main bcb64c9b, 2026-10-25 03:00Z.</p>
+<div class="gates" id="gates"></div>
+<p class="cap">The two open fights are diagnosed. In one, a target chosen by an earlier card play leaks into the search's world copies. In the other, the game runs the Parrying Shield relic after it flushes the hand at turn end, where the old copy ran it before. Round R7h is fixing both and rerunning the whole table.</p>
+</div>
+</div>
+
+<div class="board">
+<h3>The kernel rebuild by the AI's own weight</h3>
+<p class="small muted">Share of the AI's divergence weight by hook family on block S3 (gen 3, 2026-10-24). Tier 1 migrates families in this order and stops when what is left holds under 10%.</p>
+<div class="stack" id="stack"></div>
+<div class="legend" id="stacklegend"></div>
+<p class="cap">F08 is damage and the kill sequence; F10 is death and removal; F06 is card-play hooks; F11 is the piles; F15 is rewards. Everything else (run flow, relics' counters, unassigned records) is 7%. Once F08 and F10 switch on, 54% of the weight runs on the rebuilt core; F06, F11 and F15 take it to 94%.</p>
+</div>
+
+<div class="board">
+<h3>How exact the copy is</h3>
+<div class="bars" id="fidelity"></div>
+</div>
+</section>
+
+<section class="prose" id="plan">
+<h2>The plan and why it is shaped this way</h2>
+<p>The plan of record was written on 2026-10-22 after an independent review of the previous approach, and is in force through decisions D17 to D21. It turned the project's order around.</p>
+<h3>What was wrong before</h3>
+<p>Until 2026-10-22 the project was perfecting the copy before building any AI, on the theory that an AI must not learn from a flawed copy. That order never ends. The remaining errors in the copy were architectural (the order in which the game runs its hooks, the queue it uses for actions), fixing them one by one did not converge, and a full rebuild of the combat core was priced at most of a week's credit. Meanwhile no AI existed and nothing measured the number the goal is judged by: how often the AI wins real games.</p>
+<h3>The four moves of the plan</h3>
+<ol>
+<li><strong>Build the AI now, on the copy we have.</strong> The copy is exact on 97% of combat steps and fast. The search and training code already existed upstream and only had to run here.</li>
+<li><strong>Judge it on the real game.</strong> The game's own code runs headless on this PC and is exact by definition. Every stage the AI plays a fixed block of 500 real games.</li>
+<li><strong>Let the AI say which copy errors matter.</strong> Every real game is replayed on the copy. Disagreements are ranked by how often the AI meets them. Only those get fixed. The rebuild of the core is sized from that ranking, not assumed.</li>
+<li><strong>Keep the CPU busy and the credit idle.</strong> Self-play, training, scoring and comparison run around the clock as CPU jobs. Agent rounds (a Claude session doing one reviewed piece of work) consume only what those jobs prepare. The cheapest model that can do the job does it.</li>
+</ol>
+<h3>Principles that hold every day</h3>
+<ul>
+<li>Truth comes from the real game. The copy trains and searches; the referee judges.</li>
+<li>Fidelity is demand-driven. Nothing is fixed because a random run found it, unless the AI meets it too.</li>
+<li>Measure before building. Every build above about five rounds has a measured trigger, a stop rule and a re-plan point.</li>
+<li>Land small, gate hard. One commit per change; reject only what a commit breaks; one reviewer per change.</li>
+<li>Root causes. A divergence is fixed at its mechanism and at every other use of that mechanism, never at the symptom.</li>
+<li>No new access. No network from game processes, no bot on the live client, no game files in any repository.</li>
+</ul>
+
+<h3>The lanes</h3>
+<p>Work is split into lanes. Each has deliverables, a round-the-clock CPU job, a small number of agent rounds, and a kill rule that says when to stop.</p>
+<div class="tablewrap"><table>
+<thead><tr><th>Lane</th><th>What it delivers</th><th>State on 2026-10-25</th><th>Kill rule</th></tr></thead>
+<tbody>
+<tr><td><strong>A, the agent</strong></td><td>The searching player, generations that improve it, the weekly real-game score; later an offline run review.</td><td>Gen 3 promoted; gen 4 rejected once, retraining. Mean floor 11.3 to 12.7 on real games in three generations. The value head fails its keep conditions; the GPU lane trains it harder.</td><td>If six generations do not beat gen 0 on real games, stop training and spend on search quality.</td></tr>
+<tr><td><strong>B, fidelity on demand</strong></td><td>The weekly ranked divergence list, fixes for its top, the measured transfer gap, the G1 decision.</td><td>Ranking method landed and re-run per landing; architectural share 90%. Kit queue ready for week 4 (ranking provenance, exact-fight trace tool, three probe-first items).</td><td>Gate G1 (below).</td></tr>
+<tr><td><strong>C, the referee as environment</strong></td><td>A hardened real-game environment: recycling, crash handling, missing action types, other characters.</td><td>The ten-minute slowdown is named (per-game memory growth) and removed by recycling every 60 runs, which becomes the default at week 4's first landing. Run API can start any of the five characters.</td><td>Under 50 decisions/s or over 5% crashes: smaller, rarer blocks; no new host built on that alone.</td></tr>
+<tr><td><strong>D, the CPU scheduler</strong></td><td>The lab's priority ladder of jobs, weights, utilisation report.</td><td>Running unattended; the loop's share of CPU is ramping toward 50%. Utilisation was 26% over 7 days against a 90% target before the ladder changes.</td><td>None; mechanical.</td></tr>
+<tr><td><strong>E, security and ops</strong></td><td>Owner actions: firewall rule, profile check, patch list.</td><td>H6 approved 2026-10-23. No open security item.</td><td>Any HALT, connection or touched profile stops everything.</td></tr>
+<tr><td><strong>F, the public mod</strong></td><td>A mod carrying only the distilled policy network, released when its gate passes.</td><td>Research done; modding assumed allowed (D28). ONNX export packages installed 2026-10-25. Code starts in P2.</td><td>Never shipped weaker than the human median in fights.</td></tr>
+<tr><td><strong>R, the kernel rebuild</strong></td><td>Tier 1: the combat core in the game's shape, families migrated in ranked order.</td><td>Core built; F08+F10 ported, switch pending on two fights. Next F06, F11, F15.</td><td>Stop line 120 rounds; escalate to Tier 2 only by the G1 rules.</td></tr>
+<tr><td><strong>GPU lane</strong></td><td>Shared inference server, harder-trained value head, sweeps in quiet windows.</td><td>Piece 1 complete and switched on (+22% decisions/s). Piece 2 design in review. Piece 3 waits for piece 2's result.</td><td>Judge stays on the CPU path until equivalence is proven; kill file stops the server.</td></tr>
+</tbody></table></div>
+
+<h3>Gates</h3>
+<ul>
+<li><strong>G0 (end of week 1), passed 2026-10-23:</strong> every speed in the measurement table is measured, the AI plays whole runs on both engines, the first ranked list exists, the lab runs 48 hours without a guard failure.</li>
+<li><strong>G1 (end of week 4):</strong> the kernel rebuild decision. A rebuild is approved if, after two fix cycles, architectural groups hold over half the AI's divergence weight (they hold 90%). Tier 1, the kernel plus ranked families, when the top five families hold at least 70% of the architectural weight (they hold 97%); Tier 2, the full rebuild, when the weight is spread. Tier 1 was started early with the owner's approval because the kernel is needed in both tiers; G1 now confirms the family order or escalates.</li>
+<li><strong>G2 (end of week 8):</strong> the real-game win rate and mean floor of the best agent against gen 0, the rules policy and the human average; the regret table on the labelled benchmark; whether to port to a later game build; the start of the other characters.</li>
+</ul>
+
+<h3>Budget and spend</h3>
+<p>The unit of spend is a round: one reviewed piece of agent work, about 60 tool calls for Sonnet, with Opus counted at 1.7 rounds. The plan's standing ceiling is 15% of the subscription's weekly allowance, about 52 rounds, split by lane. Unspent allowance is the normal case.</p>
+<p>This week is the exception, by the owner's decision. The rebuild lane was uncapped on 2026-10-24 to carry the F08 migration through (D25), the allowance was allowed to run to 70% (D25 addendum, D30), and $250 of Claude Code cloud-session credit paid for sixteen cloud sessions that wrote handler batches, ran independent reviews and did research in parallel with the PC's sessions. The credit was closed on 2026-10-25 with $44 unspent (D30) because the handler batches it was best at are done and the remaining work needs the game and the corpus, which only the PC has.</p>
+<p>The reason given each time: after the lockstep fixes, what remained was one ordering mechanism plus routine single-site bugs, both cheap; the ceiling, not difficulty, was holding them. The orchestrator reads the usage page at each wake and stops every lane at a 68% reading.</p>
+</section>
+
+<section class="prose" id="kernel">
+<h2>The kernel rebuild, explained</h2>
+<p><strong>The problem.</strong> The game's combat is driven by hooks: when a card is played, when damage lands, when a creature dies, at the start and end of a turn. Dozens of cards, relics and powers listen to each hook, and the game runs the listeners in a fixed order through an action queue. The copy was written by hand, site by site, and gets the order right most of the time. Where it does not, a fight diverges in ways no single-site fix can close, because the fix for one card breaks the order for another.</p>
+<p><strong>The owner's preference</strong> was to rebuild the copy's dispatch in the game's own structure rather than keep patching orders one site at a time. The question was how much to rebuild.</p>
+<p><strong>Two tiers.</strong> Tier 2 is the full rebuild: every combat model re-expressed as handlers on a new core, every test converted, one switchover; reviewed at about 255 rounds, three quarters of a week. Tier 1 builds the same core (the hook dispatcher with the game's listener order, generated from a table that a trace patch verifies against the real game, plus the action queue) and then migrates content one hook family at a time, in the order of the AI's ranking, while the dispatcher calls the old code for families not yet migrated. It stops when what is left holds under 10% of the AI's weight. Estimated at 60 to 100 rounds.</p>
+<p><strong>Why Tier 1 won.</strong> The full price bundles a cheap kernel with an expensive re-expression of about a thousand content models, and three quarters of the AI's divergence sits in a few ordering families. Migrating those first buys most of the benefit at a fraction of the cost. The old objection to a hybrid ("never sound until it is done") is answered by having the real game as judge: soundness is measured by the transfer gap and per-family divergence, not assumed. When the ranking method was corrected on 2026-10-24, the top five families held 97% of the architectural weight, which made the choice decisive.</p>
+<h3>How a family is migrated</h3>
+<ol>
+<li><strong>Diagnose first.</strong> One Opus session reads the family's divergences and the game's method, and names the mechanism. By-family tags are heuristics; one family's apparent 65% share turned out to be a comparer artefact.</li>
+<li><strong>Port every handler.</strong> Each (model, hook) pair in the family gets a handler on the new core, in batches with their tests. A port gate counts pairs with no handler, including models no recorded fight reaches; it must read 0, because a missing handler would silently drop under the switch.</li>
+<li><strong>Prove nothing changed while off.</strong> A byte proof runs the whole recorded corpus (47,432 fight pairs in eleven modes) through old and new and requires identical states.</li>
+<li><strong>Prove it is right when on.</strong> With the family switched on in a test fixture: the old test suites must not gain a failure; the fights traced against the real game must not get worse; the recorded corpus must not get worse; a strict step-order test and a fuzzer that compares combat endings must pass.</li>
+<li><strong>Switch, then re-measure.</strong> The family is marked migrated; the lockstep comparison on the next real-game block measures the result.</li>
+</ol>
+<h3>What has happened</h3>
+<p>The core (dispatcher and queue) landed in week 2 and week 3 with its own tests. F08 and F10 were taken together because the kill sequence binds them: the game kills, runs death hooks and removes the creature inside each damage call. All their handlers were ported between 2026-10-24 and 2026-10-25: a cloud pilot batch and five cloud batches for powers and relics, local batches for monsters and the models that needed the game's context, a review that found and fixed a kernel bug (a search fork could advance the live run's random stream), and finally the eleven pairs no recorded fight reaches.</p>
+<p>The switch-on proof then failed in four rounds of narrowing, each time finding a mechanism: the old combat ending fired at the kill while the game ends combat after its queue drains (113 fights); the game's two turn-start win checks had never run under the old turn start; a comparer census fault; two relics whose damage folds had never been ported. The corpus count of worse fights went 122, 3, 2. Two remain, both diagnosed, under repair.</p>
+<p>Next in the ranked order: F06 (card-play hooks, 21% of the weight), then F11 (piles, 11%) and F15 (rewards, 9%), each with its Opus diagnosis first. The escalation rules stand: Tier 2 only if the architectural share has not halved once the top five are migrated, or if a migrated family's divergence returns through an unmigrated one more than twice.</p>
+</section>
+
+<section class="prose" id="week4">
+<h2>Next: week 4 of the plan</h2>
+<p>Week 4 ends at gate G1. Its briefs are drafted from the week-3 review and the night's results; the owner has not yet said when to start the week-4 session. In order of priority:</p>
+<ol>
+<li><strong>Kernel lane:</strong> R7h closes the two fights and reruns the proof; the switch flips only with every gate passing; then the post-switch by-family table and traced set; then F06's diagnosis and migration, then F11, F15.</li>
+<li><strong>Lane B:</strong> the exact-fight trace tool (lockstep decision to a traced real fight, so a divergence can be seen in its run context); the ranking-provenance kit as a local job; the probe-first items once their traces name them; re-rank after each landing.</li>
+<li><strong>Lane A:</strong> score the promoted generation on block S3 each promotion under the review guard; judge the GPU lane's value head against the keep conditions (the dev-set skill interval must exclude zero).</li>
+<li><strong>Lane C:</strong> recycle-60 as the default for real-game blocks; the other four characters end to end; potion discard on closed-belt screens, which is the owner's call because it changes the action masks the policies see.</li>
+<li><strong>GPU lane:</strong> piece 2 (the value head) after its design review; piece 3 (sweeps) only in quiet windows after piece 2 has a measured result.</li>
+<li><strong>Weekly review:</strong> G1 on the re-ranked table after the switch.</li>
+</ol>
+<h3>Open owner calls</h3>
+<ul>
+<li>When to write and start the week-4 session: now, or after the F08+F10 switch lands.</li>
+<li>Potion discard on closed-belt screens (changes the policies' masks).</li>
+<li>Reversible decisions taken under delegation overnight (D29, D24's guard, D23's family order, D26's cloud-plan revision): all stand unless the owner reverses one.</li>
+</ul>
+</section>
+
+<section class="prose" id="decisions">
+<h2>Decisions, in plain language</h2>
+<p>The full log is docs/DECISIONS.md. A decision is changed only by a new dated entry that names the one it replaces. Here is what each one did and why.</p>
+<h3>Foundations, 2026-10-10 to 2026-10-13</h3>
+<div class="tl">
+<div class="tl-item"><div class="d">D1 · 10-10</div><div><span class="t">Pin the game at v0.107.1.</span> Every label and test is valid for one build; the pristine install is archived and Steam updates are off.</div></div>
+<div class="tl-item"><div class="d">D3 · 10-10</div><div><span class="t">No third-party code runs before a review records GO.</span> The emulator and mod were reviewed; the review is published as docs/SECURITY_REVIEW.md.</div></div>
+<div class="tl-item"><div class="d">D4, D5 · 10-10</div><div><span class="t">Combat-local value first; learned components only when the ledger calls for them,</span> and kept only on a paired win on fresh seeds.</div></div>
+<div class="tl-item"><div class="d">D6, D7 · 10-10</div><div><span class="t">No end-to-end reinforcement learning and no language model anywhere in the player.</span> Search plus two learned components is the agent. Restated for the public repository as D14.</div></div>
+<div class="tl-item"><div class="d">D8, D9 · 10-10</div><div><span class="t">The Windows PC is the always-on worker; cloud only for bursts.</span></div></div>
+<div class="tl-item"><div class="d">D10 · 10-10</div><div><span class="t">The information firewall starts with every allow-list empty.</span> The AI sees only what a player can see; each addition needs evidence.</div></div>
+<div class="tl-item"><div class="d">D11 · 10-11</div><div><span class="t">Ascension 10 only, Acts 1 to 3.</span> A common competitive level with a large public run corpus; one fixed level keeps everything comparable.</div></div>
+<div class="tl-item"><div class="d">D13 · 10-11</div><div><span class="t">The public Spire Codex run export is a test corpus, never a training source.</span> Aggregates only, with attribution.</div></div>
+<div class="tl-item"><div class="d">D15 · 10-13</div><div><span class="t">Ironclad first; the goal is any character.</span> It was the only character the copy could play whole runs with. Replaces D2 and D12 (Defect first).</div></div>
+<div class="tl-item"><div class="d">D16 · 10-13</div><div><span class="t">Our own fork of the open-source copy, refereed by the game's own code.</span> Upstream keeps changing outside our control; the real game is the fidelity reference. The referee harness is published; no game files ever are.</div></div>
+</div>
+<h3>The re-plan, 2026-10-22</h3>
+<div class="tl">
+<div class="tl-item"><div class="d">D17</div><div><span class="t">The goal is the agent; the simulator serves it.</span> Agent work starts now on the current copy. Simulator-first did not converge and measured nothing the goal is judged by.</div></div>
+<div class="tl-item"><div class="d">D18</div><div><span class="t">Where learning runs.</span> The headless referee may score the agent and supply real outcomes to fine-tune the learned components. Bulk self-play stays on the copy. No bot on the live client.</div></div>
+<div class="tl-item"><div class="d">D19</div><div><span class="t">Fidelity work is ranked by agent play; the rebuild is gated at G1.</span></div></div>
+<div class="tl-item"><div class="d">D20</div><div><span class="t">Hosts.</span> The full real-game environment is the judge; faster hosts are parked behind a throughput bar.</div></div>
+<div class="tl-item"><div class="d">D21</div><div><span class="t">Budget and model policy.</span> A 15% weekly ceiling, Sonnet first, Opus for design and review, idle credit unspent.</div></div>
+<div class="tl-item"><div class="d">D22</div><div><span class="t">Better than the best players, and a public in-fight mod as a side product.</span> The owner stated both goals in chat.</div></div>
+</div>
+<h3>The sprint, 2026-10-23 to 2026-10-25</h3>
+<div class="tl">
+<div class="tl-item"><div class="d">D23 · 10-23</div><div><span class="t">No faster real-game host although the throughput bar is crossed:</span> the real game is not the bottleneck while it only scores.</div></div>
+<div class="tl-item"><div class="d">D23 · 10-23</div><div><span class="t">The kernel rebuild has two tiers; start Tier 1's kernel now.</span> The owner approved starting ahead of G1 because the kernel is needed in both tiers. Addendum 10-24: the by-family table reads Tier 1 decisively; order F10+F08, F06, F11, F15.</div></div>
+<div class="tl-item"><div class="d">D24 · 10-24</div><div><span class="t">The boss-kill check becomes a not-worse guard until the kill rate reaches 10%.</span> At a 1 to 2% kill rate the co-primary test had no power and nothing could promote. Decided by the orchestrator from the test's power; the pairing check passed and the guard is on.</div></div>
+<div class="tl-item"><div class="d">D25 · 10-24</div><div><span class="t">The rebuild lane runs uncapped this week; the credit starts.</span> Addenda: the allowance may reach 70%; caps cut and extended in steps as the proof narrowed (18, 8, 5, 3, 3 rounds).</div></div>
+<div class="tl-item"><div class="d">D26 · 10-24</div><div><span class="t">The cloud plan revised on an independent review:</span> re-priced, liveness and gate rules added. Six hours had been lost to an access failure invisible from the PC.</div></div>
+<div class="tl-item"><div class="d">D27 · 10-24</div><div><span class="t">A GPU lane.</span> The GPU idled between training jobs while self-play paid the policy prior's cost on the CPU. Piece 1, the shared inference server, is complete: +22% decisions/s, identical decisions on 1,000 seeds, switched on 2026-10-25.</div></div>
+<div class="tl-item"><div class="d">D28 · 10-24</div><div><span class="t">Lane F proceeds on the assumption that modding is allowed.</span> The publisher openly supports modding; comparable advisor mods exist.</div></div>
+<div class="tl-item"><div class="d">D29 · 10-24</div><div><span class="t">Overnight decisions under delegation:</span> the guard goes on after the pairing check (it passed); a completed-Q training target was A/B-tested and showed no separation, so the default stays; recycling every 60 runs removes the environment's slowdown and becomes the default.</div></div>
+<div class="tl-item"><div class="d">D30 · 10-25</div><div><span class="t">The cloud credit stops; the allowance runs to 70%; lanes stop at 68%.</span> Addendum: GPU pieces 2 and 3 start now within that line, piece 2 first.</div></div>
+</div>
+</section>
+
+<section class="prose" id="risks">
+<h2>Risks and what would change the plan</h2>
+<div class="tablewrap"><table>
+<thead><tr><th>Risk</th><th>What follows</th></tr></thead>
+<tbody>
+<tr><td>The AI has no wins at Ascension 10 yet; almost every run ends in Act 1.</td><td>Expected at this stage: three generations in, the floor is rising about half a floor per generation. The kill rule fires only if six generations do not beat gen 0 on real games. The value head's weakness (it fails its keep conditions) is the GPU lane's piece 2.</td></tr>
+<tr><td>The switch-on proof keeps finding one more mechanism.</td><td>Each round has closed most of what it found (122, 3, 2 fights). If R7h leaves a new class open, the kernel lane stops and the switch waits for a diagnosis round rather than a hot fix.</td></tr>
+<tr><td>Switching the rebuilt core on exposes behaviour no gate covers.</td><td>The lockstep comparison on the next real-game block is the measure; the old engine stays usable and the switch is one line in a config file.</td></tr>
+<tr><td>The weekly allowance reaches its line before the switch lands.</td><td>Lanes stop at 68%; the CPU jobs keep producing; the switch waits for the next allowance. Nothing is lost, only delayed.</td></tr>
+<tr><td>Memory at 20 self-play workers plus the inference server.</td><td>Peak 31.2 GB against a 37.8 GB limit, accepted with the kill file; a memory-aware fallback is queued.</td></tr>
+<tr><td>The AI exploits a bug in the copy.</td><td>The real-game score catches it as a jump in the transfer gap; the mechanism goes to the top of the ranking.</td></tr>
+<tr><td>A game update is wanted.</td><td>Priced as its own item; v0.107.1 stays the target until then.</td></tr>
+<tr><td>Tier 1 is not enough.</td><td>Escalation to Tier 2 by the G1 rules; the kernel is reused.</td></tr>
+</tbody></table></div>
+</section>
+
+<section class="prose" id="rules">
+<h2>Rules that never bend</h2>
+<ul>
+<li>The game's code runs headless only on this PC and only because the security review recorded GO. It never connects to the network, never touches a player profile, and no bot ever plays the live client, Daily runs or leaderboards.</li>
+<li>No game file, asset or decompiled text goes into any repository, result file or commit. The public repositories hold our own code only.</li>
+<li>The reviewed emulator checkout is read-only. Our changes live in our fork and are pushed after their tests pass; useful fixes are offered upstream as pull requests.</li>
+<li>Results and logs carry no host names, user names or personal paths. No credential is stored on the PC.</li>
+<li>The AI sees only what a player can see. Hidden information is resampled, never read; leak tests are gates.</li>
+<li>No language model in the player; no end-to-end reinforcement learning; no learning from human run logs.</li>
+<li>A decision is changed only by a new dated entry in the decision log. Overnight decisions are reversible by the owner.</li>
+</ul>
+</section>
+
+<section class="prose" id="log">
+<h2>How this paper is kept, and its change log</h2>
+<p>The orchestrator session republishes this page whenever the project's state changes: a landing, a switch, a promotion, a decision, a new measurement. Every figure names its date and the block or commit it comes from. The source file lives in the Spireline repository at docs/paper/spireline-paper.html, so any later session can update it.</p>
+<ul class="log" id="changelog"></ul>
+<h3>Glossary</h3>
+<dl>
+<dt>Round</dt><dd>One reviewed piece of agent work (a worker plus its reviewer), about 60 tool calls for Sonnet; Opus counts 1.7.</dd>
+<dt>Referee</dt><dd>The real game's code running headless as the judge.</dd>
+<dt>Emulator, the copy</dt><dd>Our fork of the open-source re-implementation of the game's logic; fast and forkable.</dd>
+<dt>Lockstep</dt><dd>The copy replaying a real game's decisions from the same seed, compared by state hash after each step.</dd>
+<dt>Hook family</dt><dd>A group of game events that content listens to in a fixed order: F08 damage, F10 death and removal, F06 card play, F11 piles, F15 rewards, and so on.</dd>
+<dt>Tier 1</dt><dd>The kernel in the game's shape plus families migrated in ranked order; the old code serves the rest meanwhile.</dd>
+<dt>Switch-on</dt><dd>Marking a family as migrated so the new core handles it in real play; allowed only when every proof gate passes.</dd>
+<dt>Port gate, byte proof</dt><dd>The count of (model, hook) pairs without a handler, which must be 0; and the corpus-wide check that old and new produce identical states while a family is off.</dd>
+<dt>Generation</dt><dd>One trained candidate of the AI; promoted only by the gate.</dd>
+<dt>E-block, S-block</dt><dd>Fixed fresh sets of seeds used once: E for promotion on the copy, S for scoring on the real game.</dd>
+<dt>Transfer gap, G</dt><dd>The AI's win rate on the copy minus its win rate on the real game, on paired seeds. Zero so far because both are zero.</dd>
+<dt>Quiet window</dt><dd>A reserved period when the CPU belongs to one measurement and no other heavy job starts.</dd>
+<dt>Allowance</dt><dd>The subscription's weekly usage, read as a percentage on the usage page.</dd>
+</dl>
+</section>
+</div>
+
+<script>
+// Everything that changes between editions is in STATE. Edit here, then republish.
+const STATE = {
+  updated: "2026-10-25 03:20Z",
+  edition: 1,
+  phases: [
+    {key:"P0", name:"Foundations", weeks:"week 1", state:"done", note:"Measured the machine; AI runs on both engines."},
+    {key:"P1", name:"The flywheel", weeks:"weeks 2 to 4", state:"now", note:"Week 4 starting. Generations, real-game blocks, ranked fixes, kernel stage."},
+    {key:"P2", name:"Scale and judge", weeks:"weeks 5 to 8", state:"next", note:"Value head on real outcomes, labelled benchmark, mod built."},
+    {key:"P3", name:"Other characters, public proof", weeks:"week 9 on", state:"next", note:"Mod released, head-to-head seed block, per-character generations."}
+  ],
+  bars: [
+    {label:"Plan phase P1 (weeks 2 to 4)", pct:67, value:"2 of 3 stages", note:"Weeks 2 and 3 reviewed (2026-10-23, 2026-10-24); week 4 begins 2026-10-25 and ends at gate G1."},
+    {label:"Kernel rebuild: handlers ported for F08 and F10", pct:100, value:"port gate 0", note:"Every (model, hook) pair has a handler on the new core, including the 11 no recorded fight reaches. Fork main bcb64c9b."},
+    {label:"Kernel rebuild: switch-on proof for F08 and F10", pct:71, value:"5 of 7 gates", note:"Two gates open: 2 corpus fights worse of 4,392, and 1 traced fight compared on fewer fields. Both diagnosed; R7h in flight."},
+    {label:"Tier 1 by the AI's weight: families switched on", pct:0, value:"0% switched, 54% ported", note:"F08+F10 carry 54% of the divergence weight and switch on together. Stop rule: under 10% left unmigrated."},
+    {label:"GPU lane piece 1: shared inference server", pct:100, value:"complete", note:"+21.6% decisions/s at 20 workers, 1,000 seeds identical on both paths, lab switched over 2026-10-25 02:00Z."},
+    {label:"GPU lane piece 2: value head trained harder", pct:15, value:"design in review", note:"Design written 2026-10-25; code starts after the Opus review; adopted only if the dev-set skill interval excludes zero."},
+    {label:"GPU lane piece 3: sweeps in quiet windows", pct:0, value:"waiting", note:"Starts only after piece 2 has a measured result."},
+    {label:"Weekly allowance used", pct:61, value:"61% at 03:00Z", marks:[{at:68,label:"lanes stop 68%"},{at:70,label:"owner's line 70%"}], warnAt:68, note:"Read on the usage page at each wake. Sessions stop at a 68% reading; the owner's line is 70% (D30)."},
+    {label:"Cloud-session credit", pct:82, value:"$206 of $250, closed", note:"Sixteen sessions delivered; $44 unspent by the owner's decision (D30). No further cloud sessions."}
+  ],
+  fidelity: [
+    {label:"AI decisions where the copy agrees with the real game (lockstep, block S3, 2026-10-24)", pct:99.41, value:"99.41%", note:"333 of 56,629 decisions diverged; 285 re-anchors; 0 crashes in 500 runs."},
+    {label:"Recorded combat steps reproduced exactly (corpus, 2026-10-22)", pct:97.2, value:"97.2%", note:"4,392 recorded fights replayed step by step."},
+    {label:"Recorded fights identical to the end (corpus, 2026-10-22)", pct:77.7, value:"77.7%", note:"One wrong step early makes a fight count as not identical even when it recovers."},
+    {label:"Public Ironclad runs replayed identically to the end (Codex walk, 2026-10-22)", pct:74.4, value:"74.4%", note:"20,294 runs; a gate that may never get worse."}
+  ],
+  stack: [
+    {label:"F08 + F10: ported, switch pending", pct:53.7, cls:"seg-a"},
+    {label:"F06: next", pct:20.6, cls:"seg-b"},
+    {label:"F11, F15: after", pct:19.7, cls:"seg-c"},
+    {label:"Everything else", pct:6.0, cls:"seg-d"}
+  ],
+  gates: [
+    {state:"pass", text:"Port gate: 0 pairs without a handler, unreached pairs included."},
+    {state:"pass", text:"Byte proof: 0 states differ with the switch off, old against new, over 400 fights in 4 modes (full corpus 47,432 pairs at landing 8)."},
+    {state:"pass", text:"Old test suites with the switch on: 0 tests fail only when on (215 pass both, 76 not covered)."},
+    {state:"pass", text:"Strict step-order test: 4 of 4 pass."},
+    {state:"pass", text:"Fuzzer: 0 disagreements on how a combat ends."},
+    {state:"open", text:"Fights traced against the real game: 8 better, 69 same, 0 worse, but 1 fight compared on fewer fields."},
+    {state:"open", text:"Recorded corpus: 63 better, 4,327 same, 2 worse of 4,392 (was 122 on 2026-10-24)."}
+  ],
+  changelog: [
+    {when:"2026-10-25 03:20Z", what:"Edition 1. Written at the owner's request as the standing plain-language record. State: R7g landed (bcb64c9b), R7h in flight; GPU piece 2 design in review; allowance 61%."}
+  ]
+};
+
+function h(tag, cls, html){const e=document.createElement(tag); if(cls) e.className=cls; if(html!=null) e.innerHTML=html; return e;}
+
+(function render(){
+  document.getElementById('updated').textContent=STATE.updated;
+  document.getElementById('edition').textContent=STATE.edition;
+
+  const road=document.getElementById('road');
+  STATE.phases.forEach(p=>{
+    const d=h('div','ph '+(p.state==='done'?'done':p.state==='now'?'now':''));
+    d.appendChild(h('div','eyebrow',p.key+' · '+p.weeks+(p.state==='now'?' · now':p.state==='done'?' · done':'')));
+    d.appendChild(h('div','nm',p.name));
+    d.appendChild(h('span','small',p.note));
+    road.appendChild(d);
+  });
+
+  function bar(b){
+    const w=h('div','bar'+(b.marks?' has-marks':''));
+    w.setAttribute('role','img');
+    w.setAttribute('aria-label',b.label+': '+b.value);
+    const head=h('div','bar-head'); head.appendChild(h('span',null,b.label)); head.appendChild(h('span','v',b.value)); w.appendChild(head);
+    const t=h('div','bar-track');
+    const f=h('div','bar-fill'+(b.warnAt!=null&&b.pct>=b.warnAt?' warn':'')); f.style.width=Math.max(0,Math.min(100,b.pct))+'%'; t.appendChild(f);
+    (b.marks||[]).forEach(m=>{const mk=h('div','bar-mark'); mk.style.left=m.at+'%'; mk.appendChild(h('span',null,m.label)); t.appendChild(mk);});
+    w.appendChild(t);
+    if(b.note) w.appendChild(h('div','bar-note',b.note));
+    return w;
+  }
+  const bars=document.getElementById('bars'); STATE.bars.forEach(b=>bars.appendChild(bar(b)));
+  const fid=document.getElementById('fidelity'); STATE.fidelity.forEach(b=>fid.appendChild(bar(b)));
+
+  const st=document.getElementById('stack'), lg=document.getElementById('stacklegend');
+  STATE.stack.forEach(s=>{const d=h('div',s.cls); d.style.width=s.pct+'%'; d.title=s.label+' '+s.pct+'%'; st.appendChild(d);
+    const l=h('span',null,s.label+' <span class="mono">'+s.pct.toFixed(1)+'%</span>'); l.style.setProperty('--sw','var(--'+({'seg-a':'accent','seg-b':'accent-2','seg-c':'accent-3','seg-d':'track'})[s.cls]+')'); lg.appendChild(l);});
+
+  const g=document.getElementById('gates');
+  STATE.gates.forEach(x=>{const r=h('div','gate'); r.appendChild(h('span','pill '+x.state,x.state==='pass'?'pass':'open')); r.appendChild(h('div',null,x.text)); g.appendChild(r);});
+
+  const cl=document.getElementById('changelog');
+  STATE.changelog.forEach(c=>cl.appendChild(h('li',null,'<span class="mono muted">'+c.when+'</span> · '+c.what)));
+})();
+</script>
