@@ -119,6 +119,12 @@ every character.**
   tape checks must include A10 runs in every act before an A10 label in that act is trusted.
 - Supersedes: "A0" in D2, `scope.ascension: 0` and "Act 1 first" in the DRAFT
   `eval/prereg/phase1.yaml`.
+- Addendum 2026-10-25 (owner, in chat): **no lower-ascension curriculum for training.** The orchestrator suggested training
+  early generations at a lower ascension while scoring at A10; the owner declined: A10 is a fundamentally different game from A0
+  or even A9, strategies that work at lower levels are bad at A10, and that is what the AI has to work out. The owner also notes
+  that optimising for floors reached can make the boss harder to beat (taking too many cards, for example), so the promotion rule
+  keeps the boss-kill guard (D24) and the weekly review reports cards taken per floor and boss damage beside the floor metric as a
+  check for floor-greedy play. D11 stands as written.
 
 ## D12 · 2026-10-11 · Defect is the primary character
 
@@ -546,6 +552,10 @@ every character.**
 - Decided 2026-10-25 ~07:00Z by the owner, in chat, accepting the orchestrator's recommendation.
 - Supersedes: D25's 120-round stop line for Tier 1 (the lane stopped and reported at it, as D25 required); the D23 addendum's
   family order F06, F11, F15 (replaced by measured share after the re-rank).
+- Addendum 2026-10-25 ~08:45Z (owner, in chat): **no further family migration is priced from a tag.** A migration is priced only
+  from a diagnosis that names the mechanism behind the family's weight and counts the handler pairs it needs; the by-family tags
+  choose what to diagnose, never what to build. (Twice a diagnosis has overturned a tag: F11's share was a comparer artefact and
+  F06's was a single-site rule.)
 
 ## D32 · 2026-10-25 · The week's line is 80%, then everything waits for the reset; potion discard is approved
 
