@@ -556,6 +556,16 @@ every character.**
   from a diagnosis that names the mechanism behind the family's weight and counts the handler pairs it needs; the by-family tags
   choose what to diagnose, never what to build. (Twice a diagnosis has overturned a tag: F11's share was a comparer artefact and
   F06's was a single-site rule.)
+- Addendum 2026-10-25 ~11:00Z: **the native step is landed**, fork main `d886569b` (N1: the engine option `STS2_ENGINE`, default
+  old; the kernel built in the native library; the lab's entry points pinned to old) and `4595f84d` (N2: combat handles, clones and
+  forks step and carry the kernel; snapshot load and re-anchor bind it; screen answers through its queue; native API v38, run API
+  v29). N2 gate: C# 7,464 (0 failed), EmuDump 335, Python 0 new, corpus 0 regressed of 4,306, Codex walk 0 worse over 20,294 runs,
+  old-engine byte proof 0 differ in 11 modes x 600 fights. About 6.1 rounds. Still refused under core2: loading a document taken
+  mid-step, and the state readout on a hook action's screen. **Speed cost** (bench-emu, 8 processes, 60 s): core2 against old, steps
+  13,567/s against 17,878 (-24%), clones -4%, search simulations 1,286/s against 1,853 (-31%). The lab's defaults are unchanged;
+  whether the agent trains on core2 is the owner's call on the S3 re-rank (running now on `--engine core2`, doubling as the smoke)
+  against that cost. Open for week 4: the corpus-wide native-against-EmuDump parity harness, a post-turn-one snapshot test, a core2
+  re-anchor test. The rebuild lane is stopped for the week except the F11 diagnosis after the S3 table, usage permitting.
 
 ## D32 · 2026-10-25 · The week's line is 80%, then everything waits for the reset; potion discard is approved
 
