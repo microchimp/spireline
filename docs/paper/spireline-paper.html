@@ -360,7 +360,7 @@ dd{margin:0}
 <div class="tablewrap"><table>
 <thead><tr><th>Lane</th><th>What it delivers</th><th>State on 2026-10-25</th><th>Kill rule</th></tr></thead>
 <tbody>
-<tr><td><strong>A, the agent</strong></td><td>The searching player, generations that improve it, the weekly real-game score; later an offline run review.</td><td>Gen 3 promoted; gen 4 rejected once; the retrain resumes on deduplicated records (a resumed self-play block had re-appended its records, 19.7% duplicates, fixed 2026-10-25). Mean floor 11.3 to 12.7 on real games in three generations. The value head has real skill on clean data; the run macro stays on rules until a paired A/B and the owner's decision.</td><td>If six generations do not beat gen 0 on real games, stop training and spend on search quality.</td></tr>
+<tr><td><strong>A, the agent</strong></td><td>The searching player, generations that improve it, the weekly real-game score; later an offline run review.</td><td>Gen 3 promoted; gen 4's retrain on deduplicated records (a resumed self-play block had re-appended its records, 19.7% duplicates, fixed 2026-10-25) was judged and rejected normally, so gen 3 stands. Mean floor 11.3 to 12.7 on real games in three generations. The value head has real skill on clean data; the run macro stays on rules until a paired A/B and the owner's decision.</td><td>If six generations do not beat gen 0 on real games, stop training and spend on search quality.</td></tr>
 <tr><td><strong>B, fidelity on demand</strong></td><td>The weekly ranked divergence list, fixes for its top, the measured transfer gap, the G1 decision.</td><td>Ranking method landed and re-run per landing; architectural share 90%. Kit queue ready for week 4 (ranking provenance, exact-fight trace tool, three probe-first items).</td><td>Gate G1 (below).</td></tr>
 <tr><td><strong>C, the referee as environment</strong></td><td>A hardened real-game environment: recycling, crash handling, missing action types, other characters.</td><td>The ten-minute slowdown is named (per-game memory growth) and removed by recycling every 60 runs, which becomes the default at week 4's first landing. Run API can start any of the five characters.</td><td>Under 50 decisions/s or over 5% crashes: smaller, rarer blocks; no new host built on that alone.</td></tr>
 <tr><td><strong>D, the CPU scheduler</strong></td><td>The lab's priority ladder of jobs, weights, utilisation report.</td><td>Running unattended; the loop's share of CPU is ramping toward 50%. Utilisation was 26% over 7 days against a 90% target before the ladder changes.</td><td>None; mechanical.</td></tr>
@@ -379,8 +379,8 @@ dd{margin:0}
 
 <h3>Budget and spend</h3>
 <p>The unit of spend is a round: one reviewed piece of agent work, about 60 tool calls for Sonnet, with Opus counted at 1.7 rounds. The plan's standing ceiling is 15% of the subscription's weekly allowance, about 52 rounds, split by lane. Unspent allowance is the normal case.</p>
-<p>This week is the exception, by the owner's decision. The rebuild lane was uncapped on 2026-10-24 to carry the F08 migration through (D25), the allowance was allowed to run to 70% (D25 addendum, D30), and $250 of Claude Code cloud-session credit paid for sixteen cloud sessions that wrote handler batches, ran independent reviews and did research in parallel with the PC's sessions. The credit was closed on 2026-10-25 with $44 unspent (D30) because the handler batches it was best at are done and the remaining work needs the game and the corpus, which only the PC has.</p>
-<p>The reason given each time: after the lockstep fixes, what remained was one ordering mechanism plus routine single-site bugs, both cheap; the ceiling, not difficulty, was holding them. The orchestrator reads the usage page at each wake and stops every lane at a 68% reading.</p>
+<p>This week is the exception, by the owner's decision. The rebuild lane was uncapped on 2026-10-24 to carry the F08 migration through (D25), the allowance was allowed to run to 70% (D25 addendum, D30), and $250 of Claude Code cloud-session credit paid for sixteen cloud sessions that wrote handler batches, ran independent reviews and did research in parallel with the PC's sessions. The credit was closed on 2026-10-25 with $44 unspent (D30) because the handler batches it was best at are done and the remaining work needs the game and the corpus, which only the PC has. Later the same day the line went to 80% (D32) so that the native step and the re-rank finish within the week rather than stopping half done; after that every lane waits for the weekly reset.</p>
+<p>The reason given each time: after the lockstep fixes, what remained was one ordering mechanism plus routine single-site bugs, both cheap; the ceiling, not difficulty, was holding them. The orchestrator reads the usage page at each wake, stops new rounds at a 78% reading and lets a landing in progress finish.</p>
 </section>
 
 <section class="prose" id="kernel">
@@ -406,20 +406,19 @@ dd{margin:0}
 
 <section class="prose" id="week4">
 <h2>Next: week 4 of the plan</h2>
-<p>Week 4 ends at gate G1. Its briefs are drafted from the week-3 review and the night's results; the owner has not yet said when to start the week-4 session. In order of priority:</p>
+<p>Week 4 ends at gate G1. Its briefs are drafted from the week-3 review and the night's results. By the owner's decision (D32) the week-4 session starts at the weekly reset; until then only the native step, the re-rank and the potion-discard item run, within the 80% line. In order of priority:</p>
 <ol>
 <li><strong>Kernel lane (D31, under way):</strong> the kernel in the native library (4 to 6 rounds: build it in the native library, step the search's combat handles through it and carry its state through clones and forks), which lets self-play, promotion and the lockstep run on the new core and lets the switch be measured by agent weight; then the post-switch re-rank on a build with the Fairy in a Bottle fix; then at most one further family chosen by its measured kernel share, diagnosis first. F06 is not migrated.</li>
 <li><strong>Lane B:</strong> the exact-fight trace tool (lockstep decision to a traced real fight, so a divergence can be seen in its run context); the ranking-provenance kit as a local job; the probe-first items once their traces name them; re-rank after each landing.</li>
 <li><strong>Lane A:</strong> score the promoted generation on block S3 each promotion under the review guard; the generation-3 retrain on deduplicated records; a paired A/B of the rules macro against the value-head macro on a fresh block, whose result goes to the owner.</li>
-<li><strong>Lane C:</strong> recycle-60 as the default for real-game blocks; the other four characters end to end; potion discard on closed-belt screens, which is the owner's call because it changes the action masks the policies see.</li>
+<li><strong>Lane C:</strong> potion discard on closed-belt screens (approved, D32; under way on the week-3 session with the masks versioned, in force for the next generation); recycle-60 as the default for real-game blocks; the other four characters end to end.</li>
 <li><strong>GPU lane:</strong> piece 2 (the value head) after its design review; piece 3 (sweeps) only in quiet windows after piece 2 has a measured result.</li>
 <li><strong>Weekly review:</strong> G1 on the re-ranked table after the switch.</li>
 </ol>
 <h3>Open owner calls</h3>
 <ul>
 <li>After the re-rank: whether any further family is migrated, one at a time, each on its measured kernel share after a diagnosis (D31).</li>
-<li>When to write and start the week-4 session.</li>
-<li>Potion discard on closed-belt screens (changes the policies' masks).</li>
+<li>Next week's ceiling: this week ran to 80% for the kernel switch and the GPU server; the recommendation is an explicit lower ceiling from the reset, re-priced at G1.</li>
 <li>Whether the run macro switches from rules to the value head, once the paired A/B has a result.</li>
 <li>Reversible decisions taken under delegation overnight (D29, D24's guard, D23's family order, D26's cloud-plan revision): all stand unless the owner reverses one.</li>
 </ul>
@@ -461,6 +460,8 @@ dd{margin:0}
 <div class="tl-item"><div class="d">D28 · 10-24</div><div><span class="t">Lane F proceeds on the assumption that modding is allowed.</span> The publisher openly supports modding; comparable advisor mods exist.</div></div>
 <div class="tl-item"><div class="d">D29 · 10-24</div><div><span class="t">Overnight decisions under delegation:</span> the guard goes on after the pairing check (it passed); a completed-Q training target was A/B-tested and showed no separation, so the default stays; recycling every 60 runs removes the environment's slowdown and becomes the default.</div></div>
 <div class="tl-item"><div class="d">D30 · 10-25</div><div><span class="t">The cloud credit stops; the allowance runs to 70%; lanes stop at 68%.</span> Addendum: GPU pieces 2 and 3 start now within that line, piece 2 first.</div></div>
+<div class="tl-item"><div class="d">D31 · 10-25</div><div><span class="t">Tier 1 continues on a new line:</span> the native step first, then the re-rank, then any further family one at a time on its measured kernel share after a diagnosis. F06 is not migrated. The owner accepted the orchestrator's recommendation at the 120-round stop line.</div></div>
+<div class="tl-item"><div class="d">D32 · 10-25</div><div><span class="t">The week's line is 80%, then everything waits for the reset; potion discard approved.</span> New rounds stop at 78%, landings finish; the week-4 session starts at the reset.</div></div>
 </div>
 </section>
 
@@ -519,8 +520,8 @@ dd{margin:0}
 <script>
 // Everything that changes between editions is in STATE. Edit here, then republish.
 const STATE = {
-  updated: "2026-10-25 07:10Z",
-  edition: 6,
+  updated: "2026-10-25 08:35Z",
+  edition: 7,
   phases: [
     {key:"P0", name:"Foundations", weeks:"week 1", state:"done", note:"Measured the machine; AI runs on both engines."},
     {key:"P1", name:"The flywheel", weeks:"weeks 2 to 4", state:"now", note:"Week 4 starting. Generations, real-game blocks, ranked fixes, kernel stage."},
@@ -536,7 +537,7 @@ const STATE = {
     {label:"GPU lane piece 1: shared inference server", pct:100, value:"complete", note:"+21.6% decisions/s at 20 workers, 1,000 seeds identical on both paths, lab switched over 2026-10-25 02:00Z."},
     {label:"GPU lane piece 2: value head trained harder", pct:100, value:"complete", note:"Landed 7477ebb3 (2026-10-25 03:49Z). On deduplicated data and a large enough evaluation the value head has real pre-kill skill: Brier skill +0.044 (interval 0.028 to 0.060) with 4 rows per run per epoch, adopted. Week 3's 'no skill' reading was 38 kills on duplicated data."},
     {label:"GPU lane piece 3: sweeps in quiet windows", pct:70, value:"sweep done, runner deferred", note:"The arm sweep ran on the GPU and is complete. The quiet-window runner (one round) waits until a sweep is queued; nothing is queued this week."},
-    {label:"Weekly allowance used", pct:64, value:"64% at 05:45Z", marks:[{at:68,label:"lanes stop 68%"},{at:70,label:"owner's line 70%"}], warnAt:68, note:"Read on the usage page at each wake. Sessions stop at a 68% reading; the owner's line is 70% (D30)."},
+    {label:"Weekly allowance used", pct:66, value:"66% at 08:15Z", marks:[{at:78,label:"new rounds stop 78%"},{at:80,label:"owner's line 80%"}], warnAt:78, note:"Read on the usage page at each wake. New rounds stop at a 78% reading and a landing in progress finishes; the owner's line is 80% (D32). After that every lane waits for the weekly reset."},
     {label:"Cloud-session credit", pct:82, value:"$206 of $250, closed", note:"Sixteen sessions delivered; $44 unspent by the owner's decision (D30). No further cloud sessions."}
   ],
   fidelity: [
@@ -561,6 +562,7 @@ const STATE = {
     {state:"pass", text:"Recorded corpus: 71 better, 4,321 same, 0 worse of 4,392, 0 on fewer fields (122 worse on 2026-10-24)."}
   ],
   changelog: [
+    {when:"2026-10-25 08:35Z", what:"Edition 7. D32: the week's usage line is 80% (new rounds stop at 78%, landings finish), then every lane waits for the weekly reset and week 4 starts at the reset; potion discard on closed-belt screens approved. The lab's judge rejected generation 4's deduplicated retrain normally; generation 3 stays promoted. Native step: N1 in review fixes and its landing gate."},
     {when:"2026-10-25 07:10Z", what:"Edition 6. The owner set a new Tier 1 line (D31): the native step runs now within the 68% stop, then the post-switch re-rank, then any further family one at a time on its measured kernel share after a diagnosis. The kernel lane has started the native step."},
     {when:"2026-10-25 06:50Z", what:"Edition 5. F06's diagnosis: 85% of its weight was one single-site rule (Fairy in a Bottle offered as a combat action) already fixed by the fix lane; the kernel would address at most 6%, so F06 is not migrated. Tier 1 has spent about 120 to 125 rounds against its 120-round stop line and has stopped per D25; the owner decides on a new line or a stop at F08+F10. Allowance 64%."},
     {when:"2026-10-25 06:25Z", what:"Edition 4. The post-switch re-rank cannot run yet: the native runtime refuses a switched-on run and the lockstep has no engine option, so self-play, promotion and lockstep still play the old engine. The kernel-in-the-native-library step is priced at 4 to 6 rounds and is the owner's call; both lanes hold."},
