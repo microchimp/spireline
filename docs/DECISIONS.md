@@ -587,6 +587,12 @@ every character.**
   work, and no further Tier 1 family is indicated by the measured weight; Tier 1 stands at F08+F10 unless the re-rank after the
   driver fix shows otherwise. The rebuild lane is stopped for the week; week-4 items (parity harness, snapshot and re-anchor tests,
   the kernel's speed, the 3 failed re-anchors and the `screen:None` loss) are in HANDOFF section 0 with estimates.
+- Confirmed by the first nightly block 2026-10-25 (job 20261025T1611-nightly-real, generation 5, 2,000 seeds, core2 arm): after
+  the driver's pick-order fix F11 fell from 26.3% of the weight (0.0139 per decision) to 5.3% (0.0048 per decision, -66%); the
+  Gorge pair-swap groups are gone and the remaining F11 groups follow F15 deck roots, as the diagnosis predicted. Nightly headline:
+  mean floor 18.64, Act-1 boss kills 27.5% (550), wins 0, crashes 4, divergence 0.52% of 286,748 decisions, ranked share 96.1%;
+  F08 45.5%, F06 17.8%, F15 13.1%, F11 5.3%; Tier 1 holds. Week-4 note: the real-game half slows about eightfold for 25-50 minutes
+  after each recycle wave (a start cost per wave, not a steady defect).
 
 ## D32 · 2026-10-25 · The week's line is 80%, then everything waits for the reset; potion discard is approved
 
