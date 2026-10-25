@@ -440,6 +440,12 @@ every character.**
   3 worse fights, unread, and a census fault in `struct_compare.py` (8 corpus and 3 traced fights compared on fewer fields;
   a comparer fault, the review confirms). The kernel lane gets 3 more rounds for R7f: the census, the 3 fights, the rerun,
   and the switch only with every gate passing.
+- Addendum 6 (2026-10-25 01:50Z): R7f landed on fork main `95cdd87b` (the census fix; handlers for Diamond Diadem and Undying
+  Sigil, which the port list had skipped because no recorded fight reaches them; `port_list --unreached`). Proof: old suites
+  0, traced 8 better / 69 same / 0 worse, corpus 63 better / 4,327 same / 2 worse, strict step test 4 of 4, fuzz 0 ending
+  disagreements. Open: 11 F08/F10 pairs for unreached models with no handler (they would silently drop under the switch, so
+  they count against the gate), the 2 worse fights (Shrink's target slot; Gremlin Horn's draw and energy for an egg that
+  Parrying Shield kills), one traced fight on fewer fields. The page read 59%; the kernel lane gets 3 more rounds for R7g.
 
 ## D23 addendum · 2026-10-24 · The by-family table now reads Tier 1 decisively; the migration order is set
 
