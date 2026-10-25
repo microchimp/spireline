@@ -602,3 +602,7 @@ every character.**
 - Decided 2026-10-25 ~09:30Z by the owner, in chat, accepting the orchestrator's recommendation.
 - Supersedes: the rules macro as the default for new candidates (`SPIRELINE_MACRO_VRUN` off, D27 addendum); the held-out keep
   test for V_run as the gate (DESIGN 5.3 as applied in week 3).
+- Addendum 2026-10-25 ~09:50Z (owner, in chat): three extras for the remaining line, after the macro switch and within the 78%
+  stop: (1) the A/B arms re-read with the new per-floor fields (cards, nodes, rests, boss damage); (2) the real-game score on S3 of
+  the first candidate promoted with the V_run macro, paired against generation 3's 12.72; (3) the three probe-first kits if rounds
+  remain. Not this week: a lookahead-cost sweep, the sub-1.5% single-site kits, the week-4 review before the re-rank.
