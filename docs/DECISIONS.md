@@ -690,3 +690,15 @@ every character.**
   picked option's index; leak tests unchanged; Python-only gate); the real-game numbers are re-read on the next nightly block. Boss
   recognition fixed in A11 (a boss fight is a combat on the act's boss floor): generation 5 reached the Act-1 boss in 82.8% of S3
   runs and won 29.5% of those reached; generation 3 reached 194 and won 27 (13.9%).
+
+## D34 · 2026-10-26 · Every action a player can take is in the AI's action space
+
+- The AI sees what a player sees and never more (D10, the firewall); from now it can also do whatever a player can do. The known
+  gaps are approved as Lane C work, in this order: potion use on the closed-belt screens (discard landed 2026-10-25 under D32),
+  the "choose none" selections, the card-reward alternatives, and whatever the 23 real-game decisions with no copy option in the
+  S3 block turn out to be. Each is one round with a failing-then-passing test and the full gate; the policies' masks are versioned so
+  saved generations still load, and each change is in force for the next generation.
+- Why: the owner's rule, in chat ("do it if the player has access to it"). A decision the AI cannot take is scored but not ranked,
+  so each gap hides part of the transfer gap and caps the policy below what a player can do.
+- They run within the 85% line only if the usage reading allows; otherwise they are the first week-4 Lane C items.
+- Training on core2 is not a player-access question and stays as it is (old core; the speed work first).
