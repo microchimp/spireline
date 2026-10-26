@@ -793,3 +793,11 @@ every character.**
   138 pile-position reads, all classed; bisimulation 0 failures over about 9,100 equal-key pairs; the remaining fix replaces a
   depth-cut tolerance with a zero-tolerance comparison and extends the scan to potion callers. S3 starts only at or under a 92%
   reading (90% at 19:10Z), else at the reset.
+- S1 landed 2026-10-26 ~21:30Z: fork main `5670dce1` (about 5.5 units: the build plus two fix rounds and reviews). The key: a
+  generated census of every combat-state field, each in the key or excluded with a reason; hand, discard, exhaust and potion slots
+  as multisets unless a scanned order reader exists (436 pile-position reads, all classed; King's Courage listed by hand); the draw
+  pile as a known top, an unknown middle and a known bottom; hindsight mode keeps every pile a roll indexes ordered; S2's recorded
+  chance answers keyed (the merge surfaced it and the coverage test caught it); bisimulation 0 failures with nothing tolerated over
+  about 9,100 equal-key pairs in both modes. Gate: C# 7,555 (0 failed), corpus 0 regressed, byte proof 0 differ. Usage 91%: S3
+  (3.4 units plus review) cannot finish under the 92% line; its brief is on `solver/s3-expectimax` (`docs/rebuild/S3_BRIEF.md`) and
+  it starts at the reset with S4-S7. The core so far: about 12 units for S1 and S2 with their reviews and fixes.
