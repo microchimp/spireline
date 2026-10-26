@@ -786,3 +786,10 @@ every character.**
   week-3 session to keep the owner engaged.
 - Addendum 2026-10-26 ~13:00Z (owner, in chat, "you can go a little over"): the solver core's and the run viewer's rounds may run to
   a 92% reading instead of 90%; a landing in progress finishes.
+- S2 landed 2026-10-26 ~19:00Z: fork main `480d5b29` (the RNG stream hook, a null check and allocation-free when unset; enemy move
+  odds tested against seeded rolls; the draw model with reshuffles, hand cap and Perfect Fit; copies carry no chance source;
+  degenerate random calls refused). Gate: C# 7,538 (0 failed), corpus 0 regressed, Codex walk 0 worse, the fix delta byte proof 0
+  differ. About 6.5 units with review, gate, fix and re-review. S1 (the state key) in its second fix round: the scripted scan found
+  138 pile-position reads, all classed; bisimulation 0 failures over about 9,100 equal-key pairs; the remaining fix replaces a
+  depth-cut tolerance with a zero-tolerance comparison and extends the scan to potion callers. S3 starts only at or under a 92%
+  reading (90% at 19:10Z), else at the reset.
