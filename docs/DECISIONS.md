@@ -753,3 +753,13 @@ every character.**
   not the line that wins once the draws are known. The hindsight mode is an upper bound on avoidable losses for attribution only;
   it never grades a decision as a mistake and never produces a training label. Regret and labels come from the expectation: the
   exact layer's value over the draw-pile multiset and the enemy's rolls, or the deeper sampled search beyond its reach.
+- Design landed 2026-10-26 ~10:30Z: fork main `08882f79`, `docs/rebuild/FIGHT_SOLVER.md` (docs only, about 1.7 units). Expected
+  value and the hindsight bound are separate exports (`Sts2_SolveExpected`, `Sts2_SolveHindsight`). Price in Sonnet-equivalent
+  units: S1 state key 1.7; S2 chance (RNG hook, enemy move odds, draw model) 3.4; S3 expectimax with transposition table, lossless
+  prunings, reference solver and equal-value harness 3.4; S4 native exports, EmuDump solve, hindsight, potion-subset curve 1.7; S5
+  the oracle in the search 1.7; S6 coverage curve 1.0; S7 the A/B 1.0: 13.9 (15.6 with a review-fix round; 17.3 with dominance and
+  bounds), above D35's "about four rounds" and the 5-point envelope. A four-round cut drops the enemy odds: lethal and forced
+  survival only, no reach past the next enemy roll. Risks named: state explosion (exact reach the last one or two turns of most
+  fights), a key that misses state silently merging positions (guards: field coverage, bisimulation, the reference solver, a gate
+  on real streams), clone cost per step. Implementation waits for the owner's choice: the cut now and the rest at the reset, or the
+  full S1-S3 now and the rest at the reset.
