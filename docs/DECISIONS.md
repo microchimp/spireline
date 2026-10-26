@@ -710,6 +710,12 @@ every character.**
   Week-4 Lane C order after C4: the event candidate set, the shop price and removal, the Wongos option, then the choose-none and
   reward-alternative records. Boss identity confirmed in the value head's observation (`run_train/features.py`, the boss one-hots
   and the boss row's distance).
+- Landed 2026-10-26 ~08:20Z: C4 on fork main `87b2c81b` (potion use on the four closed-belt screens under mask version 3, run API
+  30): the use slots of the non-targeted AnyTime potions (Blood Potion, Fruit Juice, Entropic Brew) on those screens; the Foul
+  Potion's one out-of-fight use (thrown during the shop's card-removal selection) is not yet offered and joins the Lane C list;
+  versions 1 and 2 byte-identical; new candidates write 3; judge, firewall and leak tests untouched. Gate: C# 7,499 (0 failed),
+  corpus 0 regressed, byte proof identical over 47,432 pairs. Remaining D34 items (choose-none selections, card-reward alternatives,
+  the event candidate set, the shop price and removal, the Wongos option, the Foul Potion throw) head the week-4 Lane C list.
 
 ## D35 · 2026-10-26 · Build the fight solver: an exact layer inside the combat search
 
