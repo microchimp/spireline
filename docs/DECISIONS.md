@@ -702,3 +702,11 @@ every character.**
   so each gap hides part of the transfer gap and caps the policy below what a player can do.
 - They run within the 85% line only if the usage reading allows; otherwise they are the first week-4 Lane C items.
 - Training on core2 is not a player-access question and stays as it is (old core; the speed work first).
+- Addendum 2026-10-26 ~01:50Z: potion use is running as C4 (mask version 3; generations 3 and 5 unchanged). The 41 no-option
+  real decisions of the two S3 blocks classified: 34 are card selections after an event page (33 Wood Carvings, 1 Cheese Gorge),
+  one mechanism, the event's card-selection candidate set; 4 card-reward takes with no matching offer (likely the Hopper rows B14b
+  changes); 2 shop options (a price one gold off; a card removal the copy did not offer); 1 event option (Welcome to Wongos). None
+  is a choose-none selection or a card-reward alternative; those appear as `selection:left_open` records and untaken reward rows.
+  Week-4 Lane C order after C4: the event candidate set, the shop price and removal, the Wongos option, then the choose-none and
+  reward-alternative records. Boss identity confirmed in the value head's observation (`run_train/features.py`, the boss one-hots
+  and the boss row's distance).
