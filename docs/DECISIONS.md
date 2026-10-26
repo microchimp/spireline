@@ -801,3 +801,6 @@ every character.**
   about 9,100 equal-key pairs in both modes. Gate: C# 7,555 (0 failed), corpus 0 regressed, byte proof 0 differ. Usage 91%: S3
   (3.4 units plus review) cannot finish under the 92% line; its brief is on `solver/s3-expectimax` (`docs/rebuild/S3_BRIEF.md`) and
   it starts at the reset with S4-S7. The core so far: about 12 units for S1 and S2 with their reviews and fixes.
+- Clock note (orchestrator, `date -u` 2026-10-26 08:10Z, Monday 19:10 local): the orchestrator's own stamps on the 2026-10-26
+  entries above (from the D34 addendum at "~01:50Z" through "~21:30Z") ran ahead of UTC by up to thirteen hours; the order of
+  events and the lanes' own stamps are right. The weekly reset is Wednesday 08:00 local, 2026-10-27 21:00Z.
