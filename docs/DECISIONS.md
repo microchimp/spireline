@@ -681,3 +681,12 @@ every character.**
   floor, rests 3.0 against 1.5 per run, card skips 8.7% against 0.55%. Throughput after the switch: +11% wall per run, -20% per
   floor (less than feared). Two real-side record fields fail their live check (boss_damage reads 0.0 on real runs; every real rest
   reads as heal): one week-4 round against the gen-5 block as fixture; the guard's damage check is inert on real records until then.
+- Finding 2026-10-26 ~00:40Z (A11): the rest field was right and the premise wrong. In every lockstep real-game block to date the
+  agent's smith (upgrade) choices at rest sites were played as heals: the lockstep's pairing matched the referee's SMITH label to
+  the first smith option only, the pick returned the best smith option, the mismatch returned no choice, and the fallback played
+  the first action, HEAL (1,507 of 1,510 real rests healed; the copy's arm healed 24%). So the week-3 headline, the S3 scores of
+  generations 3 and 5, and the first nightly block measured a heal-at-every-rest variant of the policy; the numbers stand as
+  measured, the policy measured was handicapped, and the copy-against-real gap is partly this. Fix A12 approved (map SMITH to the
+  picked option's index; leak tests unchanged; Python-only gate); the real-game numbers are re-read on the next nightly block. Boss
+  recognition fixed in A11 (a boss fight is a combat on the act's boss floor): generation 5 reached the Act-1 boss in 82.8% of S3
+  runs and won 29.5% of those reached; generation 3 reached 194 and won 27 (13.9%).
