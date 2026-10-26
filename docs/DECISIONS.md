@@ -710,3 +710,22 @@ every character.**
   Week-4 Lane C order after C4: the event candidate set, the shop price and removal, the Wongos option, then the choose-none and
   reward-alternative records. Boss identity confirmed in the value head's observation (`run_train/features.py`, the boss one-hots
   and the boss row's distance).
+
+## D35 · 2026-10-26 · Build the fight solver: an exact layer inside the combat search
+
+- A fight solver with three layers: exact expectimax over the copy's combat rules when the remaining state is below a size
+  threshold (draw pile as a known set with sampled order, enemy moves by the game's rules with their randomness as branches,
+  potions and end-turn as actions, state-hash transposition merging so commuting plays collapse); the sampled search the AI runs
+  today above the threshold; the networks scoring positions neither finishes. The exact layer is an oracle inside the main AI's
+  search (no missed lethal or forced survival), the source of ground-truth labels for the value and policy networks and the regret
+  benchmark (DESIGN 4.3), and the attribution tool for lost fights (exact play wins: an in-fight error; exact play dies: the loss
+  was decided by deck, route, rests or potions). The same logic is the mod's engine on the game's own code if the Lane F
+  feasibility check passes.
+- Order: first a one-round measurement of the size distribution of real fight states the AI meets (how often a position is
+  exactly solvable within a time budget, and from which turn of a fight); then an Opus design round; then about four
+  implementation rounds; judged by an A/B on a fresh seed block (HP lost per fight, boss kills, the share of decisions the exact
+  layer settles within budget). Starts in week 4 after the reset; the week-4 brief carries it as Lane A's first new item after the
+  real-side record fields, beside the 30-against-120-simulations block and the regret benchmark's first slice.
+- Why: the owner, in chat, 2026-10-26 ("I think we should build the fight solver"); it makes the design's DEEP and LABEL budgets
+  concrete, and nothing measures optimality today. Caveat: the solver is only as right as the rules it solves over, so the fidelity
+  loop stays the base. D6 and D7 unchanged: search is the player; no end-to-end RL, no language model.
