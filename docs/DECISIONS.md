@@ -804,3 +804,7 @@ every character.**
 - Clock note (orchestrator, `date -u` 2026-10-26 08:10Z, Monday 19:10 local): the orchestrator's own stamps on the 2026-10-26
   entries above (from the D34 addendum at "~01:50Z" through "~21:30Z") ran ahead of UTC by up to thirteen hours; the order of
   events and the lanes' own stamps are right. The weekly reset is Wednesday 08:00 local, 2026-10-27 21:00Z.
+- Addendum 2026-10-26 ~08:20Z (owner, in chat, "go up to 95%"): the week's line is 95%; S3 (the expectimax with the
+  transposition table, the lossless prunings, the reference solver and the equal-value harness) starts now on the kernel lane; new
+  rounds stop at a 94% reading, a landing in progress finishes, review fixes that cannot finish under 94% complete at the reset.
+  S4-S7 wait for the reset.
