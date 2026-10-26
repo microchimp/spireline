@@ -763,3 +763,12 @@ every character.**
   fights), a key that misses state silently merging positions (guards: field coverage, bisimulation, the reference solver, a gate
   on real streams), clone cost per step. Implementation waits for the owner's choice: the cut now and the rest at the reset, or the
   full S1-S3 now and the rest at the reset.
+- Sizing measurement 2026-10-26 ~11:30Z (`W4-S1-report.md`, generation-5 self-play, 277,680 decisions; cross-checked within 3
+  points on generations 2 and 3 and on 164 real AI decisions from the trace replays): share of decisions whose rest-of-fight state
+  estimate is under 10^4 / 10^5 / 10^6 / 10^7 states: overall 35 / 44 / 52 / 58% (median 2 turns left); Act 1 37 / 46 / 54 / 60;
+  Act 2 26 / 32 / 40 / 47; the last three turns of lost fights 45 / 56 / 66 / 72; boss fights 20 / 26 / 31 / 33 (median 4 turns
+  left); one turn left 100% under 10^4; four or more turns left 99% above 10^7. Median decision: hand 4, draw pile 8 cards in 5
+  kinds, 1 enemy. Caveats: targeting, potions, in-turn draws and enemy randomness left out (undercount); full-pile draws each turn
+  (overcount); Acts 2-3 thin. Reading: a full rest-of-fight solve fits a 10^7 budget for about three fifths of decisions and for
+  72% of the last three turns of lost fights, for a third of boss-fight decisions, and for almost nothing with four or more turns
+  left: a depth-limited, turn-by-turn solve is the shape that fits, with whole-fight exactness for short fights.
