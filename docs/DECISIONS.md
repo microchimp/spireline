@@ -779,3 +779,8 @@ every character.**
   to six points of boss kills with a consistent drop in HP lost, so the in-fight layer leaves at least that on the table and the
   solver's target is the gap above it. Flag for Lane B: seed 4GAEDDDQBY stalls at floor 4 in a run-layer decision loop in both arms
   (about a million decisions until the 1,800 s cap); one repro round, week 4.
+- Choice 2026-10-26 ~12:30Z (owner, in chat): **the full core now** (S1 state key, S2 chance, S3 expectimax with the harness,
+  about 8.5 units) on the kernel lane, new rounds stopping at a 90% reading and any unfinished piece completing at the reset;
+  S4-S7 at the reset. The owner does not need something to show at once; a run viewer (the AI's best real run rendered floor by
+  floor, with the generator kept under tools/ so the solver's annotations can be added later) is approved as one round on the
+  week-3 session to keep the owner engaged.
