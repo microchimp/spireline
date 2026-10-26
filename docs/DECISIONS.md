@@ -735,3 +735,9 @@ every character.**
 - Why: the owner, in chat, 2026-10-26 ("I think we should build the fight solver"); it makes the design's DEEP and LABEL budgets
   concrete, and nothing measures optimality today. Caveat: the solver is only as right as the rules it solves over, so the fidelity
   loop stays the base. D6 and D7 unchanged: search is the player; no end-to-end RL, no language model.
+- Addendum 2026-10-26 (owner, in chat): efficiency is a judged criterion of the solver, not an afterthought. The design round
+  prices the exact layer on the engine's hot path (C# inside the combat engine, exposed through the native library, not Python
+  over it), and the A/B reports positions solved per second, engine steps per solve with each pruning switched on and off, and the
+  share of decisive positions solved within the per-decision budget. Lossless prunings (transposition merging, the draw pile as a
+  multiset, interchangeable enemies, the fixed shown intent, subtree reuse) are in from the first version; dominance and bounds
+  behind the equal-value harness; heuristics last.
