@@ -784,3 +784,5 @@ every character.**
   S4-S7 at the reset. The owner does not need something to show at once; a run viewer (the AI's best real run rendered floor by
   floor, with the generator kept under tools/ so the solver's annotations can be added later) is approved as one round on the
   week-3 session to keep the owner engaged.
+- Addendum 2026-10-26 ~13:00Z (owner, in chat, "you can go a little over"): the solver core's and the run viewer's rounds may run to
+  a 92% reading instead of 90%; a landing in progress finishes.
