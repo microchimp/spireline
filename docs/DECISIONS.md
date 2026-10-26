@@ -749,3 +749,7 @@ every character.**
   recorded for the A/B: the solver will matter highly for the win rate; the orchestrator's: more for reaching Act 3 than for Act 1.
   Also in the brief: a hindsight mode that solves a finished fight with its actual draw order (attribution and labels), and the
   coverage curve (share of real fights solved fully within 1 s and 10 s, by act and deck size).
+- Correction 2026-10-26 (owner, in chat): perfect play is the action best in expectation over draws and rolls at decision time,
+  not the line that wins once the draws are known. The hindsight mode is an upper bound on avoidable losses for attribution only;
+  it never grades a decision as a mistake and never produces a training label. Regret and labels come from the expectation: the
+  exact layer's value over the draw-pile multiset and the enemy's rolls, or the deeper sampled search beyond its reach.
