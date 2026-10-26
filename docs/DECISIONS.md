@@ -741,3 +741,11 @@ every character.**
   share of decisive positions solved within the per-decision budget. Lossless prunings (transposition merging, the draw pile as a
   multiset, interchangeable enemies, the fixed shown intent, subtree reuse) are in from the first version; dominance and bounds
   behind the equal-value harness; heuristics last.
+- Started 2026-10-26 ~09:35Z (owner, in chat: "start this using 5% of weekly budget"): a 5-point envelope from the 86% reading
+  at the start; new rounds stop at a 90% reading, a landing in progress finishes. Kernel lane: the Opus design round first
+  (`docs/rebuild/FIGHT_SOLVER.md` on the fork), then the C# exact layer piece by piece on the owner's reading of the design;
+  week-3 session in parallel: the sizing measurement (state-size distribution of real fight decisions, share under 10^4 to 10^7
+  states, by act and for the last turns of lost and boss fights) and the 30-against-120 simulations block. The owner's prediction,
+  recorded for the A/B: the solver will matter highly for the win rate; the orchestrator's: more for reaching Act 3 than for Act 1.
+  Also in the brief: a hindsight mode that solves a finished fight with its actual draw order (attribution and labels), and the
+  coverage curve (share of real fights solved fully within 1 s and 10 s, by act and deck size).
