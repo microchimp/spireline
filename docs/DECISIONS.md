@@ -772,3 +772,10 @@ every character.**
   (overcount); Acts 2-3 thin. Reading: a full rest-of-fight solve fits a 10^7 budget for about three fifths of decisions and for
   72% of the last three turns of lost fights, for a third of boss-fight decisions, and for almost nothing with four or more turns
   left: a depth-limited, turn-by-turn solve is the shape that fits, with whole-fight exactness for short fights.
+- The 30-against-120 block 2026-10-26 (`W4-S2-report.md`; generation 5, same prior and macro, 500 fresh paired seeds on the copy,
+  guard on): 120 simulations minus 30, paired mean floor +0.98 (+0.51 to +1.45; 17.75 to 18.72); Act-1 boss kills 81 to 109 of 500
+  (+5.6 points, +2.0 to +9.2, McNemar p 0.0015); wins 0 and 0; HP lost per fight -0.39 (-0.62 to -0.15), elites -1.7, bosses -2.0;
+  cards taken and skip rate unchanged; cost 2.9-3.4x the wall per run. Reading: four times the search buys about one floor and five
+  to six points of boss kills with a consistent drop in HP lost, so the in-fight layer leaves at least that on the table and the
+  solver's target is the gap above it. Flag for Lane B: seed 4GAEDDDQBY stalls at floor 4 in a run-layer decision loop in both arms
+  (about a million decisions until the 1,800 s cap); one repro round, week 4.
