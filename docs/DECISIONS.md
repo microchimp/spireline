@@ -631,6 +631,11 @@ every character.**
   1.5 rounds; (6) potion use on the closed-belt screens if approved, about 1.5; (7) the three probe-first kits, 3; (8) the parity
   harness and the re-anchor tests, 3; (9) a reserve of about 5 rounds for what the nightly blocks reveal. About 29 rounds, 7-12
   points. Runs on the existing sessions; the week-4 session still starts at the reset. Nothing starts before the owner's go.
+- Go 2026-10-25 ~22:40Z (owner, in chat: "approved to use up to 85%"): the week's line is 85%; new rounds stop at an 84% reading
+  (81% at the go, the extra point above 80% having come from landings in progress and the orchestrator's own records), landings
+  finish. The go covers, in order, item 1 (the two real-side record fields) and item 3 (the fix lane on the nightly ranking's top
+  groups, kits first, one mechanism per round) until the stop. The G1 review waits for the reset with three nights of data; the
+  other items wait for the reset. Potion use and training on core2 are unanswered and stay as they are.
 
 ## D33 · 2026-10-25 · The value head becomes the run macro for new candidates; its keep test is out-of-fold on the full window
 
