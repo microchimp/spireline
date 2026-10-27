@@ -846,3 +846,9 @@ every character.**
   49% reading, landings finish. Shares: kernel lane about 30 (the solver, same order), week-4 lane about 12 (its deferred
   items return after the night's numbers and the post-night gate; nights and G1 first), GPU about 3, orchestrator and
   paper about 3, reserve 2.
+- Addendum 2026-10-27 23:58Z (orchestrator): **solver S3 (the exact search) landed, fork main `6cd01889`** (S3 a9467443 plus review
+  fixes; about 4.3 units). Gate: C# 7,568 (0 failed), EmuDump 335, corpus 0 regressed of 4,306, byte proof 1,200 pairs 0
+  differ. Equal-value harness: 303 positions under six pruning sets, 0 differences; subtree reuse 391 children, 0
+  differences; the chance model 1,652 moves against an independent count, 0 mismatches. The owner's order-dependence check
+  (Hunter Killer with Tender, Toadpoles with Thorns, 12 positions) solved equal to the reference. One refusal added by the
+  review (a shuffle pick over tied cards with different key values). S4 is being written; it builds after the night.
