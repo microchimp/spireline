@@ -814,3 +814,8 @@ every character.**
   tests; it completes at the reset (build, tests, review, landing), then S4-S7. Meanwhile the lab promoted generations 6 (+1.72
   floors over 5) and 7 (+0.75 over 6, on its second candidate) in the emulator, and generation 7's first real-game block (the
   second nightly, the first with the agent's own rest choices) is running.
+- Addendum 2026-10-27 11:55Z (owner, in chat, "use up to 99 percent before tomorrow reset"): the line is 99% until the reset
+  at 21:00Z (Wednesday 08:00 local). New rounds stop at a 98% reading, landings finish, unfinished review fixes complete at the
+  reset. Spent on, in order: S3's build, tests, review and landing (S4 only if S3 lands at or under 97%); the stuck nightly's fix
+  (the emulator arm's pool waits forever for a run lost on a recycle, so generation 7's real-game night never reached its real
+  arm); the mutation job's copy; the Hopper diagnosis if the reading allows.
