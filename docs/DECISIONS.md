@@ -842,3 +842,7 @@ every character.**
   Why: the measured solver runs at the engine's own step rate (about 8,500 steps/s against the engine's 5,900 on small
   positions), so the search's reach is set by the step cost, which also bounds self-play; the owner's instinct that the
   solver matters for the win rate stands on record (D35) and the A/B (S7) is the test of it.
+- Addendum 2026-10-27 23:39Z (owner, in chat, "you can use to 50 of weekly budget"): the week's line is 50%; new rounds stop at a
+  49% reading, landings finish. Shares: kernel lane about 30 (the solver, same order), week-4 lane about 12 (its deferred
+  items return after the night's numbers and the post-night gate; nights and G1 first), GPU about 3, orchestrator and
+  paper about 3, reserve 2.
