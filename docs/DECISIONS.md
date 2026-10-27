@@ -808,3 +808,9 @@ every character.**
   transposition table, the lossless prunings, the reference solver and the equal-value harness) starts now on the kernel lane; new
   rounds stop at a 94% reading, a landing in progress finishes, review fixes that cannot finish under 94% complete at the reset.
   S4-S7 wait for the reset.
+- Addendum 2026-10-27 01:58Z (`date -u`, orchestrator): usage reads 95%, the line. S3's code is written on `solver/s3-core` (the
+  expectimax, the transposition table, successors, action grouping, the budget, the reference solver, exact rational utilities,
+  tests, the harness and fixtures; uncommitted in the kernel lane's worktree) and waits on the lab's quiet lock for its build and
+  tests; it completes at the reset (build, tests, review, landing), then S4-S7. Meanwhile the lab promoted generations 6 (+1.72
+  floors over 5) and 7 (+0.75 over 6, on its second candidate) in the emulator, and generation 7's first real-game block (the
+  second nightly, the first with the agent's own rest choices) is running.
