@@ -819,3 +819,18 @@ every character.**
   reset. Spent on, in order: S3's build, tests, review and landing (S4 only if S3 lands at or under 97%); the stuck nightly's fix
   (the emulator arm's pool waits forever for a run lost on a recycle, so generation 7's real-game night never reached its real
   arm); the mutation job's copy; the Hopper diagnosis if the reading allows.
+- Outcome 2026-10-27 21:25Z (orchestrator): the week-3 lane paused the lab at 11:51Z to stop the stuck nightly step and then
+  exhausted the allowance at 100% before landing anything; S3 was not built under the old line (its quiet-lock wait held it);
+  the stale lock line was cleared at 21:20Z after the reset. The week closed at 100%.
+
+## D36 · 2026-10-28 · The week of 2026-10-28 runs to 30% of the allowance
+
+- Decided by the owner at the reset, in chat ("okay it has reset use up to 30%"). New rounds stop at a 29% reading; a landing
+  in progress finishes. Shares at the start, re-priced at G1: the kernel lane (solver S3 to S7, then the kernel's speed work)
+  about 10 points; the week-4 session (the nightly stall fix, the mutation job, the Hopper diagnosis and fix, the remaining
+  player actions under D34, the nightly ranking's groups, lab items, G1, the human reference curve) about 12; the GPU lane
+  (quiet-window runner, a larger prior sweep) about 2; the orchestrator and the paper about 2; reserve about 4.
+- Why: D21's standing 15% was set before the flywheel existed; last week ran to 100% and the orchestrator recommended an
+  explicit ceiling below 95%; the owner set 30%.
+- Supersedes: D32 and its addenda (last week's lines) for this week. D21's 15% stays the standing default for any week the
+  owner does not set.
