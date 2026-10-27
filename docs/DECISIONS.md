@@ -834,3 +834,11 @@ every character.**
   explicit ceiling below 95%; the owner set 30%.
 - Supersedes: D32 and its addenda (last week's lines) for this week. D21's 15% stays the standing default for any week the
   owner does not set.
+- Addendum 2026-10-27 23:21Z (owner, in chat, "I want to shift some resources to getting this search really good"): shares
+  change within the 30%: kernel lane about 16 points (solver S4, then S6 early as a baseline with a profile, then
+  optimisation in the profile's order: the engine step, the macro draw, dominance and bounds with irrelevant plays, dead
+  end-turn fields only if measured; then S5 and S7), week-4 lane about 8 (keeps the nights, the post-night gate and G1;
+  defers the Codex curve, the item 5 diagnoses and the Lane C gaps after C7), GPU 2, orchestrator and paper 2, reserve 2.
+  Why: the measured solver runs at the engine's own step rate (about 8,500 steps/s against the engine's 5,900 on small
+  positions), so the search's reach is set by the step cost, which also bounds self-play; the owner's instinct that the
+  solver matters for the win rate stands on record (D35) and the A/B (S7) is the test of it.
