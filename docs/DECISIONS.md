@@ -892,3 +892,8 @@ every character.**
   HP and deck the AI brings to the boss, read from the copy's arm) instead of pausing fight work. M1 and M2 still run first:
   they build the replay harness the gym needs and give the numbers the predictions are judged on. Orchestrator's prediction
   for M2, on record: about +10 Act 1 boss kills per 100 fights for the sixteen-times arm. The owner's prediction: not given yet.
+- Addendum 2026-10-29 11:16Z (owner, in chat): "if fights are not played optimally given a deck - we will not be able to learn what cards are good
+  optimally - macro choices, and it seems easy to optimise the fights". Recorded as the reason for the order: fight play first,
+  card and path choices second, because card values measured under poor fight play are wrong. Design consequence for the gym
+  build brief: the fight player the gym trains becomes the fight play used in self-play and in the real-game nights, so the run
+  layer learns card values under the strongest fight play available.
