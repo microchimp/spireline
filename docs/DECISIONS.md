@@ -882,3 +882,13 @@ every character.**
   that nearly the whole gap is the Act 2 boss: of the runs that reach the Act 1 boss, humans kill it in 74% and generation 5
   in 29.5% (the AI reaches it more often, 83% against 74%), and the Act 1 boss is where the data is (327 of the 696 coverage
   decisions). Review cost: one Opus subagent, 63 tool calls.
+
+- Addendum 2026-10-29 11:15Z (owner, in chat: "my instinct is that playing each fight close to optimally is extremely important - all
+  the pros do this"; "it may not help in the sample we have - but it will definitely help"). Near-optimal fight play is a
+  requirement of the goal, not a hypothesis that M2 tests. The fight gym (the AI's own fight starts replayed with fresh draws;
+  the solver's exact values where it finishes, the stronger search's root values elsewhere; a fight prior and value head
+  trained on them) is built whatever M2 returns. M2's rule changes: its number sets the gym's priority against the run layer
+  and is the baseline the gym is measured from; under +3 the lane diagnoses why (is the sixteen-times arm stronger at all; the
+  HP and deck the AI brings to the boss, read from the copy's arm) instead of pausing fight work. M1 and M2 still run first:
+  they build the replay harness the gym needs and give the numbers the predictions are judged on. Orchestrator's prediction
+  for M2, on record: about +10 Act 1 boss kills per 100 fights for the sixteen-times arm. The owner's prediction: not given yet.
