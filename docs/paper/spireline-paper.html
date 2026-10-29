@@ -58,6 +58,13 @@ strong{font-weight:700}
 nav.toc{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);border-top:1px solid var(--line);border-bottom:1px solid var(--line);overflow-x:auto;white-space:nowrap;margin-top:12px}
 nav.toc a{display:inline-block;padding:10px 14px 10px 0;margin-right:10px;font-family:var(--mono);font-size:13px;text-decoration:none;color:var(--muted)}
 nav.toc a:hover{color:var(--accent)}
+.glance h2{margin-top:8px}
+.glance .board{margin:10px 0}
+.glance ul{margin:6px 0 0 18px;padding:0}
+.glance li{margin:4px 0}
+details.record{margin:18px 0}
+details.record>summary{cursor:pointer;padding:12px 14px;border:1px solid var(--line,#ddd);border-radius:10px;font-weight:600}
+details.record[open]>summary{margin-bottom:14px}
 .board{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:20px;margin-top:22px}
 .board+.board{margin-top:16px}
 .board h3{margin-top:0}
@@ -146,6 +153,63 @@ dd{margin:0}
   <div class="stamp"><span>Updated <span id="updated">2026-10-25 03:20Z</span></span><span>Edition <span id="edition">1</span></span><span>Plan of record: docs/PLAN.md (2026-10-22)</span><span>Decisions: D1 to D36</span></div>
 </header>
 
+<section class="glance" id="glance">
+<h2>At a glance (2026-10-29 02:33Z)</h2>
+<div class="board">
+<h3>Scoreboard: the AI against humans at Ascension 10</h3>
+<div class="tablewrap"><table>
+<thead><tr><th>Measure</th><th>Humans (average)</th><th>AI, generation 7</th></tr></thead>
+<tbody>
+<tr><td>Floors reached</td><td class="num">27.1</td><td class="num">19.2</td></tr>
+<tr><td>Act 1 boss killed</td><td class="num">55%</td><td class="num">30%</td></tr>
+<tr><td>Act 2 boss killed</td><td class="num">29%</td><td class="num">1%</td></tr>
+<tr><td>Runs won</td><td class="num">11%</td><td class="num">0</td></tr>
+<tr><td>The copy agrees with the real game on the AI's decisions</td><td class="num">·</td><td class="num">99.5%</td></tr>
+<tr><td>Fight solver: real decisions solved exactly within ten seconds (last-turn decisions)</td><td class="num">·</td><td class="num">7.2% (44%)</td></tr>
+</tbody></table></div>
+<p class="cap">The goal is the best humans, who sit well above the average line. Nearly the whole gap is the Act 2 boss.</p>
+</div>
+<div class="board">
+<h3>Where the compute goes, week of 2026-10-28</h3>
+<div class="tablewrap"><table>
+<thead><tr><th>Resource</th><th>Where it goes</th><th>Note</th></tr></thead>
+<tbody>
+<tr><td>CPU, 8 cores, around the clock</td><td>The nightly real-game block (4 h a night); the self-play loop that trains new generations (about daily from 2026-10-29); bug-finding sweeps of the copy against the real game for the rest</td><td>The loop had been off since 2026-10-26: its 50% share was judged over 7 days and one training burst locked it out. Fixed (window 2 days), runner restarted 02:30Z.</td></tr>
+<tr><td>GPU</td><td>Training, a few minutes per generation; the prior server during play</td><td>Idle otherwise. The recipe sweep (6 GPU-hours) found no gain from more GPU; its next use is training on solver labels, once those exist.</td></tr>
+<tr><td>Claude tokens</td><td>28% of the week used (Fable 35%) against a 50% ceiling. Solver lane about 16 of its 30 points; week-4 lane (copy fixes, night reports); GPU lane done; orchestrator and this paper</td><td>New rounds stop at 49%. Fable is the binding allowance; two lanes still run on it.</td></tr>
+</tbody></table></div>
+</div>
+<div class="board">
+<h3>Barriers</h3>
+<ul>
+<li><strong>The Act 2 boss.</strong> The AI dies at or before it in 99 runs of 100; humans pass it in 29.</li>
+<li><strong>The solver's reach.</strong> 7.2% of real decisions within ten seconds after both speed rounds; the trees of multi-turn decisions are too large for speed, so the pruning rounds decide. The shape of the fight layer itself (exact solver, chess-style search, a learned fight net on replayed fights, or a mixture) is under independent review, requested 2026-10-29.</li>
+<li><strong>Bugs found faster than fixed.</strong> 4,212 open divergence groups, hundreds found a day, a few mechanisms fixed a day. Fixing is bound by agent tokens, not CPU.</li>
+<li><strong>The Fable allowance</strong> (35%) is the binding one; moving the week-4 lane to Opus needs the owner's hand.</li>
+</ul>
+</div>
+<div class="board">
+<h3>Progress this week (landed and proved)</h3>
+<ul>
+<li>Generation 7's first honest night: 19.2 floors on 1,771 real runs, no crashes, 99.5% agreement; the human reference line from the public corpus.</li>
+<li>Fight solver: the exports, the measured baseline (6.5%), the whole-hand draw (an end-turn move thirty times cheaper), the engine round (7.2%); two refusal classes closed.</li>
+<li>Copy and lab fixes: the empty-chest driver stop, shop-removal gold timing, the nightly's own deadlines (no night can hang), the loop's share window.</li>
+<li>GPU recipe sweep: 63 fits, the lab's own recipe stays, nothing adopted.</li>
+</ul>
+</div>
+<div class="board">
+<h3>Queued, and waiting on the owner</h3>
+<ul>
+<li>Tonight's night at about 03:23Z: generation 7 on the new run API.</li>
+<li>Solver lane: the bounds round (running); the hindsight sweep over lost fights after the night (how many deaths had a winning line in the last turn or the one before); the shape review; then dominance or a re-aim, in fresh Opus sessions.</li>
+<li>Week-4 lane: the morning report with per-fight win rates, the real arm's position recording, the remaining player actions.</li>
+<li>GPU: nothing queued.</li>
+<li>Owner: list 23 (the reward screen's own upgrade flags) added or left red; paper daily or per landing; the week-4 lane's model switch.</li>
+</ul>
+</div>
+</section>
+
+<details class="record" id="record"><summary>The full record: the map, progress boards, plan, decisions, risks, rules and change log</summary>
 <nav class="toc" aria-label="Contents">
   <a href="#onepage">In one page</a><a href="#map">The map</a><a href="#progress">Progress</a><a href="#plan">The plan</a><a href="#kernel">The kernel rebuild</a><a href="#week4">Next: week 4</a><a href="#decisions">Decisions</a><a href="#risks">Risks</a><a href="#rules">Rules</a><a href="#log">Change log</a>
 </nav>
@@ -157,7 +221,7 @@ dd{margin:0}
 <p><strong>Why a copy of the game.</strong> The search needs to play millions of imagined fights an hour. The real game manages about a hundred decisions a second on this PC and cannot be forked. The copy is our own fork of an open-source re-implementation of the game's combat and run logic in C#. It is exact on 97% of combat steps and plays about a thousand decisions a second per core.</p>
 <p><strong>Why the real game still matters.</strong> A copy that is slightly wrong teaches slightly wrong play. So the real game, run headless with no window, is the judge. Every stage the current AI plays a fixed block of 500 real games. Its win rate and how far it gets are the headline numbers. Every real game it plays is also replayed on the copy, step by step. Where the two disagree, the disagreement is weighed by how often the AI meets it, and only the heavy disagreements get fixed. The copy is improved on demand, never on principle.</p>
 <p><strong>Where we are (2026-10-28).</strong> The loop runs unattended around the clock and has promoted seven generations of the AI. Generation 7's first honest real-game night is in: a mean floor of 18.6 on 1,771 runs with no crashes, 19.2 once the 111 runs the driver ended at an empty chest are set aside (a driver bug, now fixed, not a death), which is level with generation 5's first night; the Act 1 boss falls in 28% of runs (30% without the chest stops); 45% of rests are now spent upgrading a card, against 0.2% before the rest fix and 55% for humans; no wins yet at Ascension 10. The copy scores 19.5 on the same seeds, so it overstates real play by about a quarter of a floor, and it disagrees with the game on 0.54% of the AI's decisions. The human reference is in: Ironclad at Ascension 10 in the public corpus averages 27.1 floors, kills the Act 1 boss in 55% of runs and the Act 2 boss in 29%, and wins 11%; the AI stands at 19.2, 30%, 1% and none. Four of the fight solver's seven pieces are landed: the core three, proved exact, and the exports, which carry the review's native-library fix. Its first honest measurement, on 696 real decisions, is sobering: 200 nodes a second on real positions and 6.5% of decisions solved exactly within ten seconds (41% of last-turn decisions), because an end-turn move replays the enemy turn about 490 times across the draw outcomes. That measured fact set the order of the optimisation rounds. The first, the whole-hand draw, is landed: an end-turn move is thirty times cheaper, and the share of decisions solved within ten seconds moved from 6.5% to 6.8%. So the trees' size, not the speed, is the limit, and the pruning rounds (bounds, dominance) decide the solver's reach. The GPU lane swept the combat prior's training recipe in 63 fits and found no factor that improves it; the lab's own recipe stays. An independent design review of its optimisation round returned CHANGES: it found a bug that shows only in the native library the AI uses, and re-ordered the work so that fix comes first, then a measured baseline on real decisions, then the whole-hand draw ahead of the engine step. The night closed at 07:23Z once a hung worker ended; the nightly's own deadlines are landed, so it cannot hang that way again.</p>
-<p><strong>What comes next.</strong> The whole-hand draw round is landed. Now the engine round, whose first commit fixes a kernel-queue fault the solver exposed (an end-turn step leaves its finished action in the queue, which refused 149 of the 696 solves) and diagnoses six positions the draw registry refused; then bounds, then dominance and dead fields, each behind the brute-force proof on a widened position set; then the oracle inside the AI's search and a paired A/B with the owner's prediction on record first. Tonight's night is the first on the new run API; from the night after, the real arm records a sample of fight positions so the coverage curve can run on real decisions. Beside it: the G1 review on three honest nights against the human line and the week-4 lane's remaining player actions. The GPU lane's sweep is in and nothing is adopted; the lane is idle.</p>
+<p><strong>What comes next.</strong> The engine round is landed (7.2% of real decisions within ten seconds). Now bounds (running), then an independent review of the fight layer's shape before dominance: exact solver, chess-style search, a learned fight net trained on replayed fights with shuffled draws, or a mixture; the remaining pruning rounds continue or are re-aimed on its word. Beside it: the hindsight sweep over lost fights, tonight's night on the new run API, the morning report with per-fight win rates, and the self-play loop back to a daily cadence.</p>
 <div class="callout small"><strong>Reading the plan's calendar.</strong> The plan is written in "weeks" (week 1 foundations, weeks 2 to 4 the flywheel, and so on). A plan week has taken about one calendar day: week 2 ran on 2026-10-23, week 3 on 2026-10-24, and the week-3 session carried week-4 items through 2026-10-25 and 2026-10-26 within the week's allowance. Week 4 proper starts at the allowance reset on Wednesday 2026-10-28 (08:00 local). The word "week" below is a stage name, not seven days.</div>
 </section>
 
@@ -592,11 +656,13 @@ dd{margin:0}
 </section>
 </div>
 
+</details>
 <script>
+(function(){var r=document.getElementById('record');function o(){try{if(location.hash&&r&&r.querySelector(location.hash))r.open=true;}catch(e){}}window.addEventListener('hashchange',o);o();})();
 // Everything that changes between editions is in STATE. Edit here, then republish.
 const STATE = {
-  updated: "2026-10-28 21:20Z",
-  edition: 28,
+  updated: "2026-10-29 02:33Z",
+  edition: 29,
   phases: [
     {key:"P0", name:"Foundations", weeks:"week 1", state:"done", note:"Measured the machine; AI runs on both engines."},
     {key:"P1", name:"The flywheel", weeks:"weeks 2 to 4", state:"now", note:"Week 4 starts at the reset. Seven generations; nightly real-game blocks; the kernel stage done; the solver under way."},
@@ -616,7 +682,7 @@ const STATE = {
     {label:"GPU lane piece 1: shared inference server", pct:100, value:"complete", note:"+21.6% decisions/s at 20 workers, 1,000 seeds identical on both paths, lab switched over 2026-10-25 02:00Z."},
     {label:"GPU lane piece 2: value head trained harder", pct:100, value:"complete", note:"Landed 7477ebb3 (2026-10-25 03:49Z). On deduplicated data and a large enough evaluation the value head has real pre-kill skill: Brier skill +0.044 (interval 0.028 to 0.060) with 4 rows per run per epoch, adopted. Week 3's 'no skill' reading was 38 kills on duplicated data."},
     {label:"GPU lane piece 3: sweeps in quiet windows", pct:70, value:"sweep done, runner deferred", note:"The arm sweep ran on the GPU and is complete. The quiet-window runner (one round) waits until a sweep is queued; nothing is queued this week."},
-    {label:"Weekly allowance used (week of 2026-10-28)", pct:26, value:"26% at 2026-10-28 20:59Z", marks:[{at:49,label:"new rounds stop 49%"},{at:50,label:"owner's line 50%"}], warnAt:49, note:"Read on the usage page at each landing. The owner set this week's ceiling at 30% at the reset (D36) and raised it to 50% the same day to put resources into the fight solver; new rounds stop at a 49% reading and a landing in progress finishes. Shares: the solver about 30 points, the week-4 lane 12, the GPU lane 3, the orchestrator and the paper 3, reserve 2. The allowance resets Wednesday 2026-11-04 at 08:00 local."},
+    {label:"Weekly allowance used (week of 2026-10-28)", pct:28, value:"28% at 2026-10-29 01:20Z", marks:[{at:49,label:"new rounds stop 49%"},{at:50,label:"owner's line 50%"}], warnAt:49, note:"Read on the usage page at each landing. The owner set this week's ceiling at 30% at the reset (D36) and raised it to 50% the same day to put resources into the fight solver; new rounds stop at a 49% reading and a landing in progress finishes. Shares: the solver about 30 points, the week-4 lane 12, the GPU lane 3, the orchestrator and the paper 3, reserve 2. The allowance resets Wednesday 2026-11-04 at 08:00 local."},
     {label:"Cloud-session credit", pct:82, value:"$206 of $250, closed", note:"Sixteen sessions delivered; $44 unspent by the owner's decision (D30). No further cloud sessions."}
   ],
   fidelity: [
@@ -644,6 +710,7 @@ const STATE = {
     {state:"pass", text:"Recorded corpus: 71 better, 4,321 same, 0 worse of 4,392, 0 on fewer fields (122 worse on 2026-10-24)."}
   ],
   changelog: [
+    {when:"2026-10-29 02:33Z", what:"Edition 29. A lean front page on the owner's request: scoreboard, where CPU, GPU and Claude tokens go, barriers, progress and the queue; the full record folds below it. The engine round landed (7d7b972d): 7.2% within ten seconds, both refusal classes closed. The self-play loop was found off since 2026-10-26 (its share judged over 7 days); fixed with a 2-day window (7c19a553), the runner restarted 02:30Z. The hindsight sweep over lost fights is queued after the night, and an independent review of the fight layer's shape was requested. Usage 28% (Fable 35%)."},
     {when:"2026-10-28 21:20Z", what:"Edition 28. The whole-hand draw round landed (01549ea4): an end-turn move costs 17 engine runs against 498, a worker runs 4.4 times faster and the heaviest solve fits in 120 MB, yet the share of real decisions solved within ten seconds moved from 6.5% to 6.8% (one turn left 2.5% to 3.8%, two or more still none): the trees' size, not the speed, is the limit, and the pruning rounds decide. The round exposed a kernel-queue fault (a finished end-turn action left in the queue, 149 refusals), which the engine round fixes first, and six positions a value-dependent draw refused. The GPU lane's recipe sweep landed (d07dc959, 63 fits): the lab's own recipe stays, nothing is adopted, the lane is idle. Usage 26% of the week; the solver lane at about 14 of its 30 points."},
     {when:"2026-10-28 18:05Z", what:"Edition 27. The solver's baseline landed (351a2f65): on 696 real decisions the search runs at 204 nodes a second (the test positions had shown 3,200) and solves 6.5% exactly within ten seconds, 41% of last-turn decisions, none with two turns left; the engine step is 77% of the time and the draw expansion 18%, an end-turn move costing about 490 engine runs. The whole-hand draw round started from it with a memory fix (one solve reached 14 GB). Two calls: no profiler install; the real arm records a sample of fight positions from the night of 2026-10-29 so the curve can run on real decisions. The GPU sweep's 50 fits name the lab's own recipe as best. Usage 24% of the week; the solver lane at about 12 of its 30 points."},
     {when:"2026-10-28 15:08Z", what:"Edition 26. The solver's exports (S4) landed on the fork's main (4bee6d63) with the review's native-library fix as the first commit and a test through the native library itself; every gate green; the solver lane at about 10 of its 30 points, the measured baseline round under way. The morning's landings after the night closed: the gate bundle (seven fixes), the nightly's worker and wrap-up deadlines (no night can hang this way again), the shop-removal gold timing (the copy charged at the click, the game once a card is chosen; proved live), the Windows error-mode cause of three flaky tests, and a worktree cleanup (32 GB). Usage 22% of the week."},
