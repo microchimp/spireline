@@ -969,3 +969,13 @@ about 4,200; fixes land at a few per day.
 
 Kept: the practice loop and training (a candidate was promoted 2026-10-29T14:49Z); the corpus check against recorded real
 games at every landing that touches the engine.
+
+- Addendum 2026-10-30 05:12Z (owner: "think of other ways to save on usage, and improve speed"). Usage: diagnosis and fixing split by
+  model (the expensive model finds the cause and writes the reproduction; a cheaper model fixes from it; applies to workers
+  started after today's two); every daily step is a script that prints one line, the agent writes prose only; tool output
+  rule "counts and heads, never whole files"; workers wait inside their turn, never by ending it; context cap: hand off at
+  300k tokens or 300 turns, context size in every five-line report. Asked of the owner: this orchestrator and the
+  morning-report lane on a cheaper model for routine hours (or archive that lane; the orchestrator runs its script). Speed:
+  gate pieces in parallel and two ready engine landings batched under one gate; the Python suite split into a fast tier per
+  landing and a slow tier nightly; the night's emulator arm and comparison run per seed as each real run finishes; the
+  `presort` job (a fifth of lab CPU over three days) audited for incremental operation.
