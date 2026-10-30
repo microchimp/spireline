@@ -154,7 +154,7 @@ dd{margin:0}
 </header>
 
 <section class="glance" id="glance">
-<h2>At a glance (2026-10-30 01:19Z)</h2>
+<h2>At a glance (2026-10-30 03:53Z)</h2>
 <div class="board">
 <h3>The idea in one paragraph</h3>
 <p>The real game is slow and cannot be rewound. Our copy of it plays the same move as the real game 997 times in 1,000, and it lets us save any moment and replay it thousands of times with different card draws. The AI practises on the copy, a new version is trained from that practice about once a day, and each night the newest version plays 2,000 runs in the real game, so we know the copy is not fooling us. The next thing to fix is fight play: a fight with a given deck is a small problem that can be replayed endlessly, and the AI can only learn which cards are good once it plays its deck well.</p>
@@ -214,7 +214,8 @@ dd{margin:0}
 <li>Test 1, done: where the exact tool knows the perfect move, the AI's own move costs it 0.04 health per fight on average. It misses a kill in 2.5 fights per 100, and a move that would have kept it alive in 12.5 fights per 100, always on the turn it died. Next in the solver: the tool checks every decision for a kill or a forced survival from inside the AI's search.</li>
 <li>Test 2, the headline in: 200 of the AI's own Act 1 boss fights from last night, each replayed ten times with fresh draws. Its usual thinking kills the boss in 37 fights in 100; sixteen times more thinking kills it in 46 in 100, so better fight play alone is worth about 10 kills per 100 (the orchestrator's guess on record was 10; the owner gave none). The rest of the test (four times the thinking, the Act 2 fights) resumes after tonight's run: it stopped on one fight that never ended and held 20 GB, which gets a time and memory limit first.</li>
 <li>Then the fight trainer, built as the owner decided today: a fight player trained in the replay gym, with hundreds of fights played in lockstep so the graphics card answers their positions in one batch; then a fight judge (deck and enemy in, win chance and health lost out) learned from those replays; then a run planner that chooses cards, paths, rests and shops by asking the judge. The player's fight play is used in the runs, so card choices are learned under good fight play.</li>
-<li>Decided today by the owner: the three-part design; the graphics card for the trainer; the enemy-health bug fixed now.</li>
+<li>Decided today by the owner: the three-part design; the graphics card for the trainer; the enemy-health bug fixed now, and after it the gold and next-screen bugs, by a second expert worker.</li>
+<li>New: <a href="https://claude.ai/artifact/LxBhvhyLVqsb1LyE6Czie3">the fight board</a>, one square per boss fight per version of the fight player. Today it shows the usual thinking against sixteen times the thinking on 200 real boss fights: 21 fights the AI already wins every time, 69 that nobody wins yet, 9 that more thinking alone flips. Each new version of the fight player adds a row.</li>
 <li>Waiting on the owner: the second lane's model switch; whether its position-recording round runs now, over its share; a red test (the reward screen's upgrade flags) left red or fixed.</li>
 </ul>
 <p class="cap">The record below is the full history in the team's own words.</p>
@@ -673,7 +674,7 @@ dd{margin:0}
 (function(){var r=document.getElementById('record');function o(){try{if(location.hash&&r&&r.querySelector(location.hash))r.open=true;}catch(e){}}window.addEventListener('hashchange',o);o();})();
 // Everything that changes between editions is in STATE. Edit here, then republish.
 const STATE = {
-  updated: "2026-10-30 01:19Z",
+  updated: "2026-10-30 03:53Z",
   edition: 31,
   phases: [
     {key:"P0", name:"Foundations", weeks:"week 1", state:"done", note:"Measured the machine; AI runs on both engines."},
@@ -723,6 +724,7 @@ const STATE = {
     {state:"pass", text:"Recorded corpus: 71 better, 4,321 same, 0 worse of 4,392, 0 on fewer fields (122 worse on 2026-10-24)."}
   ],
   changelog: [
+    {when:"2026-10-30 03:53Z", what:"Edition 31, the fight board added (docs/paper/fight-board.html, built by tools/fight_board.py from the gym's replays): one square per fight per arm, a scoreboard per boss, the fights nobody wins, the fights more thinking flips, the fights already safe. A second Opus worker is on the gold and next-screen groups (branch fix/f16-gold-screens)."},
     {when:"2026-10-30 01:19Z", what:"Edition 31, D37: the owner's three decisions. The AI is built as three parts (fight player, fight judge, run planner, in that order); the gym plays hundreds of fights in lockstep with the network batched on the GPU; the enemy-HP divergence group (37% of the weight) is diagnosed and fixed now from the reserve by an Opus worker on branch fix/f08-enemy-hp."},
     {when:"2026-10-30 01:14Z", what:"Edition 31, test 2 headline: the sixteen-times arm kills the Act 1 boss in 46.3% of 1,999 paired replays against 36.8% for today's thinking, +9.6 (SE 0.9); the orchestrator's prediction was +10. The gym proceeds with that as its baseline; the run stopped on one endless 16x game (20 GB), which gets a per-game deadline and memory guard before the plan resumes after the night (x4, M3, Act 2). The gym code is on fork main 58e71b65."},
     {when:"2026-10-29 12:00Z", what:"Edition 31, test 1 landed (e9e95342): on 113 exactly solved decisions the AI's regret is 0.04 health per fight; missed kills 2.5 per 100 fights, missed forced survivals 12.5 per 100 fights, all on the dying turn. Next in the solver: the root check inside the AI's search; test 2 (the headroom test) runs now."},
