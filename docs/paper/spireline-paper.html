@@ -154,7 +154,7 @@ dd{margin:0}
 </header>
 
 <section class="glance" id="glance">
-<h2>At a glance (2026-10-30 01:14Z)</h2>
+<h2>At a glance (2026-10-30 01:19Z)</h2>
 <div class="board">
 <h3>The idea in one paragraph</h3>
 <p>The real game is slow and cannot be rewound. Our copy of it plays the same move as the real game 997 times in 1,000, and it lets us save any moment and replay it thousands of times with different card draws. The AI practises on the copy, a new version is trained from that practice about once a day, and each night the newest version plays 2,000 runs in the real game, so we know the copy is not fooling us. The next thing to fix is fight play: a fight with a given deck is a small problem that can be replayed endlessly, and the AI can only learn which cards are good once it plays its deck well.</p>
@@ -182,7 +182,7 @@ dd{margin:0}
 <thead><tr><th>Resource</th><th>What it does</th><th>Note</th></tr></thead>
 <tbody>
 <tr><td>The PC's 8 cores, day and night</td><td>Each night, four hours: 2,000 runs in the real game and the same 2,000 on the copy. The rest of the day: the AI practises against itself on the copy and a new version is trained from it; and the copy is checked against recorded real games to find places where the two differ.</td><td>The practice loop had been off for three days by mistake (a rule looked at a seven-day window). Fixed; back on since this morning.</td></tr>
-<tr><td>The graphics card</td><td>Trains a new version of the AI (minutes each time) and answers the AI's network while it plays.</td><td>Idle most of the day. A sweep of 63 training runs found no better recipe. It gets busy once the fight trainer replays thousands of fights at once.</td></tr>
+<tr><td>The graphics card</td><td>Trains a new version of the AI (minutes each time) and answers the AI's network while it plays.</td><td>Idle most of the day. A sweep of 63 training runs found no better recipe. The owner's decision today: the fight trainer is built to play hundreds of fights in lockstep and send their positions to the card in one batch.</td></tr>
 <tr><td>Claude agents (the ones writing and testing the code)</td><td>36 in 100 of the week's allowance used, ceiling 50. Most of it on the exact fight tool and its tests; the rest on fixing the copy, the nightly reports and this page.</td><td>The Fable allowance is the tightest (41 in 100). The second lane has spent its share and only writes the morning reports now.</td></tr>
 </tbody></table></div>
 </div>
@@ -191,7 +191,7 @@ dd{margin:0}
 <ul>
 <li><strong>The Act 1 boss.</strong> The AI reaches it more often than humans and kills it half as often. Test 2 says better fight play alone lifts kills from 37 to 46 in 100; humans are at 74, so the rest is arriving too weak (deck, health). Both get fixed, fight play first, by the owner's decision.</li>
 <li><strong>Long fights.</strong> The exact tool, which tries every line, finishes within ten seconds on 16 positions in 100 and never on long fights. Those the AI must learn from practice: replay each saved fight start with fresh draws, think deeply on a sample to get the right answers, train the network toward them. That trainer is the next build.</li>
-<li><strong>Copy bugs are found faster than fixed.</strong> About 4,200 open differences between the copy and the real game, hundreds found a day, a few fixed a day. Fixing costs agent tokens, not computer time.</li>
+<li><strong>Copy bugs are found faster than fixed.</strong> About 4,200 open differences between the copy and the real game, hundreds found a day, a few fixed a day. Fixing costs agent tokens, not computer time. The biggest single bucket, enemy health in fights (37 in 100 of the disagreement), gets an expert diagnosis and fix now, from the reserve, by the owner's decision today.</li>
 <li><strong>Agent tokens.</strong> Moving the second lane to the cheaper model needs the owner's hand.</li>
 </ul>
 </div>
@@ -213,7 +213,8 @@ dd{margin:0}
 <li>Tonight at about 03:30Z: 2,000 real runs again, the same AI unless the loop trains a better one first.</li>
 <li>Test 1, done: where the exact tool knows the perfect move, the AI's own move costs it 0.04 health per fight on average. It misses a kill in 2.5 fights per 100, and a move that would have kept it alive in 12.5 fights per 100, always on the turn it died. Next in the solver: the tool checks every decision for a kill or a forced survival from inside the AI's search.</li>
 <li>Test 2, the headline in: 200 of the AI's own Act 1 boss fights from last night, each replayed ten times with fresh draws. Its usual thinking kills the boss in 37 fights in 100; sixteen times more thinking kills it in 46 in 100, so better fight play alone is worth about 10 kills per 100 (the orchestrator's guess on record was 10; the owner gave none). The rest of the test (four times the thinking, the Act 2 fights) resumes after tonight's run: it stopped on one fight that never ended and held 20 GB, which gets a time and memory limit first.</li>
-<li>Then the fight trainer. Its stronger fight player then plays the runs, so card choices are learned under good fight play.</li>
+<li>Then the fight trainer, built as the owner decided today: a fight player trained in the replay gym, with hundreds of fights played in lockstep so the graphics card answers their positions in one batch; then a fight judge (deck and enemy in, win chance and health lost out) learned from those replays; then a run planner that chooses cards, paths, rests and shops by asking the judge. The player's fight play is used in the runs, so card choices are learned under good fight play.</li>
+<li>Decided today by the owner: the three-part design; the graphics card for the trainer; the enemy-health bug fixed now.</li>
 <li>Waiting on the owner: the second lane's model switch; whether its position-recording round runs now, over its share; a red test (the reward screen's upgrade flags) left red or fixed.</li>
 </ul>
 <p class="cap">The record below is the full history in the team's own words.</p>
@@ -672,7 +673,7 @@ dd{margin:0}
 (function(){var r=document.getElementById('record');function o(){try{if(location.hash&&r&&r.querySelector(location.hash))r.open=true;}catch(e){}}window.addEventListener('hashchange',o);o();})();
 // Everything that changes between editions is in STATE. Edit here, then republish.
 const STATE = {
-  updated: "2026-10-30 01:14Z",
+  updated: "2026-10-30 01:19Z",
   edition: 31,
   phases: [
     {key:"P0", name:"Foundations", weeks:"week 1", state:"done", note:"Measured the machine; AI runs on both engines."},
@@ -722,6 +723,7 @@ const STATE = {
     {state:"pass", text:"Recorded corpus: 71 better, 4,321 same, 0 worse of 4,392, 0 on fewer fields (122 worse on 2026-10-24)."}
   ],
   changelog: [
+    {when:"2026-10-30 01:19Z", what:"Edition 31, D37: the owner's three decisions. The AI is built as three parts (fight player, fight judge, run planner, in that order); the gym plays hundreds of fights in lockstep with the network batched on the GPU; the enemy-HP divergence group (37% of the weight) is diagnosed and fixed now from the reserve by an Opus worker on branch fix/f08-enemy-hp."},
     {when:"2026-10-30 01:14Z", what:"Edition 31, test 2 headline: the sixteen-times arm kills the Act 1 boss in 46.3% of 1,999 paired replays against 36.8% for today's thinking, +9.6 (SE 0.9); the orchestrator's prediction was +10. The gym proceeds with that as its baseline; the run stopped on one endless 16x game (20 GB), which gets a per-game deadline and memory guard before the plan resumes after the night (x4, M3, Act 2). The gym code is on fork main 58e71b65."},
     {when:"2026-10-29 12:00Z", what:"Edition 31, test 1 landed (e9e95342): on 113 exactly solved decisions the AI's regret is 0.04 health per fight; missed kills 2.5 per 100 fights, missed forced survivals 12.5 per 100 fights, all on the dying turn. Next in the solver: the root check inside the AI's search; test 2 (the headroom test) runs now."},
     {when:"2026-10-29 11:24Z", what:"Edition 31. The front page rewritten in plain language at the owner's request: no project words; the idea in one paragraph, the scoreboard in counts per hundred, where the computer's time goes, what stands in the way, done this week, next. The record below is unchanged."},

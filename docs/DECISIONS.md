@@ -897,3 +897,30 @@ every character.**
   card and path choices second, because card values measured under poor fight play are wrong. Design consequence for the gym
   build brief: the fight player the gym trains becomes the fight play used in self-play and in the real-game nights, so the run
   layer learns card values under the strongest fight play available.
+
+## D37 · 2026-10-30 · Three parts (fight player, fight judge, run planner); the gym batches on the GPU; the enemy-HP group is fixed now
+
+Owner's decisions, in chat on 2026-10-30 (recorded 2026-10-30 01:19Z), on three proposals of the orchestrator.
+
+1. **Three parts, built in this order** (owner: "okay do this"). Today one network and one search choose cards, paths and fight
+   moves. The AI is rebuilt as a fight player (given deck, relics, potions, HP and the enemy, plays the fight; trained in the
+   fight gym on its own fight starts replayed with fresh draws, graded by the stronger search and by the exact solver where it
+   finishes), a fight judge (deck and enemy in; win chance, HP lost and potions used out; learned from the player's replays),
+   and a run planner (cards, paths, rests and shops, using the judge). Seam rules: carry-over (HP, potions) is among the
+   judge's outputs, never assumed; judge drift on decks it has not seen is measured against the player's replays before the
+   planner trusts it. The player is built first; its fight play is used in self-play and nights as D35's addendum says.
+2. **The gym leverages the GPU** (owner: "leverage this"). Today six CPU workers each hold their own copy of the network, one
+   position at a time, and the card is idle. The gym is built to play hundreds of fights in lockstep in one process and
+   evaluate their positions in one batch on the card; fight states are forked in memory (under a millisecond) rather than
+   reloaded; the exact solver grades the positions where it finishes (16% within ten seconds). The lane reports fights per
+   hour before and after. Measured today: 6.4 s per Act-1 boss fight at the usual thinking, 74 s at sixteen times, on six
+   CPU workers.
+3. **The enemy-HP divergence is fixed now** (owner: "yes fix this it is important"). Group `Gb25e996655` (in-fight enemy HP,
+   37% of last night's divergence weight) and `Geea146c773` (player HP) where it shares a cause: an Opus worker clusters the
+   records, names the game's rule against the copy's, writes failing reproductions, fixes the mechanism in the rebuilt F08
+   handler and lands after the full gate. Funded from the week's reserve: about one point for the diagnosis, up to one more for
+   the fix. Started 2026-10-30 01:19Z as a worker inside the orchestrator's session (a new session cannot start while the owner is on
+   Remote Control); branch `fix/f08-enemy-hp`, worktree `D:/spireline/fork/wt-f08`.
+
+M2's headline, for the record: the sixteen-times search kills the Act-1 boss in 46.3% of 1,999 paired replays against 36.8%
+for today's search, +9.6 ± 0.9; the orchestrator's prediction was +10. By D35's addendum the gym proceeds with that baseline.
