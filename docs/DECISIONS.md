@@ -999,3 +999,21 @@ promoted version; GPU utilisation is reported but is not the goal.
 Condition (orchestrator, agreed in chat): the loop learns the copy's mistakes as faithfully as the game's rules, so the
 nightly comparison against the real game stays the referee, promotions are scored on the board, and the copy-bug fixes
 (D37 item 3, D39) continue alongside.
+
+## D41 · 2026-10-30 · The week's ceiling raised to 65%; the fight judge v0 and the always-on loop start now
+
+Owner, in chat on 2026-10-30 ("we need to move something to the gpu"; "raise to 65"), recorded 2026-10-30 12:25Z. The weekly allowance
+ceiling for the week of 2026-10-28 is 65% (new work stops at 64%), from 50%. Reason put to the owner: the allowance resets
+on 2026-11-03 21:00Z and the unused part is lost; the card was idle (0-2% busy) with the batched player landed (f820b5ba,
+x1.09, card 2.3% busy: the network is an eighth of a fight's time, play-outs on the CPU the rest).
+
+Started now, in this order of landing:
+1. **The fight judge v0** (D37 part 2, started from what exists): a network that takes a fight position and returns the
+   win chance and the end HP, trained on the card from played-out fights (the gym's games, excluding the 200 board starts,
+   a fifth of starts held out), plugged into the search as the leaf estimate in place of play-outs (what M3 measured:
+   value head r=0.68 against play-outs r=0.71), measured paired against a3-v1 on the 200 Act-1 boss starts at equal wall
+   time, with fights per hour and card utilisation reported; a fight-board row. One Opus worker, about one unit.
+2. **The always-on loop** (D40), its worker started in parallel from the kernel lane's brief; its promotion gate adopts
+   the judge-equipped player when that lands.
+3. The two driver fixes from the 10-30 night report (end-turn stamp; pool restart), one Sonnet worker.
+4. The player-HP group Geea146c773 (Kaiser Crab cluster first) after the gold/next-screen fix lands.
