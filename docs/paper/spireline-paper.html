@@ -154,51 +154,52 @@ dd{margin:0}
 </header>
 
 <section class="glance" id="glance">
-<h2>At a glance (2026-10-30 03:53Z)</h2>
+<h2>At a glance (2026-10-30 07:45Z)</h2>
 <div class="board">
 <h3>The idea in one paragraph</h3>
-<p>The real game is slow and cannot be rewound. Our copy of it plays the same move as the real game 997 times in 1,000, and it lets us save any moment and replay it thousands of times with different card draws. The AI practises on the copy, a new version is trained from that practice about once a day, and each night the newest version plays 2,000 runs in the real game, so we know the copy is not fooling us. The next thing to fix is fight play: a fight with a given deck is a small problem that can be replayed endlessly, and the AI can only learn which cards are good once it plays its deck well.</p>
+<p>The real game is slow and cannot be rewound. Our copy of it plays the same move as the real game 996 times in 1,000, and it lets us save any moment and replay it thousands of times with different card draws. The AI practises on the copy, a new version is trained from that practice about once a day, and each night the newest version plays 2,000 runs in the real game, so we know the copy is not fooling us. The next thing to fix is fight play: a fight with a given deck is a small problem that can be replayed endlessly, and the AI can only learn which cards are good once it plays its deck well.</p>
 </div>
 <div class="board">
 <h3>Scoreboard: our AI against the average human player, Ironclad at Ascension 10</h3>
 <div class="tablewrap"><table>
 <thead><tr><th>Measure</th><th>Average human</th><th>Our AI, last night</th></tr></thead>
 <tbody>
-<tr><td>Floors reached, average</td><td class="num">27</td><td class="num">19</td></tr>
-<tr><td>Reaches the Act 1 boss</td><td class="num">74 in 100 runs</td><td class="num">81 in 100</td></tr>
-<tr><td>Kills the Act 1 boss once there</td><td class="num">74 in 100</td><td class="num">36 in 100</td></tr>
+<tr><td>Floors reached, average</td><td class="num">27</td><td class="num">22</td></tr>
+<tr><td>Reaches the Act 1 boss</td><td class="num">74 in 100 runs</td><td class="num">91 in 100</td></tr>
+<tr><td>Kills the Act 1 boss once there</td><td class="num">74 in 100</td><td class="num">51 in 100</td></tr>
 <tr><td>Kills the Act 2 boss</td><td class="num">29 in 100 runs</td><td class="num">1 in 100</td></tr>
 <tr><td>Wins the run</td><td class="num">11 in 100</td><td class="num">0</td></tr>
-<tr><td>Survives a fight in Act 1: ordinary / elite / boss</td><td class="num">·</td><td class="num">99 / 85 / 36 in 100</td></tr>
-<tr><td>Survives a fight in Act 2: ordinary / elite / boss</td><td class="num">·</td><td class="num">90 / 48 / 12 in 100</td></tr>
-<tr><td>Our copy plays the same move as the real game</td><td class="num">·</td><td class="num">997 in 1,000</td></tr>
+<tr><td>Survives a fight in Act 1: ordinary / elite / boss</td><td class="num">·</td><td class="num">99 / 93 / 51 in 100</td></tr>
+<tr><td>Survives a fight in Act 2: ordinary / elite / boss</td><td class="num">·</td><td class="num">92 / 61 / 6 in 100</td></tr>
+<tr><td>Our copy plays the same move as the real game</td><td class="num">·</td><td class="num">996 in 1,000</td></tr>
 <tr><td>The exact fight tool finds the perfect move within ten seconds</td><td class="num">·</td><td class="num">16 positions in 100 (72 on a last turn)</td></tr>
 </tbody></table></div>
-<p class="cap">"Average human" is every Ironclad run at Ascension 10 in the public record, 14,811 runs. The goal is the best players, who sit well above this line; their numbers are the next thing to add. "Last night" is the current AI's 1,921 real runs on 2026-10-29. No human per-fight numbers exist yet.</p>
+<p class="cap">"Average human" is every Ironclad run at Ascension 10 in the public record, 14,811 runs. The goal is the best players, who sit well above this line; their numbers are the next thing to add. "Last night" is the newest AI's 1,409 real runs on 2026-10-30, its first night (a new version was promoted on 2026-10-29; the night's time ran out with 569 of 2,000 runs unplayed, and 22 runs crashed). No human per-fight numbers exist yet.</p>
 </div>
 <div class="board">
 <h3>Where the computer's time goes, week of 2026-10-28</h3>
 <div class="tablewrap"><table>
 <thead><tr><th>Resource</th><th>What it does</th><th>Note</th></tr></thead>
 <tbody>
-<tr><td>The PC's 8 cores, day and night</td><td>Each night, four hours: 2,000 runs in the real game and the same 2,000 on the copy. The rest of the day: the AI practises against itself on the copy and a new version is trained from it; and the copy is checked against recorded real games to find places where the two differ.</td><td>The practice loop had been off for three days by mistake (a rule looked at a seven-day window). Fixed; back on since this morning.</td></tr>
+<tr><td>The PC's 8 cores, day and night</td><td>Each night: 2,000 runs in the real game on a day a new version was promoted, 500 otherwise (the owner's cut of 2026-10-30), and the same runs on the copy. The rest of the day: the AI practises against itself on the copy and a new version is trained from it; and the copy is checked against recorded real games. From 2026-10-30 the hunt for new differences is paused (the owner's cut): that time builds repro kits for the twelve biggest known ones until fixing catches up.</td><td>The practice loop had been off for three days by mistake (a rule looked at a seven-day window). Fixed; back on since this morning.</td></tr>
 <tr><td>The graphics card</td><td>Trains a new version of the AI (minutes each time) and answers the AI's network while it plays.</td><td>Idle most of the day. A sweep of 63 training runs found no better recipe. The owner's decision today: the fight trainer is built to play hundreds of fights in lockstep and send their positions to the card in one batch.</td></tr>
-<tr><td>Claude agents (the ones writing and testing the code)</td><td>36 in 100 of the week's allowance used, ceiling 50. Most of it on the exact fight tool and its tests; the rest on fixing the copy, the nightly reports and this page.</td><td>The Fable allowance is the tightest (41 in 100). The second lane has spent its share and only writes the morning reports now.</td></tr>
+<tr><td>Claude agents (the ones writing and testing the code)</td><td>43 in 100 of the week's allowance used at 07:40Z, ceiling 50; new work stops at 49. Most of it on the exact fight tool and its tests; since yesterday on the two copy-bug fixes, the graphics-card fight player and this page.</td><td>The Fable allowance is the tightest (45 in 100). The morning-report lane now runs on the cheaper model; the orchestrator does not yet (the owner's menu). Two small driver fixes wait on the budget.</td></tr>
 </tbody></table></div>
 </div>
 <div class="board">
 <h3>What stands in the way</h3>
 <ul>
-<li><strong>The Act 1 boss.</strong> The AI reaches it more often than humans and kills it half as often. Test 2 says better fight play alone lifts kills from 37 to 46 in 100; humans are at 74, so the rest is arriving too weak (deck, health). Both get fixed, fight play first, by the owner's decision.</li>
+<li><strong>The Act 1 boss.</strong> The AI reaches it more often than humans (91 against 74 in 100) and, since the version promoted yesterday, kills it in 51 in 100 once there against 36 the night before; humans are at 74. Test 2 says better fight play alone is worth about 10 kills in 100; the rest is arriving too weak (deck, health). Both get fixed, fight play first, by the owner's decision.</li>
 <li><strong>Long fights.</strong> The exact tool, which tries every line, finishes within ten seconds on 16 positions in 100 and never on long fights. Those the AI must learn from practice: replay each saved fight start with fresh draws, think deeply on a sample to get the right answers, train the network toward them. That trainer is the next build.</li>
-<li><strong>Copy bugs are found faster than fixed.</strong> About 4,200 open differences between the copy and the real game, hundreds found a day, a few fixed a day. Fixing costs agent tokens, not computer time. The biggest single bucket, enemy health in fights (37 in 100 of the disagreement), gets an expert diagnosis and fix now, from the reserve, by the owner's decision today.</li>
-<li><strong>Agent tokens.</strong> Moving the second lane to the cheaper model needs the owner's hand.</li>
+<li><strong>Copy bugs are found faster than fixed.</strong> About 4,200 open differences between the copy and the real game, hundreds found a day, a few fixed a day. Fixing costs agent tokens, not computer time. The biggest single bucket, enemy health in fights (37 in 100 of the disagreement), has its fix written (six changes, among them the order in which a sleeping boss and its plating wake, and how a segmented enemy settles its health) and in its last checks; it lands today. The gold and next-screen fix is being written by a second worker. From today, finding new differences is paused until fixing catches up (the owner's cut).</li>
+<li><strong>Agent tokens.</strong> 43 in 100 of the week used at 07:40Z; new work stops at 49, and the week resets on 2026-11-03. The report lane is on the cheaper model; moving the orchestrator there needs the owner's hand (the app's model menu).</li>
 </ul>
 </div>
 <div class="board">
 <h3>Done this week</h3>
 <ul>
-<li>Two honest nights for the current AI: 19 floors, no fake deaths from the empty-chest bug, and the copy within a fifth of a floor of the real game on the same seeds.</li>
+<li>Generation 9's first night (2026-10-30): 22 floors on 1,409 real runs, 47 in 100 past the Act 1 boss against 29 the night before, 51 in 100 of its boss fights won against 36; the copy within half a floor of the real game on the same seeds (996 moves in 1,000 the same).</li>
+<li>Two honest nights for generation 7: 19 floors, no fake deaths from the empty-chest bug, and the copy within a fifth of a floor of the real game on the same seeds.</li>
 <li>The exact fight tool went from 6.5 to 16 positions in 100 solved within ten seconds, in three steps: card draws made thirty times cheaper, every step made faster, then bounds that cut lines that cannot win.</li>
 <li>Per-fight survival is now measured from the game's own logs, by act and by kind of fight.</li>
 <li>Test 1 of the fight layer: on the decisions the exact tool can solve, the AI already plays near-perfectly; its misses are survivals on the dying turn, in 12.5 fights per 100.</li>
@@ -210,13 +211,13 @@ dd{margin:0}
 <div class="board">
 <h3>Next, and what waits on the owner</h3>
 <ul>
-<li>Tonight at about 03:30Z: 2,000 real runs again, the same AI unless the loop trains a better one first.</li>
+<li>Tonight at about 03:30Z: 500 real runs if no new version is promoted today, 2,000 if one is (the owner's cut: a full night only measures a changed AI).</li>
 <li>Test 1, done: where the exact tool knows the perfect move, the AI's own move costs it 0.04 health per fight on average. It misses a kill in 2.5 fights per 100, and a move that would have kept it alive in 12.5 fights per 100, always on the turn it died. Next in the solver: the tool checks every decision for a kill or a forced survival from inside the AI's search.</li>
 <li>Test 2, the headline in: 200 of the AI's own Act 1 boss fights from last night, each replayed ten times with fresh draws. Its usual thinking kills the boss in 37 fights in 100; sixteen times more thinking kills it in 46 in 100, so better fight play alone is worth about 10 kills per 100 (the orchestrator's guess on record was 10; the owner gave none). The rest of the test (four times the thinking, the Act 2 fights) resumes after tonight's run: it stopped on one fight that never ended and held 20 GB, which gets a time and memory limit first.</li>
 <li>Then the fight trainer, built as the owner decided today: a fight player trained in the replay gym, with hundreds of fights played in lockstep so the graphics card answers their positions in one batch; then a fight judge (deck and enemy in, win chance and health lost out) learned from those replays; then a run planner that chooses cards, paths, rests and shops by asking the judge. The player's fight play is used in the runs, so card choices are learned under good fight play.</li>
-<li>Decided today by the owner: the three-part design; the graphics card for the trainer; the enemy-health bug fixed now, and after it the gold and next-screen bugs, by a second expert worker.</li>
+<li>Decided by the owner on 2026-10-30, four decisions: the three-part design (fight player, fight judge, run planner) with the graphics card for the trainer, and the enemy-health bug fixed now, then the gold and next-screen bugs; the gym practises on diverse decks and enemies, human runs included, with a fixed fifth of the human record held out for ever as the exam; the cuts (no new bug hunting until fixing catches up, 500-run nights on an unchanged AI, lighter checks for code that does not touch the copy, fresh short-lived workers, one edition of this page a day); and a trainer that runs all day on the graphics card, promoting a new fight player only when it wins more of the 200 boss fights than the last one, each promotion a new row on the fight board.</li>
 <li>New: <a href="https://claude.ai/artifact/LxBhvhyLVqsb1LyE6Czie3">the fight board</a>, one square per boss fight per version of the fight player. Today it shows the usual thinking against sixteen times the thinking on 200 real boss fights: 21 fights the AI already wins every time, 69 that nobody wins yet, 9 that more thinking alone flips. Each new version of the fight player adds a row.</li>
-<li>Waiting on the owner: the second lane's model switch; whether its position-recording round runs now, over its share; a red test (the reward screen's upgrade flags) left red or fixed.</li>
+<li>Waiting on the owner: the orchestrator's model switch (the report lane's is done); whether the position-recording round runs now, over its share; a red test (the reward screen's upgrade flags) left red or fixed.</li>
 </ul>
 <p class="cap">The record below is the full history in the team's own words.</p>
 </div>
@@ -251,12 +252,12 @@ dd{margin:0}
   <text class="n-title" x="56" y="66">Real game, headless</text>
   <text class="n-sub" x="56" y="86">The judge. 2,000 real seeds a night.</text>
   <text class="n-sub" x="56" y="102">Exact by definition. ~120 decisions/s.</text>
-  <circle class="n-dot done" cx="62" cy="120" r="4"/><text class="n-st" x="72" y="124">DONE · gen 7's night, 1,771 runs</text>
+  <circle class="n-dot done" cx="62" cy="120" r="4"/><text class="n-st" x="72" y="124">DONE · gen 9's night, 1,409 runs</text>
 
   <rect class="n-box" x="365" y="40" width="230" height="92" rx="8"/>
   <text class="n-title" x="381" y="66">Lockstep comparer</text>
   <text class="n-sub" x="381" y="86">Replays every real decision on the copy,</text>
-  <text class="n-sub" x="381" y="102">compares state hashes. 0.52% disagree.</text>
+  <text class="n-sub" x="381" y="102">compares state hashes. 0.4% disagree.</text>
   <circle class="n-dot run" cx="387" cy="120" r="4"/><text class="n-st" x="397" y="124">RUNNING · every night</text>
 
   <rect class="n-box" x="690" y="40" width="230" height="92" rx="8"/>
@@ -434,18 +435,18 @@ dd{margin:0}
 
 <div class="board">
 <h3>Humans against the AI</h3>
-<p class="small muted">The human line is Ironclad at Ascension 10 in the public run corpus (game version v0.107.1, one player, no modifiers): 14,811 runs after 6,111 early quits are removed, aggregates only. The AI columns are real-game blocks: generation 5 on 500 seeds (before the rest fix) and generation 7's night on 1,660 seeds (the empty-chest driver stops set aside).</p>
+<p class="small muted">The human line is Ironclad at Ascension 10 in the public run corpus (game version v0.107.1, one player, no modifiers): 14,811 runs after 6,111 early quits are removed, aggregates only. The AI columns are real-game blocks (generation 9: its first night, 1,409 runs on 2026-10-30): generation 5 on 500 seeds (before the rest fix) and generation 7's night on 1,660 seeds (the empty-chest driver stops set aside).</p>
 <div class="tablewrap"><table>
-<thead><tr><th>Measure</th><th>Humans</th><th>AI gen 5</th><th>AI gen 7</th></tr></thead>
+<thead><tr><th>Measure</th><th>Humans</th><th>AI gen 5</th><th>AI gen 7</th><th>AI gen 9</th></tr></thead>
 <tbody>
-<tr><td>Mean floor reached</td><td class="num">27.1</td><td class="num">18.4</td><td class="num">19.2</td></tr>
-<tr><td>Act 1 boss killed, share of runs</td><td class="num">54.6%</td><td class="num">24.4%</td><td class="num">30.2%</td></tr>
-<tr><td>Act 2 boss killed, share of runs</td><td class="num">29.1%</td><td class="num">0.4%</td><td class="num">0.9%</td></tr>
-<tr><td>Runs won</td><td class="num">11.3%</td><td class="num">0</td><td class="num">0</td></tr>
-<tr><td>Rests spent upgrading a card</td><td class="num">55%</td><td class="num">0.2%</td><td class="num">45%</td></tr>
-<tr><td>Cards taken per run (skip rate)</td><td class="num">9.2 (22%)</td><td class="num">7.3 (9%)</td><td class="num">·</td></tr>
+<tr><td>Mean floor reached</td><td class="num">27.1</td><td class="num">18.4</td><td class="num">19.2</td><td class="num">22.1</td></tr>
+<tr><td>Act 1 boss killed, share of runs</td><td class="num">54.6%</td><td class="num">24.4%</td><td class="num">30.2%</td><td class="num">46.8%</td></tr>
+<tr><td>Act 2 boss killed, share of runs</td><td class="num">29.1%</td><td class="num">0.4%</td><td class="num">0.9%</td><td class="num">1.1%</td></tr>
+<tr><td>Runs won</td><td class="num">11.3%</td><td class="num">0</td><td class="num">0</td><td class="num">0</td></tr>
+<tr><td>Rests spent upgrading a card</td><td class="num">55%</td><td class="num">0.2%</td><td class="num">45%</td><td class="num">·</td></tr>
+<tr><td>Cards taken per run (skip rate)</td><td class="num">9.2 (22%)</td><td class="num">7.3 (9%)</td><td class="num">·</td><td class="num">·</td></tr>
 </tbody></table></div>
-<p class="cap">The gap to the human average is eight floors. The first wall is the Act 1 boss: of the runs that reach it, humans kill it in 74% and the AI in 30%; the Act 2 boss (humans three runs of ten, the AI one of a hundred) comes after. Humans enter the Act 1 boss at 54 of 81 max HP. The average is the first cut; the top-bracket human line, which the project's goal is measured against, is the next. The empty-chest runs are set aside because the driver, not the AI, ended them.</p>
+<p class="cap">The gap to the human average is five floors with generation 9 (eight with generation 7). The first wall is the Act 1 boss: of the runs that reach it, humans kill it in 74% and the AI in 51% (generation 9; 36% for generation 7); the Act 2 boss (humans three runs of ten, the AI one of a hundred) comes after. Humans enter the Act 1 boss at 54 of 81 max HP. The average is the first cut; the top-bracket human line, which the project's goal is measured against, is the next. The empty-chest runs are set aside because the driver, not the AI, ended them.</p>
 </div>
 
 <div class="board">
@@ -674,7 +675,7 @@ dd{margin:0}
 (function(){var r=document.getElementById('record');function o(){try{if(location.hash&&r&&r.querySelector(location.hash))r.open=true;}catch(e){}}window.addEventListener('hashchange',o);o();})();
 // Everything that changes between editions is in STATE. Edit here, then republish.
 const STATE = {
-  updated: "2026-10-30 03:53Z",
+  updated: "2026-10-30 07:45Z",
   edition: 31,
   phases: [
     {key:"P0", name:"Foundations", weeks:"week 1", state:"done", note:"Measured the machine; AI runs on both engines."},
@@ -695,7 +696,7 @@ const STATE = {
     {label:"GPU lane piece 1: shared inference server", pct:100, value:"complete", note:"+21.6% decisions/s at 20 workers, 1,000 seeds identical on both paths, lab switched over 2026-10-25 02:00Z."},
     {label:"GPU lane piece 2: value head trained harder", pct:100, value:"complete", note:"Landed 7477ebb3 (2026-10-25 03:49Z). On deduplicated data and a large enough evaluation the value head has real pre-kill skill: Brier skill +0.044 (interval 0.028 to 0.060) with 4 rows per run per epoch, adopted. Week 3's 'no skill' reading was 38 kills on duplicated data."},
     {label:"GPU lane piece 3: sweeps in quiet windows", pct:70, value:"sweep done, runner deferred", note:"The arm sweep ran on the GPU and is complete. The quiet-window runner (one round) waits until a sweep is queued; nothing is queued this week."},
-    {label:"Weekly allowance used (week of 2026-10-28)", pct:36, value:"36% at 2026-10-30 01:14Z", marks:[{at:49,label:"new rounds stop 49%"},{at:50,label:"owner's line 50%"}], warnAt:49, note:"Read on the usage page at each landing. The owner set this week's ceiling at 30% at the reset (D36) and raised it to 50% the same day to put resources into the fight solver; new rounds stop at a 49% reading and a landing in progress finishes. Shares: the solver about 30 points, the week-4 lane 12, the GPU lane 3, the orchestrator and the paper 3, reserve 2. The allowance resets Wednesday 2026-11-04 at 08:00 local."},
+    {label:"Weekly allowance used (week of 2026-10-28)", pct:43, value:"43% at 2026-10-30 07:40Z", marks:[{at:49,label:"new rounds stop 49%"},{at:50,label:"owner's line 50%"}], warnAt:49, note:"Read on the usage page at each landing. The owner set this week's ceiling at 30% at the reset (D36) and raised it to 50% the same day to put resources into the fight solver; new rounds stop at a 49% reading and a landing in progress finishes. Shares: the solver about 30 points, the week-4 lane 12, the GPU lane 3, the orchestrator and the paper 3, reserve 2. The allowance resets Wednesday 2026-11-04 at 08:00 local."},
     {label:"Cloud-session credit", pct:82, value:"$206 of $250, closed", note:"Sixteen sessions delivered; $44 unspent by the owner's decision (D30). No further cloud sessions."}
   ],
   fidelity: [
@@ -704,6 +705,7 @@ const STATE = {
     {label:"The same, first nightly block (generation 5, 2,000 fresh seeds, new core, 2026-10-26)", pct:99.48, value:"99.48%", note:"1,482 of 286,748 decisions diverged; 1,305 re-anchors, 57 of them failed; 4 crashes in 2,000 runs, counted as losses."},
     {label:"The same, generation 7's night (1,771 fresh seeds, new core, 2026-10-28)", pct:99.46, value:"99.46%", note:"1,381 of 253,412 decisions diverged; 1,168 re-anchors, 102 of them failed; 0 crashes in 1,771 runs. The block closed at its four-hour budget with 229 seeds unplayed."},
     {label:"The same, generation 7's second night (1,921 fresh seeds, after the hand-record fix, 2026-10-29)", pct:99.7, value:"99.7%", note:"0.3% of 285,216 decisions diverged (0.54% the night before); the paired floor difference between the real game and the copy fell from 0.93 to 0.18, and the arms agree on the Act 1 boss outcome in 77.7% of paired runs (75.4%). 7 game crashes; 72 seeds unplayed after one worker's deadline on a game hung at the Act 2 boss reward."},
+    {label:"The same, generation 9's first night (1,409 real runs, 2026-10-30)", pct:99.6, value:"99.6%", note:"0.4% of the decisions diverged; Act 1 boss kill agreement 74.6% paired; real minus copy -0.35 floors on the same seeds."},
     {label:"Recorded combat steps reproduced exactly (corpus, 2026-10-22)", pct:97.2, value:"97.2%", note:"4,392 recorded fights replayed step by step."},
     {label:"Recorded fights identical to the end (corpus, 2026-10-22)", pct:77.7, value:"77.7%", note:"One wrong step early makes a fight count as not identical even when it recovers."},
     {label:"Public Ironclad runs replayed identically to the end (Codex walk, 2026-10-22)", pct:74.4, value:"74.4%", note:"20,294 runs; a gate that may never get worse."}
@@ -724,6 +726,7 @@ const STATE = {
     {state:"pass", text:"Recorded corpus: 71 better, 4,321 same, 0 worse of 4,392, 0 on fewer fields (122 worse on 2026-10-24)."}
   ],
   changelog: [
+    {when:"2026-10-30 07:45Z", what:"Edition 32. Generation 9's first night (2026-10-30): 22.1 floors on 1,409 real runs (the night's time ran out with 569 of 2,000 unplayed; 22 crashes), 46.8% of runs past the Act 1 boss against 29.1% for generation 7, 51% of its Act 1 boss fights won against 36%, Act 2 boss 1.1%, no wins; the copy within 0.35 floors on the same seeds, 99.6% of decisions the same. The owner's decisions D38 to D40 recorded (diverse decks and enemies with a fixed held-out fifth of the human corpus as the exam; the cuts; the always-on trainer on the graphics card); the first cut applied after the night (no CPU on finding new copy differences). The enemy-health fix is written and in its final checks; the gold and next-screen fix in progress. Usage 43% all, 45% Fable at 07:40Z."},
     {when:"2026-10-30 03:53Z", what:"Edition 31, the fight board added (docs/paper/fight-board.html, built by tools/fight_board.py from the gym's replays): one square per fight per arm, a scoreboard per boss, the fights nobody wins, the fights more thinking flips, the fights already safe. A second Opus worker is on the gold and next-screen groups (branch fix/f16-gold-screens)."},
     {when:"2026-10-30 01:19Z", what:"Edition 31, D37: the owner's three decisions. The AI is built as three parts (fight player, fight judge, run planner, in that order); the gym plays hundreds of fights in lockstep with the network batched on the GPU; the enemy-HP divergence group (37% of the weight) is diagnosed and fixed now from the reserve by an Opus worker on branch fix/f08-enemy-hp."},
     {when:"2026-10-30 01:14Z", what:"Edition 31, test 2 headline: the sixteen-times arm kills the Act 1 boss in 46.3% of 1,999 paired replays against 36.8% for today's thinking, +9.6 (SE 0.9); the orchestrator's prediction was +10. The gym proceeds with that as its baseline; the run stopped on one endless 16x game (20 GB), which gets a per-game deadline and memory guard before the plan resumes after the night (x4, M3, Act 2). The gym code is on fork main 58e71b65."},
