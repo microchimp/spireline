@@ -943,3 +943,29 @@ from human runs as well ... we have access to lots of decks from a10 players"), 
    suppression of D13 stay as they are.
 3. Non-boss fights are graded by HP lost and potions spent (L0); the 200 Act-1 boss starts of 2026-10-29 remain the
    evaluation set the fight board scores, plus a held-out perturbed set when cheap.
+
+## D39 · 2026-10-30 · Cuts: no more bug hunting until fixing catches up; small nights on unchanged AI; tiered gates; fresh workers
+
+Owner, in chat on 2026-10-30 ("think more about what we can cut - if there is any repeated work, or stuff that doesn't add
+value"), recorded 2026-10-30 05:06Z. Measured over 2026-10-27 to 2026-10-30 (job start gaps in `LAB/runs`, 55 job-hours of 77): bug-hunting
+sweeps (fights, invariants, mutation) about a third of the lab's CPU; presort about a fifth; the 2,000-run real-game night
+about a fifth (plus a four-hour landing freeze each night); training an eighth; selfplay a sixteenth. Open divergence groups:
+about 4,200; fixes land at a few per day.
+
+1. **Bug hunting stops.** The fights slots spend CPU only on kit-building (minimal repro plus failing test) for the twelve
+   largest groups by weight; the finding strategies (random, aimed-gaps, under-tested, choice-edges, dense, whole-runs) go to
+   zero in `LAB/mix.json` until the fix rate catches up with the backlog. Daily delta triage of new groups stops; the top
+   twelve are triaged once a week.
+2. **Small nights on unchanged AI.** The 2,000-run `nightly-real` runs only on a day a new candidate was promoted; otherwise
+   500 runs (about one hour), which keeps the fidelity sample and frees three hours of landings a night.
+3. **M2's Act-2 stages are dropped** (about 3.7 CPU-hours for a number that no longer changes a decision under D35's
+   addendum); x4 on the Act-1 boss starts and M3 stay.
+4. **Tiered gates.** Commits confined to lab code (`rl/`, `tools/`, scripts, tests) take the Python-only gate. The full gate is
+   mandatory for anything touching `src/` or the engine build. Old-engine byte proofs run once per rebuild commit, not per
+   landing, once the rebuilt families are proven. Independent gate pieces run in parallel where the recipe allows.
+5. **Fresh workers, not long-lived lanes.** The kernel lane (over ten thousand messages) retires after its current items land;
+   new tasks start as fresh sessions or workers with a brief and a closing HANDOFF note from the retiring lane.
+6. **The orchestrator's own spend:** one paper edition a day plus a line per landing; no status relays.
+
+Kept: the practice loop and training (a candidate was promoted 2026-10-29T14:49Z); the corpus check against recorded real
+games at every landing that touches the engine.
