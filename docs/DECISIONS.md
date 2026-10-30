@@ -979,3 +979,23 @@ games at every landing that touches the engine.
   gate pieces in parallel and two ready engine landings batched under one gate; the Python suite split into a fast tier per
   landing and a slow tier nightly; the night's emulator arm and comparison run per seed as each real run finishes; the
   `presort` job (a fifth of lab CPU over three days) audited for incremental operation.
+
+## D40 · 2026-10-30 · The fight gym runs as an always-on loop on the GPU
+
+Owner, in chat on 2026-10-30 ("is it possible to have something training all the time on the gpu maximising the gpu all
+throughout the day?"; "is that what we should be doing"; "okay do this"), recorded 2026-10-30 06:21Z. Built after the GPU-batched fight
+player lands (D37), before the judge; priced by the kernel lane at 1.5 to 2.5 units.
+
+Shape: a detached daemon under the lab's locks. Fight generation runs continuously (the CPU steps the copy, the GPU answers
+positions in batches; fights graded by the stronger search or the exact solver where it finishes, non-boss fights by L0)
+into a replay buffer with a retention window. A trainer runs continuously on the GPU over the buffer, checkpointing every
+30 minutes, with a data-freshness guard (it idles rather than re-trains on unchanged data). Players reload the newest
+checkpoint between fights. Promotion gate: each checkpoint is scored on the 200 Act-1 boss starts (and the held-out perturbed
+set); promoted only on a paired win over the incumbent; the fight board gets a row per promoted version. The night is training
+time: generation pauses for the night, training continues on the buffer at low CPU. Inference and training share the card;
+the batches are sized so neither starves. The reported metrics are fights generated per hour and the board score per
+promoted version; GPU utilisation is reported but is not the goal.
+
+Condition (orchestrator, agreed in chat): the loop learns the copy's mistakes as faithfully as the game's rules, so the
+nightly comparison against the real game stays the referee, promotions are scored on the board, and the copy-bug fixes
+(D37 item 3, D39) continue alongside.
