@@ -924,3 +924,22 @@ Owner's decisions, in chat on 2026-10-30 (recorded 2026-10-30 01:19Z), on three 
 
 M2's headline, for the record: the sixteen-times search kills the Act-1 boss in 46.3% of 1,999 paired replays against 36.8%
 for today's search, +9.6 ± 0.9; the orchestrator's prediction was +10. By D35's addendum the gym proceeds with that baseline.
+
+## D38 · 2026-10-30 · The fight gym trains on diverse decks and enemies, human runs included; a fixed fifth of the human corpus stays the exam
+
+Owner, in chat on 2026-10-30 ("shouldn't we have a diverse sample of decks and enemies to learn good play"; "not just the AI,
+from human runs as well ... we have access to lots of decks from a10 players"), recorded 2026-10-30 04:56Z.
+
+1. The gym's training starts are drawn from: every night's replays across generations (not one night); perturbed starts
+   (a real start with cards the run was offered but declined swapped in, upgrades, relic and entering-HP variation within the
+   run's ranges); the full encounter table per act for Act 1 and Act 2 (Act 3 as the real-arm nights reach it, since the
+   copy's fidelity there is barely verified); and the human corpus: fight starts rebuilt on the copy from a human run's record
+   (deck at that floor, relics, HP at the floor, the encounter met; fresh draws). Practice is weighted toward plausible decks;
+   the lane reports the mix.
+2. D13 amended: the human corpus (14,811 Ironclad A10 runs) is split once, by run id, with a fixed one fifth held out for ever
+   as the exam (the scoreboard's "average human" line and every human comparison are computed on the held-out fifth from now
+   on, recomputed once and the paper updated); the other four fifths may be used as training starts. The held-out set's ids are
+   written next to the corpus and never used for training, labels or tuning. Aggregates-only reporting and the cell-size
+   suppression of D13 stay as they are.
+3. Non-boss fights are graded by HP lost and potions spent (L0); the 200 Act-1 boss starts of 2026-10-29 remain the
+   evaluation set the fight board scores, plus a held-out perturbed set when cheap.
