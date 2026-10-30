@@ -154,7 +154,7 @@ dd{margin:0}
 </header>
 
 <section class="glance" id="glance">
-<h2>At a glance (2026-10-29 12:00Z)</h2>
+<h2>At a glance (2026-10-30 01:14Z)</h2>
 <div class="board">
 <h3>The idea in one paragraph</h3>
 <p>The real game is slow and cannot be rewound. Our copy of it plays the same move as the real game 997 times in 1,000, and it lets us save any moment and replay it thousands of times with different card draws. The AI practises on the copy, a new version is trained from that practice about once a day, and each night the newest version plays 2,000 runs in the real game, so we know the copy is not fooling us. The next thing to fix is fight play: a fight with a given deck is a small problem that can be replayed endlessly, and the AI can only learn which cards are good once it plays its deck well.</p>
@@ -183,13 +183,13 @@ dd{margin:0}
 <tbody>
 <tr><td>The PC's 8 cores, day and night</td><td>Each night, four hours: 2,000 runs in the real game and the same 2,000 on the copy. The rest of the day: the AI practises against itself on the copy and a new version is trained from it; and the copy is checked against recorded real games to find places where the two differ.</td><td>The practice loop had been off for three days by mistake (a rule looked at a seven-day window). Fixed; back on since this morning.</td></tr>
 <tr><td>The graphics card</td><td>Trains a new version of the AI (minutes each time) and answers the AI's network while it plays.</td><td>Idle most of the day. A sweep of 63 training runs found no better recipe. It gets busy once the fight trainer replays thousands of fights at once.</td></tr>
-<tr><td>Claude agents (the ones writing and testing the code)</td><td>34 in 100 of the week's allowance used, ceiling 50. Most of it on the exact fight tool and its tests; the rest on fixing the copy, the nightly reports and this page.</td><td>The Fable allowance is the tightest (40 in 100). The second lane has spent its share and only writes the morning reports now.</td></tr>
+<tr><td>Claude agents (the ones writing and testing the code)</td><td>36 in 100 of the week's allowance used, ceiling 50. Most of it on the exact fight tool and its tests; the rest on fixing the copy, the nightly reports and this page.</td><td>The Fable allowance is the tightest (41 in 100). The second lane has spent its share and only writes the morning reports now.</td></tr>
 </tbody></table></div>
 </div>
 <div class="board">
 <h3>What stands in the way</h3>
 <ul>
-<li><strong>The Act 1 boss.</strong> The AI reaches it more often than humans and kills it half as often. The next test measures how much of that is poor fight play and how much is arriving too weak (deck, health). The owner's decision: fight play gets fixed either way.</li>
+<li><strong>The Act 1 boss.</strong> The AI reaches it more often than humans and kills it half as often. Test 2 says better fight play alone lifts kills from 37 to 46 in 100; humans are at 74, so the rest is arriving too weak (deck, health). Both get fixed, fight play first, by the owner's decision.</li>
 <li><strong>Long fights.</strong> The exact tool, which tries every line, finishes within ten seconds on 16 positions in 100 and never on long fights. Those the AI must learn from practice: replay each saved fight start with fresh draws, think deeply on a sample to get the right answers, train the network toward them. That trainer is the next build.</li>
 <li><strong>Copy bugs are found faster than fixed.</strong> About 4,200 open differences between the copy and the real game, hundreds found a day, a few fixed a day. Fixing costs agent tokens, not computer time.</li>
 <li><strong>Agent tokens.</strong> Moving the second lane to the cheaper model needs the owner's hand.</li>
@@ -202,6 +202,7 @@ dd{margin:0}
 <li>The exact fight tool went from 6.5 to 16 positions in 100 solved within ten seconds, in three steps: card draws made thirty times cheaper, every step made faster, then bounds that cut lines that cannot win.</li>
 <li>Per-fight survival is now measured from the game's own logs, by act and by kind of fight.</li>
 <li>Test 1 of the fight layer: on the decisions the exact tool can solve, the AI already plays near-perfectly; its misses are survivals on the dying turn, in 12.5 fights per 100.</li>
+<li>Test 2 of the fight layer, the headline: sixteen times more thinking at the Act 1 boss turns 37 kills in 100 into 46, on 2,000 paired replays. The replay gym that ran it is landed.</li>
 <li>Four copy bugs fixed (the empty chest, shop gold timing, the Strike and Defend hand record, night deadlines so no night can hang), and the practice loop's three-day stall found and fixed.</li>
 <li>An outside review of the fight tool's direction: build a fight trainer with the tool as its grader, rather than race to solve more positions exactly. Adopted, with the owner's decision on top: fight play is fixed whatever the test shows.</li>
 </ul>
@@ -211,7 +212,7 @@ dd{margin:0}
 <ul>
 <li>Tonight at about 03:30Z: 2,000 real runs again, the same AI unless the loop trains a better one first.</li>
 <li>Test 1, done: where the exact tool knows the perfect move, the AI's own move costs it 0.04 health per fight on average. It misses a kill in 2.5 fights per 100, and a move that would have kept it alive in 12.5 fights per 100, always on the turn it died. Next in the solver: the tool checks every decision for a kill or a forced survival from inside the AI's search.</li>
-<li>Test 2: replay 200 boss fights with sixteen times more thinking and count the extra kills. The orchestrator's guess on record: 10 more per 100. The owner's: not given yet.</li>
+<li>Test 2, the headline in: 200 of the AI's own Act 1 boss fights from last night, each replayed ten times with fresh draws. Its usual thinking kills the boss in 37 fights in 100; sixteen times more thinking kills it in 46 in 100, so better fight play alone is worth about 10 kills per 100 (the orchestrator's guess on record was 10; the owner gave none). The rest of the test (four times the thinking, the Act 2 fights) resumes after tonight's run: it stopped on one fight that never ended and held 20 GB, which gets a time and memory limit first.</li>
 <li>Then the fight trainer. Its stronger fight player then plays the runs, so card choices are learned under good fight play.</li>
 <li>Waiting on the owner: the second lane's model switch; whether its position-recording round runs now, over its share; a red test (the reward screen's upgrade flags) left red or fixed.</li>
 </ul>
@@ -671,7 +672,7 @@ dd{margin:0}
 (function(){var r=document.getElementById('record');function o(){try{if(location.hash&&r&&r.querySelector(location.hash))r.open=true;}catch(e){}}window.addEventListener('hashchange',o);o();})();
 // Everything that changes between editions is in STATE. Edit here, then republish.
 const STATE = {
-  updated: "2026-10-29 12:00Z",
+  updated: "2026-10-30 01:14Z",
   edition: 31,
   phases: [
     {key:"P0", name:"Foundations", weeks:"week 1", state:"done", note:"Measured the machine; AI runs on both engines."},
@@ -692,7 +693,7 @@ const STATE = {
     {label:"GPU lane piece 1: shared inference server", pct:100, value:"complete", note:"+21.6% decisions/s at 20 workers, 1,000 seeds identical on both paths, lab switched over 2026-10-25 02:00Z."},
     {label:"GPU lane piece 2: value head trained harder", pct:100, value:"complete", note:"Landed 7477ebb3 (2026-10-25 03:49Z). On deduplicated data and a large enough evaluation the value head has real pre-kill skill: Brier skill +0.044 (interval 0.028 to 0.060) with 4 rows per run per epoch, adopted. Week 3's 'no skill' reading was 38 kills on duplicated data."},
     {label:"GPU lane piece 3: sweeps in quiet windows", pct:70, value:"sweep done, runner deferred", note:"The arm sweep ran on the GPU and is complete. The quiet-window runner (one round) waits until a sweep is queued; nothing is queued this week."},
-    {label:"Weekly allowance used (week of 2026-10-28)", pct:34, value:"34% at 2026-10-29 12:00Z", marks:[{at:49,label:"new rounds stop 49%"},{at:50,label:"owner's line 50%"}], warnAt:49, note:"Read on the usage page at each landing. The owner set this week's ceiling at 30% at the reset (D36) and raised it to 50% the same day to put resources into the fight solver; new rounds stop at a 49% reading and a landing in progress finishes. Shares: the solver about 30 points, the week-4 lane 12, the GPU lane 3, the orchestrator and the paper 3, reserve 2. The allowance resets Wednesday 2026-11-04 at 08:00 local."},
+    {label:"Weekly allowance used (week of 2026-10-28)", pct:36, value:"36% at 2026-10-30 01:14Z", marks:[{at:49,label:"new rounds stop 49%"},{at:50,label:"owner's line 50%"}], warnAt:49, note:"Read on the usage page at each landing. The owner set this week's ceiling at 30% at the reset (D36) and raised it to 50% the same day to put resources into the fight solver; new rounds stop at a 49% reading and a landing in progress finishes. Shares: the solver about 30 points, the week-4 lane 12, the GPU lane 3, the orchestrator and the paper 3, reserve 2. The allowance resets Wednesday 2026-11-04 at 08:00 local."},
     {label:"Cloud-session credit", pct:82, value:"$206 of $250, closed", note:"Sixteen sessions delivered; $44 unspent by the owner's decision (D30). No further cloud sessions."}
   ],
   fidelity: [
@@ -721,6 +722,7 @@ const STATE = {
     {state:"pass", text:"Recorded corpus: 71 better, 4,321 same, 0 worse of 4,392, 0 on fewer fields (122 worse on 2026-10-24)."}
   ],
   changelog: [
+    {when:"2026-10-30 01:14Z", what:"Edition 31, test 2 headline: the sixteen-times arm kills the Act 1 boss in 46.3% of 1,999 paired replays against 36.8% for today's thinking, +9.6 (SE 0.9); the orchestrator's prediction was +10. The gym proceeds with that as its baseline; the run stopped on one endless 16x game (20 GB), which gets a per-game deadline and memory guard before the plan resumes after the night (x4, M3, Act 2). The gym code is on fork main 58e71b65."},
     {when:"2026-10-29 12:00Z", what:"Edition 31, test 1 landed (e9e95342): on 113 exactly solved decisions the AI's regret is 0.04 health per fight; missed kills 2.5 per 100 fights, missed forced survivals 12.5 per 100 fights, all on the dying turn. Next in the solver: the root check inside the AI's search; test 2 (the headroom test) runs now."},
     {when:"2026-10-29 11:24Z", what:"Edition 31. The front page rewritten in plain language at the owner's request: no project words; the idea in one paragraph, the scoreboard in counts per hundred, where the computer's time goes, what stands in the way, done this week, next. The record below is unchanged."},
     {when:"2026-10-29 11:15Z", what:"Edition 30, owner's decision: near-optimal fight play is a requirement, not a hypothesis M2 tests. The fight gym is built whatever M2 returns; its number sets the gym's priority against the run layer, and a low number is diagnosed, not a pause."},
