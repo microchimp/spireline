@@ -1017,3 +1017,17 @@ Started now, in this order of landing:
    the judge-equipped player when that lands.
 3. The two driver fixes from the 10-30 night report (end-turn stamp; pool restart), one Sonnet worker.
 4. The player-HP group Geea146c773 (Kaiser Crab cluster first) after the gold/next-screen fix lands.
+
+## D42 · 2026-10-31 · The week's ceiling raised to 70%
+
+Owner, in chat on 2026-10-31 ("Lift to 70"), recorded 2026-10-31 23:21Z. The weekly allowance ceiling for the week of 2026-10-28 is
+70% (new work stops at 69%), from 65% (D41). Put to the owner: at 64% the two night-driver repairs and the paper's edition
+33 were held. The repairs: (a) the `CombatEngine.EndTurn` list walk that throws "Collection was modified" and has killed
+pool workers silently since 2026-10-26 (two a night; 27 of 500 seeds never played on 10-31; the W5 lane's check: not a
+regression from F08, F16 or F17), with the two in-progress seeds replayed; (b) the pool notices a dead worker, writes a
+crash row and hands its seeds to a replacement. Together about one point, Sonnet, from the W5 lane's briefs
+(HANDOFF 2026-10-31T04:37Z); they land after tests, never during a night.
+
+Also recorded here: the always-on loop's first promotions, c0001 as v1 (2026-10-31 00:11Z, 914 against 882 wins of 2000
+paired games, p 0.013) and c0019 as v2 (14:30Z, 941 against 915, p 0.025); each gets a fight-board row from the loop's own
+200-start, 10-seed board run.
