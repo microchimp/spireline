@@ -1031,3 +1031,37 @@ crash row and hands its seeds to a replacement. Together about one point, Sonnet
 Also recorded here: the always-on loop's first promotions, c0001 as v1 (2026-10-31 00:11Z, 914 against 882 wins of 2000
 paired games, p 0.013) and c0019 as v2 (14:30Z, 941 against 915, p 0.025); each gets a fight-board row from the loop's own
 200-start, 10-seed board run.
+
+## D43 · 2026-11-01 · Three machine-time wasters: the fight gate's reused set, idle practice, the scoring job
+
+Orchestrator, routine, recorded 2026-11-01 09:22Z; the owner asked in chat whether a full diagnostic for time wasters was worth it,
+said yes to a day of machine-watching, and "do these" for the fight trainer and the practice, "figure out what to do with
+the scoring job". A read-only Sonnet worker (about 0.5 point) read the logs and the code; its findings and the decisions:
+
+1. **The always-on fight trainer** has rejected every candidate since v2 (c0020 to c0046, 27 in a row, each about 2.6
+   points below the incumbent at stage 1) at a cost of about 18.8 hours of wall time a day (34 segments and 39 gates, 113
+   process-hours, with 0 promotions). The training settings are sound (held-out loss flat, practice played by the newest
+   checkpoint). The cause is a winner's curse: stage 1 scores every candidate against the incumbent's wins on the same 400
+   games the incumbent was itself selected on, and c0019 was about 9 wins lucky there (46.6% on the other 1,600 games
+   against 49% on the 400). A candidate equal to v2 reads about -2.3 points and would need a true +3.4 to pass.
+   **Decision:** stage 1 plays game pairs the incumbent was not selected on, rotating one pair per promotion (v2 is
+   measured on pairs 2 and 3, whose games are already in c0019's file); stage 2 (all ten pairs, McNemar p < 0.05) is
+   unchanged; the rule gets a new name and a test; landed on fork main, then the daemon stopped at a verdict line and
+   relaunched with the same arguments (it resumes from state.json and the trainer's state.pt). Sonnet, about 1 point.
+   The one slow gate (c0035, 30 minutes instead of 10) was the prior server taking 374 s to start under CPU starvation
+   during the presort's groups step; it has not recurred; no change.
+2. **The daytime self-play** (21 blocks, 7.2 hours of wall time at 16 processes in the last 24 hours, about 30% of the
+   clock) produces practice under generation 9 while generation 10 has used both promotion attempts. A new candidate
+   draws at most 6,400 fights at its first try (19,200 at the third) from the 190,000 already on disk, so more practice
+   now adds nothing. **Decision:** the selfplay job is paused in `LAB/jobs.json` (enabled false; the runner re-reads the
+   file; the running block finishes; the nightly presort and the nightly runs are untouched; the CPU goes to the kit
+   rotation) until a new candidate recipe is started or the fight cap is raised. The next candidate, when it comes, is a
+   new generation number with a real change (D33 addendum 3's precedent), the orchestrator's call; no owner review is
+   involved.
+3. **The scoring job** ("score-real 0 of W min" in the runner's diary) is a ledger line, not a wait: the job runs only
+   after a promotion, last on 2026-10-29 (500 real runs, 45 minutes, rc 0), and has had nothing to do since. **Decision:**
+   leave it.
+
+Also found, not acted on: the groups and kits steps run after every fights or presort job, about 17 times a day, 6.7
+hours a day together, without a check that their inputs changed; whether their output changes is unverified and goes to
+the reset's diagnostic with the machine watcher's day of counters (`referee/machine-watch/`).
