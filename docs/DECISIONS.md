@@ -1065,3 +1065,30 @@ the scoring job". A read-only Sonnet worker (about 0.5 point) read the logs and 
 Also found, not acted on: the groups and kits steps run after every fights or presort job, about 17 times a day, 6.7
 hours a day together, without a check that their inputs changed; whether their output changes is unverified and goes to
 the reset's diagnostic with the machine watcher's day of counters (`referee/machine-watch/`).
+
+## D44 · 2026-11-01 · Process diagnostic, top to bottom, and the reset order
+
+Owner in chat (21:14Z): "run a diagnostic to see what is wrong with the process top to bottom". A read-only Sonnet worker
+(about 1 point) built the fact sheet `docs/diagnostics/2026-11-01-facts.md`; the orchestrator's reading is
+`docs/diagnostics/2026-11-01-process.md`. Findings, ranked by cost to the goal: (1) no instrument on what decides the
+game: the AI reaches the Act 1 boss more often than humans (92% against 74%) and kills it less often (52% against 74%),
+then dies in Act 2 (boss killed in 2.2% of runs against 29.1%; 0 wins in 8,104 runs), and nothing measures deck, relics
+or HP at boss entry or the AI's choices against humans (the D13/D38 exam fifth was never built; no best-human line);
+(2) the loop's fight player v2 beats the exam's player by 10 points on Act 1 boss starts and is wired to nothing, after
+about 20 points of credit and 5 cores a day; (3) the run-level recipe (V_run, floor target, unchanged since gen 5) has
+saturated (+2.0, +1.0, +0.2, -1.4) with a candidate spread (1.7 floors) above the gate's resolution (0.5); no gen 11
+recipe exists; (4) both trainers are data-starved (lab uses 5-13% of its fights; the loop's trainer 87 s of GPU in 31 h,
+candidates no better than v2) on a machine 44% idle; (5) 23% of the lab clock goes to groups and kits whose output does
+not change (kits identical in 133 of 142 runs) and the presort reruns its checks per landing; (6) fidelity no longer
+limits the score (both arms within 0.4 floors, same deaths; half the paired seeds differ run by run, unexplained);
+(7) credit went where the exam could not follow (20 points in 16 h on 10-30; no per-task ledger); (8) crash rows 0.3
+floors, the loop on an old engine, Defender 4.4% of CPU.
+
+**Decisions (orchestrator, routine):** the reset order for 2026-11-03 21:00Z is A. wire the loop's v2 into the exam
+agent as generation 11 and test it on the lab block and one night (Opus, about 2 points); B. the boss-entry instrument
+and the human per-decision exam (Sonnet, about 1.5); C. the next run-level recipe built from B (about 3); D. the lab
+clock: skip unchanged bookkeeping, run it beside replays (about 1); E. the loop's engine move (0.5), then feed the loop
+only if A confirms transfer, else stop it; F. a ledger line per worker (start and end usage) at no cost. Rule from
+finding 2: no trainer is built or kept without its consumer wired first. Nothing starts before the reset (usage near
+68%, ceiling 70) except E on the owner's word. Not changed: the exam size, the lab gate's statistics, the night driver.
+Recorded 2026-11-01 21:36Z.
