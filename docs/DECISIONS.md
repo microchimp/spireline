@@ -1110,3 +1110,11 @@ first worker: every worker's HANDOFF line carries the usage at its start and end
 after about 19:00Z on 11-02 without checking `LAB/nightly/active`, no `jobs.json` edit during a night, A's block runs
 only if it can finish before 18:30Z. Estimates as D44: A 2, B 1.5, C 3, D 1, E 0.5, about 10 points with orchestration,
 to about 79 in 100. The paper gets one line now and one per landing. Recorded 2026-11-02 01:43Z.
+
+## D38 · Addendum 1 · 2026-11-02 · The exam fifth is fixed
+
+Worker B (reset order step B) found that the held-out fifth D38 names had never been cut, and cut it: of the 14,745 vanilla runs
+in the corpus export (`runs-v0.107.1`), the runs whose id falls in the fifth under a fixed hash of the run id (the rule is in
+`tools/boss_entry.py`) are the exam, 2,924 runs. The id list sits beside the corpus (`data/spire-codex/human-exam-fifth-ids.txt`)
+and in `referee/backlog/boss-entry/human-exam-fifth-ids.txt`. The exam is read only to score the AI (first use: the per-decision
+exam of `docs/diagnostics/2026-11-02-boss-entry.md`); no training input may carry these runs. Orchestrator, routine; recorded 2026-11-02 02:37Z.
