@@ -1163,3 +1163,27 @@ V_run block: a ranking check on held-out decisions (does the candidate rank rest
 incumbent or humans do) as part of the keep test; then the second attempt with the full 8,000 runs and beta tuned, at the
 reset. Process finding: score-real ran without `--resume`, so every load stop restarted the real arm from zero (C's gate runs
 tripped the load guard 4 or 5 times); `--resume` added to the job where the driver has it. Recorded 2026-11-02 16:04Z.
+
+## D48 · 2026-11-02 · The machine: practice as the filler, cores not turns, the card fed by the work
+
+Owner in chat (16:4xZ): after "how do we maximize the cpu and gpu in this process", "Okay do what you think in terms of cpu and
+gpu". The measured state (D44 finding 4, the 2026-11-02 sweep and disk report): the processor busy about 56 in 100 over the
+watched day, 44% of core-hours idle; the card 21 in 100 busy and limiting nothing (inference batches of 1.3 ms; training
+minutes a day); the lab runner runs one job at a time, pauses when other processes pass 50% of the CPU for 120 s, and practice
+is switched on and off by hand (D43 paused it).
+
+**Decisions (orchestrator):**
+1. **Practice is the filler.** Whole-run self-play on the copy and the always-on loop's fight practice run whenever nothing
+   higher needs the machine, at BelowNormal priority, recording shards with no train marker (the recipe and its ranking check
+   decide when a fit is made, D47), so data is ready when a recipe is. They stop for the night exactly as the loop does today
+   (no start while `LAB/nightly/active` exists or within 30 minutes of the night's due time; stopped when it starts).
+2. **Cores, not turns.** The runner gives out cores: a promotion block or a scoring job takes its cores and runs beside the
+   filler instead of after it; training on the card runs beside either; the pause rule counts only non-filler load, so a
+   filler never stops a job and a job never waits for a filler. The night is unchanged and keeps the whole machine.
+3. **The card is fed by the work, not scheduled.** More practice and the larger training set (32,000 fights, D44 step E) are
+   what raise its use; no change to batching or models under this decision.
+4. **Scope and cost.** Built in the fork's lab code (runner, plans, jobs) with tests, by one Opus worker (about 1.5 points),
+   landed before 18:30Z on 11-02 or after the night; the runner restart that switches it on is the orchestrator's, after the
+   night, together with D's and the accounting line's. The engine's fight-step speed (core2, 3x the old engine's cost) is a
+   separate lane, next week. The budget: the owner asked what 90 in 100 would buy and then gave this word; the orchestrator
+   reads that as headroom to 90 for this work and the night's follow-up, stopping new starts at 89. Recorded 2026-11-02 22:22Z.
