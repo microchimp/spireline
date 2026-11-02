@@ -1092,3 +1092,21 @@ only if A confirms transfer, else stop it; F. a ledger line per worker (start an
 finding 2: no trainer is built or kept without its consumer wired first. Nothing starts before the reset (usage near
 68%, ceiling 70) except E on the owner's word. Not changed: the exam size, the lab gate's statistics, the night driver.
 Recorded 2026-11-01 21:36Z.
+
+## D45 · 2026-11-02 · The reset order starts now; the week's ceiling is 85
+
+Owner in chat (01:3xZ): "What changes at the reset, in this order - do this now usage up to 85". The D44 order (A wire the
+loop's fight player v2 into the exam agent as generation 11; B the boss-entry instrument and the human per-decision exam;
+C the next run-level recipe from B; D the lab clock; E the loop's engine move, then feed or stop the loop; F a usage line
+per worker) runs now instead of from 2026-11-03 21:00Z, under a ceiling of 85 in 100 (new worker starts stop at 83;
+usage 69 all / 54 Fable at 01:38Z). The owner's open question of 11-01 (the engine move after a night or at the reset) is
+answered by this: E runs in its place in the order.
+
+**Decisions (orchestrator, routine):** workers are Agent subagents (sim-worker; no new session can start while the owner
+is on Remote Control): A on Opus and B on Sonnet start together (they share no files: A works in the fork's `rl/` and the
+lab's train and promotion path, B reads the lab and writes to the Spireline repo; B is light on the machine); C starts
+when B reports; D starts when A has landed (both touch the fork); E runs after D at a verdict line of the loop; F from the
+first worker: every worker's HANDOFF line carries the usage at its start and end. The night is untouched: nothing lands
+after about 19:00Z on 11-02 without checking `LAB/nightly/active`, no `jobs.json` edit during a night, A's block runs
+only if it can finish before 18:30Z. Estimates as D44: A 2, B 1.5, C 3, D 1, E 0.5, about 10 points with orchestration,
+to about 79 in 100. The paper gets one line now and one per landing. Recorded 2026-11-02 01:43Z.
