@@ -1148,3 +1148,18 @@ conversation). Decisions (orchestrator, under that word):
 Also decided under the same word, as a routine and reversible operation: the move of the lab's run files to the solid-state
 drive goes ahead in the first quiet window after the 2026-11-03 night, in the order the disk-bound report gives, by a
 directory link at the old path, the old copy kept one day. Recorded 2026-11-02 11:56Z.
+
+## D47 · 2026-11-02 · Generation 12 refused; no second attempt before a ranking check
+
+Step C's recipe (the run head V_run refit only on runs played by generation 11's own fighter, pure Monte Carlo floor target,
+exploring self-play) was refused on attempt 1 of 2: -5.91 floors against generation 11 on 2,000 paired seeds (E12-2026-11-02;
+17.08 against 22.98; Act 1 boss kills 541 against 1,033), both guards fired. It rested 2.1 times against 3.1 and healed 0.73
+against 1.34 before the Act 1 boss, so 41% of its runs died before that boss against 9%: the fit undervalues HP. The keep test
+checks outcome forecasts, not how options are ranked, so it could not catch this. Likely causes, untested: a third of the
+planned data (3,781 exploring runs instead of 8,000; the clock went to score-real and two presorts) and beta 0.
+
+**Decisions (orchestrator, routine):** no second attempt this week (usage 83, the line for new starts). Before any further
+V_run block: a ranking check on held-out decisions (does the candidate rank rest, heal, path and card options as the
+incumbent or humans do) as part of the keep test; then the second attempt with the full 8,000 runs and beta tuned, at the
+reset. Process finding: score-real ran without `--resume`, so every load stop restarted the real arm from zero (C's gate runs
+tripped the load guard 4 or 5 times); `--resume` added to the job where the driver has it. Recorded 2026-11-02 16:04Z.
