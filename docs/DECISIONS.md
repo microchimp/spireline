@@ -1118,3 +1118,33 @@ in the corpus export (`runs-v0.107.1`), the runs whose id falls in the fifth und
 `tools/boss_entry.py`) are the exam, 2,924 runs. The id list sits beside the corpus (`data/spire-codex/human-exam-fifth-ids.txt`)
 and in `referee/backlog/boss-entry/human-exam-fifth-ids.txt`. The exam is read only to score the AI (first use: the per-decision
 exam of `docs/diagnostics/2026-11-02-boss-entry.md`); no training input may carry these runs. Orchestrator, routine; recorded 2026-11-02 02:37Z.
+
+## D46 · 2026-11-02 · Claude compute: the balance between credit and quality
+
+Owner in chat (11:2xZ): "what skills can you use to reduce the amount of compute Claude uses"; then (12:0xZ): "Do whatever you
+think balances compute without compromising quality in the long run." The week's credit went to three things: the workers'
+own reading and writing, the orchestrator's turns on the most expensive model, and wakes (every notification re-reads a long
+conversation). Decisions (orchestrator, under that word):
+
+1. **Model by task.** Sonnet for measurement, building to a clear brief, and verification; Opus only where judgement decides
+   (mechanism diagnosis, a recipe or design decision, engine work); Haiku for mechanical verification (checking a landing,
+   running a suite and reporting counts, copying numbers into a page). The orchestrator stays on the top model but takes
+   fewer turns (2). The quality rule: the model that decides is never cheaper than the decision; the model that measures or
+   checks can be.
+2. **Fewer wakes.** Workers report once, in at most ten lines, after their HANDOFF line (as now). Landings are recorded in
+   batches: a paper line per landing is still written, but at the next wake, and the page is published at most twice a day
+   (the edition and one batch) unless a landing changes the headline. The paper stays at one edition a day (D39).
+3. **Effort by task.** Measurement and verification workers run at low reasoning effort; builders at the default; Opus
+   workers at their default. This is the one lever the harness only allows on the owner's explicit word, which this is.
+4. **Scripts for the routine.** The night's morning report (today a Sonnet lane that wakes each night) becomes a script
+   that writes the numbers and the HANDOFF line, checked by a Haiku worker; built at the reset (2026-11-03 21:00Z), not
+   before tomorrow's night, so no report is at risk. Likewise the paper's edition figures come from a script where they can.
+5. **A ledger, and a fresh start.** Every worker line carries usage at start and end (D45 F). The usage breakdown of this
+   conversation is read once at the reset, and the orchestrator starts a fresh conversation from HANDOFF at the reset, since
+   a long context costs more per turn.
+6. **Not changed.** No worker is cut below what its task needs; a diagnosis that would be guessed on a cheaper model is not
+   run on it; the exam, the gate statistics and the night driver are untouched by this decision.
+
+Also decided under the same word, as a routine and reversible operation: the move of the lab's run files to the solid-state
+drive goes ahead in the first quiet window after the 2026-11-03 night, in the order the disk-bound report gives, by a
+directory link at the old path, the old copy kept one day. Recorded 2026-11-02 11:56Z.
