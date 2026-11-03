@@ -62,7 +62,10 @@ def below_normal() -> None:
     try:
         import ctypes  # noqa: PLC0415
 
-        ctypes.windll.kernel32.SetPriorityClass(ctypes.windll.kernel32.GetCurrentProcess(), 0x4000)
+        k = ctypes.windll.kernel32  # typed: the untyped call truncates the pseudo handle and fails without an error
+        k.GetCurrentProcess.restype = ctypes.c_void_p
+        k.SetPriorityClass.argtypes = [ctypes.c_void_p, ctypes.c_uint32]
+        k.SetPriorityClass(k.GetCurrentProcess(), 0x4000)
     except (AttributeError, OSError):
         pass
 

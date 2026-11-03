@@ -2,6 +2,7 @@
 
     python tools/boss_entry_exam.py validate --runs-root LAB/runs --gen 9 --n-runs 300
     python tools/boss_entry_exam.py exam --corpus runs-v0.107.1.jsonl.gz --runs-root LAB/runs --out exam.json
+    python tools/boss_entry_exam.py agreement --candidate cand/run_value.npz --incumbent inc/run_value.npz --out agreement.json
 
 The chooser is the nightly agent's own run-level value head (V_run, `run_value.npz` with the lookahead macro's W): every option's
 afterstate is valued by expected floors and the best is taken, exactly as `LookaheadPolicy` picks at tau = 0. It runs offline, on numpy
@@ -17,6 +18,12 @@ map). Map and shop choices, and events, are not examined: a map choice needs the
 
 Only the held-out fifth of the corpus (D38) is read, and only to score the AI against it; nothing is written for training, and the
 report holds aggregates over cells of at least `MIN_CELL` decisions.
+
+`agreement` is the exam as a check on a candidate head (the fork's V_run keep test, D47/D49): the same held-out decisions are scored
+with the candidate and with the incumbent head under the same donor maps, and the output is the share of decisions where each head
+takes the human's choice (a card reward: the same card or skip; a rest site: the same of heal and upgrade) with the paired
+difference and its standard error. A fixed seeded subset of the fifth's runs is read (`--max-runs`), the decisions of the fifth are
+cached once in a local file outside the repositories (`SPEC_CACHE`), and only counts and rates leave the tool.
 """
 
 from __future__ import annotations
@@ -24,7 +31,9 @@ from __future__ import annotations
 import argparse
 import dataclasses
 import gzip
+import hashlib
 import json
+import math
 import random
 import sys
 import types
@@ -42,6 +51,9 @@ REGION = {"ACT.OVERGROWTH": 1, "ACT.UNDERDOCKS": 2, "ACT.HIVE": 3, "ACT.GLORY": 
 REGION_BOSSES = {1: (74, 82, 83), 2: (77, 79, 84), 3: (75, 76, 81), 4: (73, 78, 80)}  # run_train.vocab.BOSSES by region
 BOSS_ID = {v: k for k, v in be.BOSSES.items()}
 MAX_FLOOR = 33  # Acts 1 and 2
+SPEC_CACHE = Path("D:/spireline/referee/backlog/boss-entry/exam-specs.jsonl.gz")  # the fifth's decisions, local only (never committed)
+AGREE_SEED = 20261103  # the seeded subset of the fifth's runs `agreement` reads, and its donor draws; fixed so every check scores the same decisions
+SPEC_CACHE_VERSION = 1
 
 
 # ------------------------------------------------------------------------------------------------ human record -> decision specs
@@ -330,6 +342,109 @@ def cmd_exam(a: argparse.Namespace) -> int:
     return 0
 
 
+# ------------------------------------------------------------------------------------------------ agreement (the keep test's human leg)
+
+
+def paired(a: list[float], b: list[float]) -> dict:
+    """Rate `a` (the candidate) and rate `b` (the incumbent) over the same decisions, and their paired difference with its standard error."""
+    n = len(a)
+    if n == 0:
+        return {"n": 0, "candidate": None, "incumbent": None, "diff": None, "se": None}
+    d = [x - y for x, y in zip(a, b)]
+    mean = sum(d) / n
+    se = math.sqrt(sum((x - mean) ** 2 for x in d) / (n - 1) / n) if n > 1 else None
+    return {"n": n, "candidate": sum(a) / n, "incumbent": sum(b) / n, "diff": mean, "se": se}
+
+
+def run_id(r: dict) -> str:
+    return r.get("run_hash") or f"{r.get('seed')}:{r.get('start_time')}"
+
+
+def exam_specs(corpus: Path, ids_file: Path | None, cache: Path = SPEC_CACHE, rebuild: bool = False, cards: be.Cards | None = None,
+               idm: Ids | None = None) -> dict[str, list[dict]]:
+    """The held-out fifth's card-reward and rest-site decisions by run id. Read from the cache when it matches the corpus file and the id
+    list; otherwise the corpus is scanned once (several minutes) and the cache written. The cache is a local file, not part of any repo."""
+    ids = set(Path(ids_file).read_text(encoding="utf-8").split()) if ids_file else None
+    meta = {"version": SPEC_CACHE_VERSION, "corpus_bytes": Path(corpus).stat().st_size,
+            "ids_sha": hashlib.sha256("\n".join(sorted(ids)).encode()).hexdigest() if ids is not None else None}
+    if cache.is_file() and not rebuild:
+        with gzip.open(cache, "rt", encoding="utf-8") as fh:
+            head = json.loads(fh.readline())
+            if head.get("meta") == meta:
+                return {row["rid"]: row["specs"] for row in map(json.loads, fh)}
+    cards, idm = cards or be.Cards.load(), idm or Ids.load()
+    out: dict[str, list[dict]] = {}
+    with be.opener(Path(corpus)) as fh:
+        for line in fh:
+            if '"ascension":10' not in line or "CHARACTER.IRONCLAD" not in line:
+                continue
+            r = json.loads(line)
+            rid = run_id(r)
+            if not be.human_ok(r) or not cards.vanilla(r) or not (rid in ids if ids is not None else be.is_exam(rid)):
+                continue
+            specs = human_specs(r, idm, cards)
+            if specs:
+                out[rid] = specs
+    cache.parent.mkdir(parents=True, exist_ok=True)
+    tmp = cache.with_name(cache.name + ".tmp")
+    with gzip.open(tmp, "wt", encoding="utf-8") as fh:
+        fh.write(json.dumps({"meta": meta}) + "\n")
+        for rid in sorted(out):
+            fh.write(json.dumps({"rid": rid, "specs": out[rid]}, separators=(",", ":")) + "\n")
+    tmp.replace(cache)
+    return out
+
+
+def agree_flag(res: dict, kind: str) -> float:
+    """1.0 when the head's choice is the human's: the same pick (a card or skip) at a card reward, the same of heal and upgrade at a rest."""
+    return float(res["top"] == res["human"]) if kind == "card_reward" else float(res["ai_smith"] == res["human_smith"])
+
+
+def agreement_doc(heads: list[list[tuple[str, dict | None]]], labels: list[str]) -> dict:
+    """The measures of every head but the last (the incumbent) against the last, from per-decision (kind, score) lists, one list per
+    head over the same decisions; a decision any head could not score (None) is left out of all."""
+    n = len(heads[0])
+    keep = [j for j in range(n) if all(h[j][1] is not None for h in heads)]
+    flags = [{k: [agree_flag(h[j][1], k) for j in keep if h[j][0] == k] for k in ("card_reward", "rest")} for h in heads]
+    extra = [{"skip": [float(h[j][1]["ai_skip"]) for j in keep if h[j][0] == "card_reward"],
+              "upgrade": [float(h[j][1]["ai_smith"]) for j in keep if h[j][0] == "rest"]} for h in heads]
+    last = len(heads) - 1
+    cands = [{"label": labels[i], "measures": {k: paired(flags[i][k], flags[last][k]) for k in ("card_reward", "rest")},
+              "skip_share": paired(extra[i]["skip"], extra[last]["skip"]),
+              "upgrade_share": paired(extra[i]["upgrade"], extra[last]["upgrade"])} for i in range(last)]
+    return {"scored": len(keep), "skipped_without_donor_maps": n - len(keep), "candidates": cands,
+            "incumbent": {"agreement": {k: (sum(v) / len(v) if v else None) for k, v in flags[last].items()}}}
+
+
+def cmd_agreement(a: argparse.Namespace) -> int:
+    be.below_normal()
+    cands = [Path(p) for p in a.candidate]
+    inc = Path(a.incumbent)
+    chs = [Chooser(Path(a.fork), p, a.w) for p in cands + [inc]]
+    specs = exam_specs(Path(a.corpus), Path(a.exam_ids) if a.exam_ids else None, Path(a.cache), a.rebuild_cache)
+    rids = sorted(specs)
+    if a.max_runs and a.max_runs < len(rids):
+        rids = sorted(random.Random(AGREE_SEED).sample(rids, a.max_runs))
+    donors = Donors(chs[0], Path(a.runs_root), a.gen, a.donor_runs)
+    rnd = random.Random(AGREE_SEED)
+    heads: list[list[tuple[str, dict | None]]] = [[] for _ in chs]
+    for rid in rids:
+        for spec in specs[rid]:
+            dn = donors.sample(spec["region"], spec["floor"], a.k, rnd)
+            for h, ch in zip(heads, chs):
+                h.append((spec["type"], score_spec(ch, spec, dn)))
+    doc = agreement_doc(heads, [f"candidate-{i}" for i in range(len(cands))])
+    for c, p in zip(doc["candidates"], cands):
+        c["sha256"] = hashlib.sha256(p.read_bytes()).hexdigest()
+    doc.update(kind="human-agreement", runs=len(rids), max_runs=a.max_runs, seed=AGREE_SEED,
+               donors={"gen": a.gen, "runs": a.donor_runs, "k": a.k}, measures=doc["candidates"][0]["measures"],
+               note="aggregates over the held-out fifth (D38); no single run or decision is kept")
+    doc["incumbent"]["sha256"] = hashlib.sha256(inc.read_bytes()).hexdigest()
+    Path(a.out).write_text(json.dumps(doc, indent=1) + "\n", encoding="utf-8")
+    print(f"agreement: {len(rids)} exam-fifth runs, {doc['scored']} decisions, {doc['skipped_without_donor_maps']} without donor maps", file=sys.stderr)
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     sub = ap.add_subparsers(dest="cmd", required=True)
@@ -346,6 +461,22 @@ def main(argv: list[str] | None = None) -> int:
             p.add_argument("--corpus", default=str(be.DEFAULT_CORPUS))
             p.add_argument("--out", required=True)
             p.add_argument("--limit", type=int, default=0)
+    ag = sub.add_parser("agreement", help="a candidate head's and the incumbent's agreement with the human choice on the held-out fifth")
+    ag.add_argument("--candidate", action="append", required=True, help="a candidate's run_value.npz (repeat for several)")
+    ag.add_argument("--incumbent", required=True, help="the incumbent's run_value.npz")
+    ag.add_argument("--runs-root", default="D:/spireline/referee/LAB/runs")
+    ag.add_argument("--gen", type=int, default=9, help="the self-play generation the donor maps come from")
+    ag.add_argument("--k", type=int, default=4, help="donor maps averaged per decision")
+    ag.add_argument("--donor-runs", type=int, default=1200)
+    ag.add_argument("--corpus", default=str(be.DEFAULT_CORPUS))
+    ag.add_argument("--exam-ids", default=None, help="the fifth's run ids (default: the hash rule)")
+    ag.add_argument("--max-runs", type=int, default=1000, help="a fixed seeded subset of the fifth's runs (0: all of them)")
+    ag.add_argument("--cache", default=str(SPEC_CACHE))
+    ag.add_argument("--rebuild-cache", action="store_true")
+    ag.add_argument("--fork", default=str(FORK), help="the fork tree whose rl/run_train scores the heads")
+    ag.add_argument("--w", type=float, default=W_WON)
+    ag.add_argument("--out", required=True)
+    ag.set_defaults(fn=cmd_agreement)
     a = ap.parse_args(argv)
     return a.fn(a)
 

@@ -214,6 +214,52 @@ def test_human_specs_for_the_exam() -> None:
                                    potion_used=["POTION.FIRE_POTION"])]) == Counter()
 
 
+def test_agreement_measures_are_paired_by_decision() -> None:
+    import boss_entry_exam as exam
+
+    p = exam.paired([1.0, 1.0, 0.0, 0.0], [1.0, 0.0, 0.0, 0.0])
+    assert (p["n"], p["candidate"], p["incumbent"], p["diff"]) == (4, 0.5, 0.25, 0.25) and abs(p["se"] - 0.25) < 1e-9
+    assert exam.paired([], [])["n"] == 0 and exam.paired([1.0, 0.0], [1.0, 0.0])["se"] == 0.0
+    card = {"top": 1, "human": 1, "ai_skip": False}
+    rest = {"ai_smith": True, "human_smith": False, "ai_skip": None}
+    assert exam.agree_flag(card, "card_reward") == 1.0 and exam.agree_flag(rest, "rest") == 0.0
+    inc = [("card_reward", card), ("card_reward", {"top": 0, "human": 1, "ai_skip": True}), ("rest", rest), ("rest", None)]
+    cand = [("card_reward", card), ("card_reward", card), ("rest", {"ai_smith": False, "human_smith": False, "ai_skip": None}), ("rest", rest)]
+    doc = exam.agreement_doc([cand, inc], ["candidate-0"])
+    assert doc["scored"] == 3 and doc["skipped_without_donor_maps"] == 1  # a decision any head could not score is left out of all
+    m = doc["candidates"][0]["measures"]
+    assert m["card_reward"]["n"] == 2 and m["card_reward"]["candidate"] == 1.0 and m["card_reward"]["incumbent"] == 0.5
+    assert m["rest"]["n"] == 1 and m["rest"]["diff"] == 1.0
+    assert doc["incumbent"]["agreement"] == {"card_reward": 0.5, "rest": 0.0}
+
+
+def test_the_exam_fifth_specs_are_read_once_and_cached(tmp_path) -> None:
+    import gzip
+    import json
+
+    import boss_entry_exam as exam
+
+    ids = exam.Ids({"STRIKE_IRONCLAD": 472, "DEFEND_IRONCLAD": 131, "BASH": 30, "ANGER": 13, "INFLAME": 10, "ARMAMENTS": 18,
+                    "TWIN_STRIKE": 99, "ASCENDERS_BANE": 1, "SHRUG_IT_OFF": 98}, {"BURNING_BLOOD": 36, "ANCHOR": 3}, {})
+    corpus = tmp_path / "runs.jsonl.gz"
+    with gzip.open(corpus, "wt", encoding="utf-8") as fh:
+        for rid in ("in-fifth", "outside"):
+            run = {**human_run(rid), "acts": ["ACT.OVERGROWTH", "ACT.HIVE"]}
+            run["players"][0]["deck"] = [{"id": "CARD.BASH"}]
+            fh.write(json.dumps(run, separators=(",", ":")) + "\n")
+    ids_file = tmp_path / "fifth.txt"
+    ids_file.write_text("in-fifth\n")
+    cache = tmp_path / "cache" / "specs.jsonl.gz"
+    got = exam.exam_specs(corpus, ids_file, cache, cards=CARDS, idm=ids)
+    assert list(got) == ["in-fifth"] and [s["type"] for s in got["in-fifth"]] == ["card_reward", "rest", "card_reward", "rest"]
+    assert cache.is_file()
+    again = exam.exam_specs(corpus, ids_file, cache, cards=CARDS, idm=ids)  # from the cache
+    assert again == got
+    ids_file.write_text("in-fifth\noutside\n")
+    wider = exam.exam_specs(corpus, ids_file, cache, cards=CARDS, idm=ids)  # another id list: the cache does not match
+    assert sorted(wider) == ["in-fifth", "outside"]
+
+
 def test_exam_table_from_rows(tmp_path) -> None:
     import json
 
