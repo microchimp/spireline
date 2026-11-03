@@ -1216,3 +1216,11 @@ Not started: generation 12's second attempt (D47: the full 8,000 exploring runs 
 `C:` disk watch (housekeeping, next week). Recorded 2026-11-03 20:45Z.
 
 **Addendum 2026-11-03 20:46Z:** the three workers were stopped one minute after starting: the orchestrator had misread the clock (they started at 20:45Z, fifteen minutes before the reset, not twelve hours), so their spending would have fallen into next week before the owner set its ceiling. Nothing was landed or left half-done. They restart at the reset under next week's ceiling on the owner's word. Usage at the stop 93 all / 64 Fable.
+
+## D51 · 2026-11-03 · Next week: ceiling 65; the three D50 items restart at the reset
+
+Owner in chat (20:5xZ): "Next week cap is at 65 and yes". The week of 2026-11-03 21:00Z runs under a ceiling of 65 in 100
+(new worker starts stop at 63), with D46 in force (model and effort by task, reports once, landings batched, the page at most
+twice a day). First starts at the reset, on the owner's yes: the always-on trainer's library move to c4401980 (after tonight's
+block ends, at a verdict line), the test funnel in the promotion path (tests only), and the sub-problem board. Then edition 37
+from tonight's block, and the rest of PLAN.md section 14 in its order. Recorded 2026-11-03 20:54Z.
