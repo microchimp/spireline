@@ -1,0 +1,927 @@
+{
+ "schema": 1,
+ "generated_utc": "2026-11-03T22:10:49Z",
+ "min_cell": 20,
+ "inputs": {
+  "night": "referee/LAB/nightly/2026-11-03",
+  "shards": {
+   "generation": 11,
+   "jobs": 7,
+   "runs": 950
+  }
+ },
+ "night": {
+  "date": "2026-11-03",
+  "agent": "g11",
+  "generation": 11,
+  "folder": "nightly/2026-11-03",
+  "real_ended": 1992,
+  "real_mean_floor": 23.4061,
+  "act1_boss_kill_of_reached": {
+   "k": 1046,
+   "n": 1852,
+   "value": 0.5647948164146869,
+   "se": 0.011520514891811703,
+   "source": "morning_report.json, real arm",
+   "date": "2026-11-03"
+  },
+  "act2_boss_kill_of_reached": {
+   "k": 63,
+   "n": 478,
+   "value": 0.13179916317991633,
+   "se": 0.015472214518370981,
+   "source": "morning_report.json, real arm",
+   "date": "2026-11-03"
+  }
+ },
+ "survival": {
+  "real": {
+   "a1.hallway": {
+    "k": 11121,
+    "n": 11175,
+    "value": 0.9951677852348993,
+    "se": 0.000655990428366671,
+    "source": "morning_report.json, real arm",
+    "date": "2026-11-03"
+   },
+   "a1.elite": {
+    "k": 885,
+    "n": 939,
+    "value": 0.9424920127795527,
+    "se": 0.007597489820473905,
+    "source": "morning_report.json, real arm",
+    "date": "2026-11-03"
+   },
+   "a1.boss": {
+    "k": 1045,
+    "n": 1850,
+    "value": 0.5648648648648649,
+    "se": 0.0115265275544171,
+    "source": "morning_report.json, real arm",
+    "date": "2026-11-03"
+   },
+   "a2.hallway": {
+    "k": 4054,
+    "n": 4398,
+    "value": 0.9217826284674853,
+    "se": 0.004048911236579047,
+    "source": "morning_report.json, real arm",
+    "date": "2026-11-03"
+   },
+   "a2.elite": {
+    "k": 435,
+    "n": 661,
+    "value": 0.6580937972768532,
+    "se": 0.018450012248932432,
+    "source": "morning_report.json, real arm",
+    "date": "2026-11-03"
+   },
+   "a2.boss": {
+    "k": 61,
+    "n": 475,
+    "value": 0.12842105263157894,
+    "se": 0.015350575910511333,
+    "source": "morning_report.json, real arm",
+    "date": "2026-11-03"
+   },
+   "a3.hallway": {
+    "k": 181,
+    "n": 210,
+    "value": 0.861904761904762,
+    "se": 0.023807256127837677,
+    "source": "morning_report.json, real arm",
+    "date": "2026-11-03"
+   },
+   "a3.elite": {
+    "k": 15,
+    "n": 35,
+    "value": 0.42857142857142855,
+    "se": 0.08364857768130284,
+    "source": "morning_report.json, real arm",
+    "date": "2026-11-03"
+   },
+   "a3.boss": {
+    "status": "suppressed",
+    "n": 11,
+    "source": "morning_report.json, real arm"
+   }
+  },
+  "emu": {
+   "a1.hallway": {
+    "k": 9776,
+    "n": 9834,
+    "value": 0.9941020947732357,
+    "se": 0.0007721457534309334,
+    "source": "morning_report.json, emu arm",
+    "date": "2026-11-03"
+   },
+   "a1.elite": {
+    "k": 901,
+    "n": 953,
+    "value": 0.9454354669464848,
+    "se": 0.00735740590163642,
+    "source": "morning_report.json, emu arm",
+    "date": "2026-11-03"
+   },
+   "a1.boss": {
+    "k": 1049,
+    "n": 1849,
+    "value": 0.5673336938885885,
+    "se": 0.011521986733846114,
+    "source": "morning_report.json, emu arm",
+    "date": "2026-11-03"
+   },
+   "a2.hallway": {
+    "k": 3581,
+    "n": 3832,
+    "value": 0.9344989561586639,
+    "se": 0.003996692823096348,
+    "source": "morning_report.json, emu arm",
+    "date": "2026-11-03"
+   },
+   "a2.elite": {
+    "k": 443,
+    "n": 682,
+    "value": 0.6495601173020528,
+    "se": 0.018269398612934515,
+    "source": "morning_report.json, emu arm",
+    "date": "2026-11-03"
+   },
+   "a2.boss": {
+    "k": 57,
+    "n": 486,
+    "value": 0.11728395061728394,
+    "se": 0.014595254425272946,
+    "source": "morning_report.json, emu arm",
+    "date": "2026-11-03"
+   },
+   "a3.hallway": {
+    "k": 154,
+    "n": 174,
+    "value": 0.8850574712643678,
+    "se": 0.02417973215859596,
+    "source": "morning_report.json, emu arm",
+    "date": "2026-11-03"
+   },
+   "a3.elite": {
+    "k": 14,
+    "n": 39,
+    "value": 0.358974358974359,
+    "se": 0.07681342173272795,
+    "source": "morning_report.json, emu arm",
+    "date": "2026-11-03"
+   },
+   "a3.boss": {
+    "status": "suppressed",
+    "n": 9,
+    "source": "morning_report.json, emu arm"
+   }
+  }
+ },
+ "route": {
+  "a1": {
+   "n": 1849,
+   "source": "referee/LAB/nightly/2026-11-03/g11-emu/runs.jsonl, emulator arm",
+   "date": "2026-11-03",
+   "elites": 0.4629529475392104,
+   "fights": 5.4223904813412656,
+   "rests": 3.289886425094646,
+   "shops": 1.3628988642509465
+  },
+  "a2": {
+   "n": 486,
+   "source": "referee/LAB/nightly/2026-11-03/g11-emu/runs.jsonl, emulator arm",
+   "date": "2026-11-03",
+   "elites": 0.6563786008230452,
+   "fights": 4.641975308641975,
+   "rests": 3.078189300411523,
+   "shops": 1.3724279835390947
+  }
+ },
+ "picks": {
+  "a1": {
+   "n": 1852,
+   "source": "referee/LAB/nightly/2026-11-03/g11/runs.jsonl, real arm",
+   "date": "2026-11-03",
+   "taken": 5.295896328293736,
+   "skipped": 1.1695464362850971,
+   "skip_rate": 0.18089193252046099
+  },
+  "a2": {
+   "n": 478,
+   "source": "referee/LAB/nightly/2026-11-03/g11/runs.jsonl, real arm",
+   "date": "2026-11-03",
+   "taken": 5.410041841004184,
+   "skipped": 0.4100418410041841,
+   "skip_rate": 0.0704529115744069
+  }
+ },
+ "ai_generation": 11,
+ "ai_door": {
+  "a1": {
+   "n": 856,
+   "source": "self-play shards of generation 11 (7 jobs, no exploration), emulator",
+   "date": "2026-11-03",
+   "kill": {
+    "k": 477,
+    "n": 856,
+    "value": 0.5572429906542056,
+    "se": 0.016977281411835007,
+    "source": "self-play shards of generation 11 (7 jobs, no exploration), emulator",
+    "date": "2026-11-03"
+   },
+   "hp_frac": 0.7757590831304233,
+   "relics": 4.18107476635514,
+   "potions": 0.8002336448598131,
+   "gold": 100.37032710280374,
+   "deck": 18.72897196261682,
+   "upgraded": 2.744158878504673,
+   "attack": 11.123831775700934,
+   "skill": 5.088785046728972,
+   "elite_take_rate": 0.19091796875,
+   "pot_taken": 2.5408878504672896,
+   "pot_left": 0.46845794392523366,
+   "shop_visits": 1.602803738317757,
+   "shop_cards": 1.175233644859813,
+   "shop_relics": 0.1133177570093458,
+   "shop_removals": 0.1366822429906542,
+   "skip_rate": 0.1705342687533729,
+   "elites": 0.4567757009345794,
+   "fights": 5.429906542056075
+  },
+  "a2": {
+   "n": 227,
+   "source": "self-play shards of generation 11 (7 jobs, no exploration), emulator",
+   "date": "2026-11-03",
+   "kill": {
+    "k": 30,
+    "n": 227,
+    "value": 0.13215859030837004,
+    "se": 0.022477859622271997,
+    "source": "self-play shards of generation 11 (7 jobs, no exploration), emulator",
+    "date": "2026-11-03"
+   },
+   "hp_frac": 0.5731908744439872,
+   "relics": 8.14977973568282,
+   "potions": 0.5814977973568282,
+   "gold": 102.17180616740089,
+   "deck": 27.030837004405285,
+   "upgraded": 5.977973568281938,
+   "attack": 15.581497797356828,
+   "skill": 7.8766519823788546,
+   "elite_take_rate": 0.3477406679764244,
+   "pot_taken": 2.039647577092511,
+   "pot_left": 0.8149779735682819,
+   "shop_visits": 1.497797356828194,
+   "shop_cards": 1.2026431718061674,
+   "shop_relics": 0.3436123348017621,
+   "shop_removals": 0.15859030837004406,
+   "skip_rate": 0.08217168011738811,
+   "elites": 0.7797356828193832,
+   "fights": 4.8017621145374445
+  }
+ },
+ "potion_use": {
+  "ai": {
+   "a1.boss": {
+    "fights": 856,
+    "with_potion": 0.6051401869158879,
+    "observed_after": 0.5572429906542056,
+    "source": "self-play shards of generation 11 (7 jobs, no exploration), emulator",
+    "date": "2026-11-03",
+    "note": "use is seen only in fights that were won (the run goes on); a lost fight has no state after it",
+    "used_when_held": {
+     "k": 331,
+     "n": 335,
+     "value": 0.9880597014925373,
+     "se": 0.005934399535572838,
+     "source": "self-play shards of generation 11 (7 jobs, no exploration), emulator",
+     "date": "2026-11-03"
+    },
+    "potions_per_use_fight": 1.3402985074626865
+   },
+   "a1.elite": {
+    "fights": 449,
+    "with_potion": 0.6481069042316259,
+    "observed_after": 0.9175946547884187,
+    "source": "self-play shards of generation 11 (7 jobs, no exploration), emulator",
+    "date": "2026-11-03",
+    "note": "use is seen only in fights that were won (the run goes on); a lost fight has no state after it",
+    "used_when_held": {
+     "k": 260,
+     "n": 272,
+     "value": 0.9558823529411765,
+     "se": 0.012451565026370912,
+     "source": "self-play shards of generation 11 (7 jobs, no exploration), emulator",
+     "date": "2026-11-03"
+    },
+    "potions_per_use_fight": 1.2463235294117647
+   },
+   "a1.hallway": {
+    "fights": 5409,
+    "with_potion": 0.49584026622296173,
+    "observed_after": 0.9914956553891662,
+    "source": "self-play shards of generation 11 (7 jobs, no exploration), emulator",
+    "date": "2026-11-03",
+    "note": "use is seen only in fights that were won (the run goes on); a lost fight has no state after it",
+    "used_when_held": {
+     "k": 1597,
+     "n": 2666,
+     "value": 0.5990247561890473,
+     "se": 0.009491854953103219,
+     "source": "self-play shards of generation 11 (7 jobs, no exploration), emulator",
+     "date": "2026-11-03"
+    },
+    "potions_per_use_fight": 0.6807951987997
+   },
+   "a2.boss": {
+    "fights": 227,
+    "with_potion": 0.4889867841409692,
+    "observed_after": 0.13215859030837004,
+    "source": "self-play shards of generation 11 (7 jobs, no exploration), emulator",
+    "date": "2026-11-03",
+    "note": "use is seen only in fights that were won (the run goes on); a lost fight has no state after it"
+   },
+   "a2.elite": {
+    "fights": 332,
+    "with_potion": 0.5963855421686747,
+    "observed_after": 0.7048192771084337,
+    "source": "self-play shards of generation 11 (7 jobs, no exploration), emulator",
+    "date": "2026-11-03",
+    "note": "use is seen only in fights that were won (the run goes on); a lost fight has no state after it",
+    "used_when_held": {
+     "k": 143,
+     "n": 146,
+     "value": 0.9794520547945206,
+     "se": 0.01174084521044213,
+     "source": "self-play shards of generation 11 (7 jobs, no exploration), emulator",
+     "date": "2026-11-03"
+    },
+    "potions_per_use_fight": 1.2054794520547945
+   },
+   "a2.hallway": {
+    "fights": 2005,
+    "with_potion": 0.5177057356608479,
+    "observed_after": 0.9246882793017457,
+    "source": "self-play shards of generation 11 (7 jobs, no exploration), emulator",
+    "date": "2026-11-03",
+    "note": "use is seen only in fights that were won (the run goes on); a lost fight has no state after it",
+    "used_when_held": {
+     "k": 800,
+     "n": 981,
+     "value": 0.8154943934760448,
+     "se": 0.012384565370413674,
+     "source": "self-play shards of generation 11 (7 jobs, no exploration), emulator",
+     "date": "2026-11-03"
+    },
+    "potions_per_use_fight": 1.0642201834862386
+   },
+   "a3.boss": {
+    "status": "suppressed",
+    "n": 3,
+    "source": "self-play shards of generation 11 (7 jobs, no exploration), emulator"
+   },
+   "a3.elite": {
+    "status": "suppressed",
+    "n": 18,
+    "source": "self-play shards of generation 11 (7 jobs, no exploration), emulator"
+   },
+   "a3.hallway": {
+    "fights": 94,
+    "with_potion": 0.4574468085106383,
+    "observed_after": 0.8404255319148937,
+    "source": "self-play shards of generation 11 (7 jobs, no exploration), emulator",
+    "date": "2026-11-03",
+    "note": "use is seen only in fights that were won (the run goes on); a lost fight has no state after it",
+    "used_when_held": {
+     "k": 32,
+     "n": 38,
+     "value": 0.8421052631578947,
+     "se": 0.05915278809989647,
+     "source": "self-play shards of generation 11 (7 jobs, no exploration), emulator",
+     "date": "2026-11-03"
+    },
+    "potions_per_use_fight": 0.9473684210526315
+   }
+  },
+  "ai_budget": {
+   "n": 856,
+   "source": "self-play shards of generation 11 (7 jobs, no exploration), emulator",
+   "date": "2026-11-03",
+   "used_hallway": 1.9521028037383177,
+   "used_elite": 0.37616822429906543,
+   "held_at_door": 0.8002336448598131,
+   "hallway_share_of_used": 0.8384345208228801,
+   "gained": 3.1623831775700935,
+   "dropped": 2.3726635514018692,
+   "drops_explained_by_fights": 0.9812900049236828
+  }
+ },
+ "human_door": {
+  "a1": {
+   "n": 2155,
+   "source": "referee/backlog/boss-entry/human.jsonl.gz, exam fifth",
+   "date": "2026-11-02",
+   "kill": {
+    "k": 1611,
+    "n": 2155,
+    "value": 0.7475638051044083,
+    "se": 0.009357854931048352,
+    "source": "referee/backlog/boss-entry/human.jsonl.gz, exam fifth",
+    "date": "2026-11-02"
+   },
+   "hp_frac": 0.673842616249235,
+   "relics": 5.993967517401392,
+   "potions": 1.5693735498839907,
+   "gold": 149.98097447795823,
+   "deck": 19.614385150812065,
+   "upgraded": 2.894199535962877,
+   "attack": 9.477030162412992,
+   "skill": 7.62691415313225,
+   "pot_taken": 3.5503480278422272,
+   "pot_left": 0.765661252900232,
+   "shop_visits": 0.9160092807424594,
+   "shop_cards": 0.9902552204176334,
+   "shop_relics": 0.2802784222737819,
+   "shop_removals": 0.21299303944315545,
+   "skip_rate": 0.14721845318860244,
+   "elites": 1.9522041763341067,
+   "fights": 6.604176334106728
+  },
+  "a2": {
+   "n": 1142,
+   "source": "referee/backlog/boss-entry/human.jsonl.gz, exam fifth",
+   "date": "2026-11-02",
+   "kill": {
+    "k": 865,
+    "n": 1142,
+    "value": 0.7574430823117339,
+    "se": 0.012683782389349791,
+    "source": "referee/backlog/boss-entry/human.jsonl.gz, exam fifth",
+    "date": "2026-11-02"
+   },
+   "hp_frac": 0.7188799201135309,
+   "relics": 11.52276707530648,
+   "potions": 1.8537653239929948,
+   "gold": 185.715411558669,
+   "deck": 26.298598949211907,
+   "upgraded": 6.947460595446585,
+   "attack": 11.367775831873905,
+   "skill": 11.09369527145359,
+   "pot_taken": 3.407180385288967,
+   "pot_left": 0.9877408056042032,
+   "shop_visits": 1.084938704028021,
+   "shop_cards": 1.0192644483362523,
+   "shop_relics": 0.5989492119089317,
+   "shop_removals": 0.361646234676007,
+   "skip_rate": 0.3411288215312255,
+   "elites": 1.746059544658494,
+   "fights": 5.783712784588442
+  }
+ },
+ "human_fights": {
+  "runs": 2924,
+  "survival": {
+   "a1.boss": {
+    "k": 1612,
+    "n": 2156,
+    "value": 0.7476808905380334,
+    "se": 0.009354247010563775,
+    "source": "human corpus, exam fifth, one pass (tools/subproblems.py humans)"
+   },
+   "a1.elite": {
+    "k": 4636,
+    "n": 5238,
+    "value": 0.8850706376479572,
+    "se": 0.004406783535261354,
+    "source": "human corpus, exam fifth, one pass (tools/subproblems.py humans)"
+   },
+   "a1.hallway": {
+    "k": 12834,
+    "n": 12956,
+    "value": 0.990583513430071,
+    "se": 0.0008485052304883275,
+    "source": "human corpus, exam fifth, one pass (tools/subproblems.py humans)"
+   },
+   "a2.boss": {
+    "k": 865,
+    "n": 1142,
+    "value": 0.7574430823117339,
+    "se": 0.012683782389349791,
+    "source": "human corpus, exam fifth, one pass (tools/subproblems.py humans)"
+   },
+   "a2.elite": {
+    "k": 2152,
+    "n": 2429,
+    "value": 0.8859613009468917,
+    "se": 0.006449406423531103,
+    "source": "human corpus, exam fifth, one pass (tools/subproblems.py humans)"
+   },
+   "a2.hallway": {
+    "k": 6009,
+    "n": 6176,
+    "value": 0.9729598445595855,
+    "se": 0.0020639463618390597,
+    "source": "human corpus, exam fifth, one pass (tools/subproblems.py humans)"
+   }
+  },
+  "potion_use": {
+   "a1.boss": {
+    "used_when_held": {
+     "k": 1093,
+     "n": 1495,
+     "value": 0.7311036789297659,
+     "se": 0.011467303805981627,
+     "source": "human corpus, exam fifth, one pass (tools/subproblems.py humans)"
+    }
+   },
+   "a1.elite": {
+    "used_when_held": {
+     "k": 2703,
+     "n": 4080,
+     "value": 0.6625,
+     "se": 0.007402863615242574,
+     "source": "human corpus, exam fifth, one pass (tools/subproblems.py humans)"
+    }
+   },
+   "a1.hallway": {
+    "used_when_held": {
+     "k": 1645,
+     "n": 7276,
+     "value": 0.2260857614073667,
+     "se": 0.004903844374609302,
+     "source": "human corpus, exam fifth, one pass (tools/subproblems.py humans)"
+    }
+   },
+   "a2.boss": {
+    "used_when_held": {
+     "k": 557,
+     "n": 809,
+     "value": 0.688504326328801,
+     "se": 0.016281900093335265,
+     "source": "human corpus, exam fifth, one pass (tools/subproblems.py humans)"
+    }
+   },
+   "a2.elite": {
+    "used_when_held": {
+     "k": 1276,
+     "n": 1989,
+     "value": 0.6415284062342886,
+     "se": 0.010752709860579005,
+     "source": "human corpus, exam fifth, one pass (tools/subproblems.py humans)"
+    }
+   },
+   "a2.hallway": {
+    "used_when_held": {
+     "k": 1559,
+     "n": 5115,
+     "value": 0.3047898338220919,
+     "se": 0.006436288114755842,
+     "source": "human corpus, exam fifth, one pass (tools/subproblems.py humans)"
+    }
+   }
+  },
+  "potion_budget": {
+   "n": 2155,
+   "source": "human corpus, exam fifth, one pass (tools/subproblems.py humans)",
+   "date": "",
+   "used_hallway": 0.6408352668213457,
+   "used_elite": 1.3294663573085848,
+   "held_at_door": 1.5693735498839907,
+   "hallway_share_of_used": 0.3252472915685351
+  },
+  "source": "human corpus, exam fifth, one pass (tools/subproblems.py humans)",
+  "note": "a fight is survived unless it is the last room of a run killed by an encounter; potions held are rebuilt from the record",
+  "date": "2026-11-03"
+ },
+ "board": {
+  "versions": [
+   {
+    "version": "v1",
+    "players": [
+     "c0001"
+    ],
+    "games": 2000,
+    "starts": 200,
+    "replays_per_start": 10.0,
+    "overall": {
+     "k": 914,
+     "n": 2000,
+     "value": 0.457,
+     "se": 0.011138918259867068,
+     "source": "referee/gym-loop/board/fp-v1.jsonl"
+    },
+    "starts_never_won": 63,
+    "starts_always_won": 48,
+    "potions": {
+     "games_with_potion": 1190,
+     "used_any": {
+      "k": 1097,
+      "n": 1190,
+      "value": 0.9218487394957983,
+      "se": 0.007780801679646407,
+      "source": "referee/gym-loop/board/fp-v1.jsonl"
+     },
+     "won_with_potion": {
+      "k": 602,
+      "n": 1190,
+      "value": 0.5058823529411764,
+      "se": 0.014493272792525186,
+      "source": "referee/gym-loop/board/fp-v1.jsonl"
+     }
+    }
+   },
+   {
+    "version": "v2",
+    "players": [
+     "c0019"
+    ],
+    "games": 2000,
+    "starts": 200,
+    "replays_per_start": 10.0,
+    "overall": {
+     "k": 941,
+     "n": 2000,
+     "value": 0.4705,
+     "se": 0.011160863541859115,
+     "source": "referee/gym-loop/board/fp-v2.jsonl"
+    },
+    "starts_never_won": 61,
+    "starts_always_won": 53,
+    "potions": {
+     "games_with_potion": 1190,
+     "used_any": {
+      "k": 1075,
+      "n": 1190,
+      "value": 0.9033613445378151,
+      "se": 0.008565105371648011,
+      "source": "referee/gym-loop/board/fp-v2.jsonl"
+     },
+     "won_with_potion": {
+      "k": 626,
+      "n": 1190,
+      "value": 0.5260504201680672,
+      "se": 0.014474590184734862,
+      "source": "referee/gym-loop/board/fp-v2.jsonl"
+     }
+    }
+   }
+  ],
+  "latest": {
+   "version": "v2",
+   "players": [
+    "c0019"
+   ],
+   "games": 2000,
+   "starts": 200,
+   "replays_per_start": 10.0,
+   "overall": {
+    "k": 941,
+    "n": 2000,
+    "value": 0.4705,
+    "se": 0.011160863541859115,
+    "source": "referee/gym-loop/board/fp-v2.jsonl"
+   },
+   "starts_never_won": 61,
+   "starts_always_won": 53,
+   "potions": {
+    "games_with_potion": 1190,
+    "used_any": {
+     "k": 1075,
+     "n": 1190,
+     "value": 0.9033613445378151,
+     "se": 0.008565105371648011,
+     "source": "referee/gym-loop/board/fp-v2.jsonl"
+    },
+    "won_with_potion": {
+     "k": 626,
+     "n": 1190,
+     "value": 0.5260504201680672,
+     "se": 0.014474590184734862,
+     "source": "referee/gym-loop/board/fp-v2.jsonl"
+    }
+   }
+  }
+ },
+ "gym_kinds": {
+  "player": "v2",
+  "config": "a3-v1",
+  "written": "2026-11-03T01:05:15Z",
+  "source": "referee/gym-loop/starts/weights.json",
+  "note": "the incumbent's games on training starts of each kind (the loop's start mix), not the board's fixed set",
+  "kinds": {
+   "act1-boss": {
+    "k": 54,
+    "n": 100,
+    "value": 0.54,
+    "se": 0.04983974317750845,
+    "source": "referee/gym-loop/starts/weights.json",
+    "date": "2026-11-03"
+   },
+   "act1-elite": {
+    "k": 90,
+    "n": 100,
+    "value": 0.9,
+    "se": 0.03,
+    "source": "referee/gym-loop/starts/weights.json",
+    "date": "2026-11-03"
+   },
+   "act1-hallway": {
+    "k": 100,
+    "n": 100,
+    "value": 1.0,
+    "se": 0.0,
+    "source": "referee/gym-loop/starts/weights.json",
+    "date": "2026-11-03"
+   },
+   "act2-boss": {
+    "k": 9,
+    "n": 100,
+    "value": 0.09,
+    "se": 0.02861817604250837,
+    "source": "referee/gym-loop/starts/weights.json",
+    "date": "2026-11-03"
+   },
+   "act2-elite": {
+    "k": 62,
+    "n": 100,
+    "value": 0.62,
+    "se": 0.048538644398046386,
+    "source": "referee/gym-loop/starts/weights.json",
+    "date": "2026-11-03"
+   },
+   "act2-hallway": {
+    "k": 94,
+    "n": 100,
+    "value": 0.94,
+    "se": 0.023748684174075843,
+    "source": "referee/gym-loop/starts/weights.json",
+    "date": "2026-11-03"
+   }
+  }
+ },
+ "exam": {
+  "runs": 2968,
+  "decisions": 40593,
+  "source": "referee/backlog/boss-entry/exam-rows.json",
+  "date": "2026-11-02",
+  "card_a1": {
+   "n": 19733,
+   "same_pick": {
+    "k": 6496,
+    "n": 19733,
+    "value": 0.3291947499113161,
+    "se": 0.0033452464517041702,
+    "source": "referee/backlog/boss-entry/exam-rows.json",
+    "date": "2026-11-02"
+   },
+   "first_or_second": {
+    "k": 11021,
+    "n": 19733,
+    "value": 0.5585060558455379,
+    "se": 0.003534921393190809,
+    "source": "referee/backlog/boss-entry/exam-rows.json",
+    "date": "2026-11-02"
+   },
+   "human_skip": {
+    "k": 2859,
+    "n": 19733,
+    "value": 0.1448842041250697,
+    "se": 0.0025056847293930063,
+    "source": "referee/backlog/boss-entry/exam-rows.json",
+    "date": "2026-11-02"
+   },
+   "ai_skip": {
+    "k": 2774,
+    "n": 19733,
+    "value": 0.1405766989307252,
+    "se": 0.002474364491249818,
+    "source": "referee/backlog/boss-entry/exam-rows.json",
+    "date": "2026-11-02"
+   },
+   "chance": 0.24674712973755186,
+   "regret_floors": 0.37206194853918856
+  },
+  "rest_a1": {
+   "n": 7625,
+   "same_choice": {
+    "k": 4603,
+    "n": 7625,
+    "value": 0.603672131147541,
+    "se": 0.005601546498676038,
+    "source": "referee/backlog/boss-entry/exam-rows.json",
+    "date": "2026-11-02"
+   },
+   "human_upgrade": {
+    "k": 4400,
+    "n": 7625,
+    "value": 0.5770491803278689,
+    "se": 0.0056575894051112165,
+    "source": "referee/backlog/boss-entry/exam-rows.json",
+    "date": "2026-11-02"
+   },
+   "ai_upgrade": {
+    "k": 3332,
+    "n": 7625,
+    "value": 0.43698360655737706,
+    "se": 0.0056803247905002525,
+    "source": "referee/backlog/boss-entry/exam-rows.json",
+    "date": "2026-11-02"
+   }
+  },
+  "card_a2": {
+   "n": 9439,
+   "same_pick": {
+    "k": 2407,
+    "n": 9439,
+    "value": 0.2550058268884416,
+    "se": 0.004486301915585034,
+    "source": "referee/backlog/boss-entry/exam-rows.json",
+    "date": "2026-11-02"
+   },
+   "first_or_second": {
+    "k": 4722,
+    "n": 9439,
+    "value": 0.500264858565526,
+    "se": 0.005146440432052355,
+    "source": "referee/backlog/boss-entry/exam-rows.json",
+    "date": "2026-11-02"
+   },
+   "human_skip": {
+    "k": 3194,
+    "n": 9439,
+    "value": 0.3383833033160292,
+    "se": 0.004870176470411152,
+    "source": "referee/backlog/boss-entry/exam-rows.json",
+    "date": "2026-11-02"
+   },
+   "ai_skip": {
+    "k": 704,
+    "n": 9439,
+    "value": 0.07458417205212417,
+    "se": 0.002704137713297599,
+    "source": "referee/backlog/boss-entry/exam-rows.json",
+    "date": "2026-11-02"
+   },
+   "chance": 0.24071185104582618,
+   "regret_floors": 0.1504036042735865
+  },
+  "rest_a2": {
+   "n": 3796,
+   "same_choice": {
+    "k": 2343,
+    "n": 3796,
+    "value": 0.6172286617492097,
+    "se": 0.007889139686343832,
+    "source": "referee/backlog/boss-entry/exam-rows.json",
+    "date": "2026-11-02"
+   },
+   "human_upgrade": {
+    "k": 1950,
+    "n": 3796,
+    "value": 0.5136986301369864,
+    "se": 0.008112297114327089,
+    "source": "referee/backlog/boss-entry/exam-rows.json",
+    "date": "2026-11-02"
+   },
+   "ai_upgrade": {
+    "k": 1915,
+    "n": 3796,
+    "value": 0.5044783983140148,
+    "se": 0.008115017884495708,
+    "source": "referee/backlog/boss-entry/exam-rows.json",
+    "date": "2026-11-02"
+   }
+  }
+ },
+ "agreement": {
+  "source": "referee/backlog/boss-entry/agreement.json",
+  "runs": 1000,
+  "scored": 14013,
+  "incumbent": {
+   "card_reward": 0.30599682287529784,
+   "rest": 0.6074600355239786
+  },
+  "candidates": [
+   {
+    "label": "candidate-0",
+    "measures": {
+     "card_reward": {
+      "n": 10072,
+      "candidate": 0.30599682287529784,
+      "incumbent": 0.30599682287529784,
+      "diff": 0.0,
+      "se": 0.0
+     },
+     "rest": {
+      "n": 3941,
+      "candidate": 0.6074600355239786,
+      "incumbent": 0.6074600355239786,
+      "diff": 0.0,
+      "se": 0.0
+     }
+    }
+   }
+  ]
+ }
+}
