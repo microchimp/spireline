@@ -469,3 +469,39 @@ flight, the next brief).
 - **lockstep:** the emulator replaying the referee's run decision by decision from the same seed, compared by state hash.
 - **G:** the transfer gap, the agent's emulator win rate minus its real-game win rate on paired seeds.
 - **PLAY / QUICK / DEEP / LABEL:** the searcher's four budgets (`DESIGN.md` section 4.1).
+
+## 14. The week of 2026-11-03: sub-problems, the funnel, the engine lane
+
+Written 2026-11-03 02:23Z at the close of the reset week (D45 to D48), for the fresh orchestrator conversation that starts at the reset
+(D46). Premise, from the diagnostic and the boss-door measure: the copy of the game no longer limits the score; the gap to
+humans is the boss fights (52 in 100 won at the first boss against 74) and Act 2 preparation (route, potions, relics, card
+picks); the process tests one candidate a day. Generation 11 (the trainer's fight player in the exam agent) is the exam agent:
+23.4 floors on its first real night, one floor and four first-boss points above generation 9.
+
+In order, each with its owner model and estimate (D46: Sonnet measures and builds, Opus decides, Haiku checks):
+
+1. **The sub-problem board** (Sonnet, about 1 point). Six pieces, each with its current number, the human number, a fast test
+   on the copy that runs in minutes, and an owner: the first-boss fight (the fight board's 200 boss starts); Act 2 fights by
+   enemy kind (the survival table); the route (elites fought before the first boss, 0.45 against 1.95); card picks and skips
+   (the per-decision exam: 33 in 100 matches, chance 25; skips 7 against 34 in Act 2); potions (half the human count at the
+   doors, use unmeasured); shops and relics. A piece lands when its number improves and the 2,000-seed block does not fall.
+2. **The funnel** (Sonnet, about 1.5). Before any block: the ranking check on held-out decisions (D47); then a 200-seed smoke
+   block; then the paired block run sequentially, stopping as soon as the sign is certain either way; the full 2,000-seed
+   block on fresh seeds stays the final gate. Practice runs as the filler (D48) so data is ready when a recipe is.
+3. **The engine lane** (Opus, 2 to 4 points plus builds and byte-proofs), in order: the Pillage hang (draw-until with only
+   Attacks left; repro in `referee/backlog/hung-runs-2026-11-02.md`, every other draw-until use checked with it); core2's fight
+   step (0.54 ms against the old engine's 0.18; then training moves onto core2); the largest remaining bucket.
+4. **The second run-planner attempt** (Sonnet, about 1.5), only after item 2's ranking check: the fighter-matched V_run on the
+   full 8,000 exploring runs from the filler, beta tuned; generation 12 attempt 2 of 2.
+5. **The always-on trainer** (Sonnet, about 0.5): gate a checkpoint only when its held-out loss beats the incumbent's (about
+   a quarter more practice a day); the human-run fight starts (D38) as a lead with what they need (worker E's line of 11-02).
+6. **The routine to scripts** (Sonnet, under 1): the night's morning report and the edition's figures from a script, checked by
+   a Haiku worker; the orchestrator publishes.
+7. **Housekeeping** (Haiku or the orchestrator): delete `referee/runs.old-2026-11-03`, `corpus.old-…` and `refset.old-…`
+   after one clean night on the SSD junctions; a disk watch for `C:` (the runner's guard watches `D:` only; `C:` gains about
+   13 GB a week); trace which files the practice workers write and fold (about 80 GB a day of churn); fix-info on the
+   refused-move crash kind (9 rows in about 4,900 since 10-30) and the shop-screen loop (seed Q32FCPEC9U).
+
+What decides: the nightly real-game block (500 runs; 2,000 the night after a promotion), the fight board, the per-decision
+exam, the lab's clock page. Budget: the owner sets the week's ceiling at the reset; with D46 in force the orchestrator expects
+about 60 to 70 for the list above. Not changed: the exam's size, the final block's 2,000 fresh seeds, the night driver.
