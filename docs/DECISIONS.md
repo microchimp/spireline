@@ -1214,3 +1214,5 @@ job's promotion path, tests only, no block run today; (3) the sub-problem board 
 current and human numbers, fast tests and owners, as `docs/SUBPROBLEMS.md` with the script that refreshes its numbers.
 Not started: generation 12's second attempt (D47: the full 8,000 exploring runs first, next week), the churn trace and the
 `C:` disk watch (housekeeping, next week). Recorded 2026-11-03 20:45Z.
+
+**Addendum 2026-11-03 20:46Z:** the three workers were stopped one minute after starting: the orchestrator had misread the clock (they started at 20:45Z, fifteen minutes before the reset, not twelve hours), so their spending would have fallen into next week before the owner set its ceiling. Nothing was landed or left half-done. They restart at the reset under next week's ceiling on the owner's word. Usage at the stop 93 all / 64 Fable.
