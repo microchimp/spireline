@@ -1200,3 +1200,17 @@ must fail it and generation 11's head pass; (3) the always-on trainer's gate pre
 gate per six hours (Sonnet, about 0.5; sweep finding 5); (4) the night's morning report as a script, tested on the last two
 nights against the lane's reports, not replacing the lane tonight (Sonnet, under 1; D46 item 4). Edition 37 after tonight's
 block. Recorded 2026-11-03 04:57Z.
+
+## D50 · 2026-11-03 · The rest of the week's allowance, with a margin
+
+Owner in chat (08:5xZ): "Use as much compute as you can before the reset but not go over". Usage about 93 all / 63 Fable;
+the reset is 21:00Z. **Decisions (orchestrator):** three items from PLAN.md section 14 start together on disjoint files,
+each with a hard budget, new starts stop here, and the orchestrator keeps about two points of margin so the allowance is
+never exhausted before the reset (an exhausted allowance would also stop the night lane): (1) the always-on trainer's
+library move to fork main c4401980, the Hellraiser fix (Sonnet, 0.5; at a verdict line, publish, relaunch, the
+incumbent's games replayed on the new tag); (2) the test funnel (Sonnet, 1.5): a 200-seed smoke block and the paired block
+run sequentially with an early stop either way, the full 2,000-seed fresh-seed block kept as the final gate, in the train
+job's promotion path, tests only, no block run today; (3) the sub-problem board (Sonnet, 0.8): the six pieces with their
+current and human numbers, fast tests and owners, as `docs/SUBPROBLEMS.md` with the script that refreshes its numbers.
+Not started: generation 12's second attempt (D47: the full 8,000 exploring runs first, next week), the churn trace and the
+`C:` disk watch (housekeeping, next week). Recorded 2026-11-03 20:45Z.
