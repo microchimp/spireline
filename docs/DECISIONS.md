@@ -1187,3 +1187,16 @@ is switched on and off by hand (D43 paused it).
    night, together with D's and the accounting line's. The engine's fight-step speed (core2, 3x the old engine's cost) is a
    separate lane, next week. The budget: the owner asked what 90 in 100 would buy and then gave this word; the orchestrator
    reads that as headroom to 90 for this work and the night's follow-up, stopping new starts at 89. Recorded 2026-11-02 22:22Z.
+
+## D49 · 2026-11-03 · Ceiling 95, then stop: four items before the reset
+
+Owner in chat (02:2xZ): "okay use up to 95 then stop". Usage 86 all / 61 Fable at 02:22Z; the reset is 2026-11-03 21:00Z.
+**Decisions (orchestrator):** four workers start at once on disjoint files, new starts stop at 94, nothing after them:
+(1) the Pillage hang in the copy (Opus, about 2.5 points: the draw-until mechanism made to stop when no eligible card
+remains, as the game does, every other draw-until use checked, the three seeds as tests, build, Python gate, byte-proof,
+the engine-edit regeneration before the gate; landed before 19:00Z so tonight's library carries it, else after the night);
+(2) the ranking check that joins the keep test before any V_run block (Sonnet, about 1; D47): generation 12's refused fit
+must fail it and generation 11's head pass; (3) the always-on trainer's gate pre-filter by held-out loss with a floor of one
+gate per six hours (Sonnet, about 0.5; sweep finding 5); (4) the night's morning report as a script, tested on the last two
+nights against the lane's reports, not replacing the lane tonight (Sonnet, under 1; D46 item 4). Edition 37 after tonight's
+block. Recorded 2026-11-03 04:57Z.
