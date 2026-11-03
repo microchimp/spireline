@@ -1,0 +1,27 @@
+[referee] run decision 0 map x
+[INFO] Creating NCombatRoom (synthetic) encounter=JAW_WORM_NORMAL.
+[referee] run decision 1 combat x
+[INFO] Creating NCombatRoom (synthetic) encounter=CULTISTS_WEAK.
+[referee] run decision 2 combat x
+[referee] run SEED0000 ended: death after 100 decisions, floor 10
+[referee] run decision 0 map x
+[INFO] Creating NCombatRoom (synthetic) encounter=JAW_WORM_NORMAL.
+[referee] run decision 1 combat x
+[INFO] Creating NCombatRoom (synthetic) encounter=NOB_ELITE.
+[referee] run decision 2 combat x
+[INFO] Creating NCombatRoom (synthetic) encounter=GUARDIAN_BOSS.
+[referee] run decision 3 combat x
+[INFO] Creating NCombatRoom (synthetic) encounter=SLIMES_WEAK.
+[referee] run decision 4 combat x
+[referee] run decision 5 event x
+[referee] run SEED0001 ended: death after 120 decisions, floor 17
+[referee] run decision 0 map x
+[INFO] Creating NCombatRoom (synthetic) encounter=JAW_WORM_NORMAL.
+[referee] run decision 1 combat x
+[INFO] Creating NCombatRoom (synthetic) encounter=MYSTERY_EVENT_ENCOUNTER.
+[referee] run decision 2 combat x
+[INFO] Creating NCombatRoom (synthetic) encounter=OVERGROWTH_CRAWLERS.
+[referee] run decision 3 combat x
+[INFO] Creating NCombatRoom (synthetic) encounter=GUARDIAN_BOSS.
+[referee] run decision 4 combat x
+[referee] run SEED0002 ended: death after 140 decisions, floor 25

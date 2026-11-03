@@ -1,0 +1,46 @@
+{
+ "character": "IRONCLAD",
+ "engine": "core2",
+ "runs": 5,
+ "crashes": 1,
+ "wins": 0,
+ "mean_floor": 19.8,
+ "decisions": 500,
+ "diverged_decisions": 0,
+ "reanchors": 0,
+ "reanchor_failed": 0,
+ "wall_s": 7200.0,
+ "died_respawns": 0,
+ "deadline_respawns": 0,
+ "unplayed_after_cap": 0,
+ "wrapup_terminated": 0,
+ "network_connections": [],
+ "errors": [
+  {
+   "ev": "crash"
+  }
+ ],
+ "gaps": 3,
+ "run_fields": {
+  "boss_act1": {
+   "runs": 5,
+   "reached": 3,
+   "won": 1
+  }
+ },
+ "nightly": {
+  "date": "2026-11-03",
+  "agent": "g9",
+  "generation": 9,
+  "role": "incumbent",
+  "seed_block": "N-2026-11-03",
+  "runs_planned": 6,
+  "runs": 6,
+  "mean_floor": 16.5,
+  "crashes": 1
+ },
+ "divergence_rate": 0.0,
+ "reanchor_fail_reasons": {
+  "fight_start:anchor:no emulator id for The given key 'MONSTER_ALPHA_SEG": 2
+ }
+}

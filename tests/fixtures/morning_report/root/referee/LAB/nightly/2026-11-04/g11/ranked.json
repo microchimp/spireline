@@ -1,0 +1,74 @@
+{
+ "summary": {
+  "decisions": 960,
+  "state_divergences": 4,
+  "mapping_gaps": 3,
+  "groups": 3,
+  "total_weight": 1000.0,
+  "arch_share": 0.5,
+  "outcome_confirmed": 3,
+  "outcome_proxy": 0
+ },
+ "groups": [
+  {
+   "id": "Gother00000",
+   "rank": 1,
+   "tag": "architectural",
+   "class": "damage_block_pipeline",
+   "weight": 600.0,
+   "decisions_affected": 30,
+   "divergences": 3,
+   "first_floor": 12,
+   "outcome_changing_confirmed": 2,
+   "display": {
+    "type": "combat",
+    "kinds": [
+     ".combat.enemy_hp"
+    ],
+    "entities": [
+     "enemy"
+    ]
+   }
+  },
+  {
+   "id": "Gdb57549c26",
+   "rank": 2,
+   "tag": "architectural",
+   "class": "action_queue",
+   "weight": 300.0,
+   "decisions_affected": 12,
+   "divergences": 2,
+   "first_floor": 21,
+   "outcome_changing_confirmed": 1,
+   "display": {
+    "type": "combat",
+    "kinds": [
+     ".combat.hand"
+    ],
+    "entities": [
+     "card:STRIKE_IRONCLAD"
+    ]
+   }
+  },
+  {
+   "id": "G2f160e9505",
+   "rank": 3,
+   "tag": "architectural",
+   "class": "action_queue",
+   "weight": 100.0,
+   "decisions_affected": 6,
+   "divergences": 1,
+   "first_floor": 17,
+   "outcome_changing_confirmed": 0,
+   "display": {
+    "type": "combat",
+    "kinds": [
+     ".combat.hand"
+    ],
+    "entities": [
+     "card:DEFEND_IRONCLAD"
+    ]
+   }
+  }
+ ]
+}

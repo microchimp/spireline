@@ -1,0 +1,5 @@
+{"decision": 1, "floor": 5, "type": "combat", "diff": [[".combat.hand", ["A", "B", "C"], ["A", "B"]]]}
+{"decision": 1, "floor": 5, "type": "combat", "diff": [[".combat.hand", ["A", "B", "C", "D"], ["A", "B", "C"]]]}
+{"decision": 1, "floor": 5, "type": "combat", "diff": [[".combat.hand", ["A"], ["A", "B"]]]}
+{"decision": 1, "floor": 5, "type": "combat", "diff": [[".combat.hand", ["A", "B"], ["A", "C"]]]}
+{"decision": 2, "floor": 6, "type": "reward", "diff": [[".hp", 1, 2]]}

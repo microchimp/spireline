@@ -1,0 +1,6 @@
+{
+ "nightly-real": {
+  "enabled": true,
+  "every_h": 20
+ }
+}

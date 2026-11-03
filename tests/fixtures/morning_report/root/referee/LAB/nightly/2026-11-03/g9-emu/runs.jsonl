@@ -1,0 +1,5 @@
+{"seed": "NEW901", "ix": 0, "win": false, "floor": 12, "end": "death", "decisions": 80, "crash": false, "boss_damage_acts": [], "nodes": "MMB", "cards": []}
+{"seed": "NEW902", "ix": 1, "win": false, "floor": 14, "end": "death", "decisions": 80, "crash": false, "boss_damage_acts": [], "nodes": "MMB", "cards": []}
+{"seed": "NEW903", "ix": 2, "win": false, "floor": 16, "end": "death", "decisions": 80, "crash": false, "boss_damage_acts": [], "nodes": "MMB", "cards": []}
+{"seed": "NEW904", "ix": 3, "win": false, "floor": 35, "end": "death", "decisions": 80, "crash": false, "boss_damage_acts": [[0, 1.0]], "nodes": "MMB", "cards": []}
+{"seed": "NEW905", "ix": 4, "win": false, "floor": 20, "end": "death", "decisions": 80, "crash": false, "boss_damage_acts": [], "nodes": "MMB", "cards": []}

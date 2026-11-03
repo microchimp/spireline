@@ -1,0 +1,10 @@
+{
+ "paired_seeds": 10,
+ "floor_gap": {
+  "n": 10,
+  "mean": 2.5,
+  "lo": -3.0,
+  "hi": 8.0,
+  "seeds": 10
+ }
+}

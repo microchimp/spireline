@@ -1,0 +1,4 @@
+{"seed": "OLD901", "ix": 0, "win": false, "floor": 18, "end": "death", "decisions": 80, "crash": false, "boss_damage_acts": [], "nodes": "MMB", "cards": []}
+{"seed": "OLD902", "ix": 1, "win": false, "floor": 22, "end": "death", "decisions": 80, "crash": false, "boss_damage_acts": [[0, 1.0]], "nodes": "MMB", "cards": []}
+{"seed": "OLD903", "ix": 2, "win": false, "floor": 17, "end": "death", "decisions": 80, "crash": false, "boss_damage_acts": [[0, 1.0]], "nodes": "MMB", "cards": []}
+{"seed": "OLD904", "ix": 3, "win": false, "floor": 33, "end": "death", "decisions": 80, "crash": false, "boss_damage_acts": [[0, 1.0]], "nodes": "MMB", "cards": []}

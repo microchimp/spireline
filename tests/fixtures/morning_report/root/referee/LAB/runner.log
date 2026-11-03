@@ -1,0 +1,6 @@
+2026-11-02T20:30:00Z job 20261102T2030-nightly-real: ladder: nightly-real (priority 2)
+2026-11-03T00:30:00Z nightly-real/nightly-real: rc=0 in 14400.0s
+2026-11-03T20:00:00Z job 20261103T2000-nightly-real: ladder: nightly-real (priority 2)
+2026-11-03T22:00:00Z step nightly-real stopped: pause (LAB/PAUSE)
+2026-11-04T00:00:00Z nightly-real/nightly-real: rc=0 in 14400.0s
+2026-11-04T01:00:00Z step nightly-real stopped: user (input 0s ago)

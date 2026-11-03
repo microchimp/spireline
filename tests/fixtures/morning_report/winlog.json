@@ -1,0 +1,52 @@
+{
+ "events": [
+  {
+   "utc": "2026-11-03T21:30:00.1000000Z",
+   "provider": ".NET Runtime",
+   "id": 1026,
+   "msg": "Application: pythonw.exe\nCoreCLR Version: 9.0.20\nDescription: The process was terminated due to an unhandled exception.\nException Info: System.InvalidOperationException: Collection was modified\n   at System.Collections.Generic.List`1.Enumerator.MoveNextRare() + 0x27\n   at Sts2Emulator.Core.CombatEngine.EndTurn(CombatState, Random) + 0x25aa\n   at Sts2Emulator.Core.CombatEngine.StepCore(CombatState, Int32, Random, Int32) + 0x96\n"
+  },
+  {
+   "utc": "2026-11-03T21:30:01.2000000Z",
+   "provider": "Application Error",
+   "id": 1000,
+   "msg": "Faulting application name: pythonw.exe, version: 0.0.0.0\nFaulting module name: Sts2Emulator.dll, version: 1.0.0.0\nException code: 0xc0000409\nFault offset: 0x000000000016ef0b\n"
+  },
+  {
+   "utc": "2026-11-03T22:10:00.0000000Z",
+   "provider": ".NET Runtime",
+   "id": 1026,
+   "msg": "Application: pythonw.exe\nCoreCLR Version: 9.0.20\nDescription: The process was terminated due to an unhandled exception.\nException Info: System.InvalidOperationException: UsePotion#12 Executing at the front of queue 0 is in an invalid state\n   at Sts2Emulator.Core2.ActionQueueSet.GetReadyAction() + 0x287\n"
+  },
+  {
+   "utc": "2026-11-03T23:00:00.0000000Z",
+   "provider": "Application Error",
+   "id": 1000,
+   "msg": "Faulting application name: pythonw.exe, version: 0.0.0.0\nFaulting module name: Sts2Emulator.dll, version: 1.0.0.0\nException code: 0xc0000409\nFault offset: 0x000000000016ef0b\n"
+  },
+  {
+   "utc": "2026-11-03T22:46:08.6720000Z",
+   "provider": ".NET Runtime",
+   "id": 1026,
+   "msg": "Application: SlayTheSpire2.exe\nCoreCLR Version: 9.0.725.31616\nDescription: The process was terminated due to an unhandled exception.\nStack:\n   at Godot.GodotObject.Dispose(Boolean)\n   at Godot.GodotObject.Finalize()\n   at System.GC.RunFinalizers()\n"
+  },
+  {
+   "utc": "2026-11-03T22:50:00.0000000Z",
+   "provider": "VSS",
+   "id": 8224,
+   "msg": "The VSS service is shutting down."
+  },
+  {
+   "utc": "2026-11-03T18:00:00.0000000Z",
+   "provider": ".NET Runtime",
+   "id": 1026,
+   "msg": "Application: pythonw.exe\nCoreCLR Version: 9.0.20\nDescription: The process was terminated due to an unhandled exception.\nException Info: System.InvalidOperationException: Collection was modified\n   at System.Collections.Generic.List`1.Enumerator.MoveNextRare() + 0x27\n   at Sts2Emulator.Core.CombatEngine.EndTurn(CombatState, Random) + 0x25aa\n   at Sts2Emulator.Core.CombatEngine.StepCore(CombatState, Int32, Random, Int32) + 0x96\n"
+  },
+  {
+   "utc": "2026-11-02T22:00:00.0000000Z",
+   "provider": ".NET Runtime",
+   "id": 1026,
+   "msg": "Application: pythonw.exe\nCoreCLR Version: 9.0.20\nDescription: The process was terminated due to an unhandled exception.\nException Info: System.InvalidOperationException: UsePotion#12 Executing at the front of queue 0 is in an invalid state\n   at Sts2Emulator.Core2.ActionQueueSet.GetReadyAction() + 0x287\n"
+  }
+ ]
+}

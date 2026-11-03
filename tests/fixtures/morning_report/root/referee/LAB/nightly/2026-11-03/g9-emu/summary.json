@@ -1,0 +1,26 @@
+{
+ "runs": 5,
+ "crashes": 0,
+ "wall_s": 3600.0,
+ "decisions": 400,
+ "floor": {
+  "n": 5,
+  "mean": 19.4
+ },
+ "run_fields": {
+  "boss_act1": {
+   "runs": 5,
+   "reached": 1,
+   "won": 1
+  }
+ },
+ "pool": {
+  "started": 3,
+  "recycled": 0,
+  "died": 0,
+  "timed_out": 0,
+  "raised": 0,
+  "retried": 0,
+  "lost": 0
+ }
+}

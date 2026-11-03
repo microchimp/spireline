@@ -1,0 +1,24 @@
+{
+ "summary": {
+  "verdict": "Tier 1 (synthetic)",
+  "unassigned_share": 0.1
+ },
+ "families": [
+  {
+   "family": "F06",
+   "name": "card play",
+   "coarse": "card-play hooks",
+   "weight": 500.0,
+   "share": 0.5,
+   "groups": 2
+  },
+  {
+   "family": "F08",
+   "name": "damage / HP",
+   "coarse": "damage and block pipeline",
+   "weight": 400.0,
+   "share": 0.4,
+   "groups": 1
+  }
+ ]
+}

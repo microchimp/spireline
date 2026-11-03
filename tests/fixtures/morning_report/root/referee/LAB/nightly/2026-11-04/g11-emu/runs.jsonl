@@ -1,0 +1,10 @@
+{"seed": "SEED0000", "ix": 0, "win": false, "floor": 10, "end": "death", "decisions": 80, "crash": false, "boss_damage_acts": [], "nodes": "MMM", "cards": []}
+{"seed": "SEED0001", "ix": 1, "win": false, "floor": 20, "end": "death", "decisions": 80, "crash": false, "boss_damage_acts": [[0, 1.0]], "nodes": "MEBM", "cards": []}
+{"seed": "SEED0002", "ix": 2, "win": false, "floor": 25, "end": "death", "decisions": 80, "crash": false, "boss_damage_acts": [[0, 1.0]], "nodes": "MMEBME", "cards": []}
+{"seed": "SEED0003", "ix": 3, "win": false, "floor": 17, "end": "death", "decisions": 80, "crash": false, "boss_damage_acts": [[0, 0.4]], "nodes": "MMB", "cards": []}
+{"seed": "SEED0004", "ix": 4, "win": true, "floor": 51, "end": "win", "decisions": 80, "crash": false, "boss_damage_acts": [[0, 1.0], [1, 1.0], [2, 1.0]], "nodes": "MBMBMB", "cards": []}
+{"seed": "SEED0005", "ix": 5, "win": false, "floor": 12, "end": "death", "decisions": 80, "crash": false, "boss_damage_acts": [], "nodes": "MM", "cards": []}
+{"seed": "SEED0006", "ix": 6, "win": false, "floor": 17, "end": "death", "decisions": 80, "crash": false, "boss_damage_acts": [[0, 0.8]], "nodes": "MB", "cards": []}
+{"seed": "SEED0007", "ix": 7, "win": false, "floor": 25, "end": "death", "decisions": 80, "crash": false, "boss_damage_acts": [[0, 1.0]], "nodes": "MEBM", "cards": []}
+{"seed": "SEED0008", "ix": 8, "win": false, "floor": 19, "end": "death", "decisions": 80, "crash": false, "boss_damage_acts": [[0, 0.2]], "nodes": "MB", "cards": []}
+{"seed": "SEED0009", "ix": 9, "win": false, "floor": 15, "end": "death", "decisions": 80, "crash": false, "boss_damage_acts": [], "nodes": "M", "cards": []}

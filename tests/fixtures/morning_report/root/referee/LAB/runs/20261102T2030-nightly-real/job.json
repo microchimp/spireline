@@ -1,0 +1,23 @@
+{
+ "version": 1,
+ "job": "nightly-real",
+ "name": "20261102T2030-nightly-real",
+ "main_sha": "0123456789abcdef0123456789abcdef01234567",
+ "created_utc": "2026-11-02T20:30:00Z",
+ "resumed": 0,
+ "steps": [
+  {
+   "name": "nightly-real",
+   "status": "done",
+   "started_utc": "2026-11-02T20:30:00Z",
+   "finished_utc": "2026-11-03T00:30:00Z",
+   "cmds": {
+    "nightly-real": {
+     "status": "done",
+     "rc": 0,
+     "secs": 14400.0
+    }
+   }
+  }
+ ]
+}

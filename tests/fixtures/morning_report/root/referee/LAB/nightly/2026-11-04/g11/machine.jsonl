@@ -1,0 +1,3 @@
+{"t": 1.0, "utc": "2026-11-03T20:10:00Z", "cpu_pct": 80.0, "avail_mb": 9000, "mem_load_pct": 60, "disk_latency_ms": 5.0, "games": 12}
+{"t": 2.0, "utc": "2026-11-03T20:10:30Z", "cpu_pct": 60.0, "avail_mb": 7000, "mem_load_pct": 70, "disk_latency_ms": 9.0, "games": 12}
+{"t": 3.0, "utc": "2026-11-03T20:11:00Z", "cpu_pct": 70.0, "avail_mb": 8000, "mem_load_pct": 65, "disk_latency_ms": 7.0, "games": 11}
