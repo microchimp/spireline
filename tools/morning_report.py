@@ -1446,6 +1446,8 @@ def build_report(night: Path, agent: str | None, lab: Path, logs: Path | None, w
     seeds_real = {r["seed"] for r in cur["real_rows"] if r.get("seed")}
     seeds_emu = {r["seed"] for r in cur["emu_rows"] if r.get("seed")}
     planned = nightly.get("runs_planned") or result.get("runs") or summ.get("runs")
+    # the copy arm may play only a prefix of the block's seeds (--emu-runs N); pairing is judged on that prefix
+    emu_planned = nightly.get("emu_runs_planned") or planned
 
     # per-fight tables
     fights = {"emu": cells_json(fight_table_from_nodes(cur["emu_end"])), "real": None, "real_notes": None}
@@ -1502,7 +1504,7 @@ def build_report(night: Path, agent: str | None, lab: Path, logs: Path | None, w
                                "emulator_arm": rnd(emu_summ["wall_s"] / 60, 1) if emu_summ.get("wall_s") else None},
                   "resumed_rows": summ.get("resumed_rows"), "wall_s_before": summ.get("wall_s_before"),
                   "interruptions": interruptions, "next_night": next_night(lab, start)},
-        "runs": {"planned": planned, "real_rows": real["rows"], "real_ended": real["ended"], "real_crash_rows": real["crashes"],
+        "runs": {"planned": planned, "emu_planned": emu_planned, "real_rows": real["rows"], "real_ended": real["ended"], "real_crash_rows": real["crashes"],
                  "emu_rows": emu["rows"], "emu_ended": emu["ended"], "emu_crash_rows": emu["crashes"],
                  "seeds_with_rows_real": len(seeds_real), "seeds_with_rows_emu": len(seeds_emu),
                  "seeds_with_rows_both": len(seeds_real & seeds_emu)},
@@ -1773,7 +1775,10 @@ def handoff_line(rep: dict) -> str:
         P.append("; ".join(bits) + ".")
     pool, wl = rep["pool"]["real"], rep["winlog"]
     cnt = ", ".join(f"`{k}` {pool.get(k)}" for k in ("died_respawns", "deadline_respawns", "unplayed_after_cap", "wrapup_terminated"))
-    fail = (f"**Pool failure counters:** {n_(rn['seeds_with_rows_both'])} of {n_(rn['planned'])} seeds have rows in both arms; {cnt}; "
+    both_planned = min(rn["planned"], rn.get("emu_planned") or rn["planned"]) if rn.get("planned") else rn.get("emu_planned")
+    prefix = (f" (the copy arm plays {n_(rn['emu_planned'])} of the {n_(rn['planned'])} seeds)"
+              if rn.get("emu_planned") and rn.get("planned") and rn["emu_planned"] < rn["planned"] else "")
+    fail = (f"**Pool failure counters:** {n_(rn['seeds_with_rows_both'])} of {n_(both_planned)} seeds have rows in both arms{prefix}; {cnt}; "
             f"{pool['network_connections']} network connections")
     ea = rep["pool"]["emulator_arm"]
     if ea:

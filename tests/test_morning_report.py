@@ -41,7 +41,7 @@ def rep_1103() -> dict:
 
 # ---------------------------------------------------------------------------------------------------- counts and rates
 def test_run_counts(rep):
-    assert rep["runs"] == {"planned": 10, "real_rows": 10, "real_ended": 8, "real_crash_rows": 2, "emu_rows": 10, "emu_ended": 10,
+    assert rep["runs"] == {"planned": 10, "emu_planned": 10, "real_rows": 10, "real_ended": 8, "real_crash_rows": 2, "emu_rows": 10, "emu_ended": 10,
                            "emu_crash_rows": 0, "seeds_with_rows_real": 10, "seeds_with_rows_emu": 10, "seeds_with_rows_both": 10}
     r = rep["real"]
     assert (r["ended"], r["crashes"], r["wins"], r["fight_unfinished"], r["chest_stop"]) == (8, 2, 1, 1, 0)
@@ -354,6 +354,19 @@ def test_handoff_line_carries_the_figures(rep):
     assert "  | real 2026-11-04 | 8 | 23.25 | 18 | 37.5% (3) | 12.5% (1) | 12.5% (1) | 2 | 0 |" in tables
     assert "  | 1 | hallway | 4 | 3 | 75.0% |" not in tables  # cells under 20 fights are suppressed in the tables
     assert "| 1 | hallway | 15 | suppressed | suppressed |" in tables
+
+
+def test_pairing_is_judged_on_the_copy_arm_prefix(rep):
+    # --emu-runs N: the copy arm plays the first N of the block's seeds, so "rows in both arms" is out of N, not the real arm's plan
+    import copy
+    r = copy.deepcopy(rep)
+    r["runs"]["emu_planned"] = 5
+    r["runs"]["seeds_with_rows_both"] = 5
+    line = mr.handoff_line(r)
+    assert "5 of 5 seeds have rows in both arms (the copy arm plays 5 of the 10 seeds)" in line
+    assert "10 seeds planned" in line
+    # without the field the line reads as before
+    assert "10 of 10 seeds have rows in both arms;" in mr.handoff_line(rep)
 
 
 def test_edition_figures_list(rep):
