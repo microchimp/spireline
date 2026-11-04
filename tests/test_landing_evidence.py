@@ -5,7 +5,8 @@ The root built by `lab` holds
   fork/sts2         main: c1, c2 (c2 adds two files); branch `side`: c3 on top of c2 (not on main)
   spireline         main: s1
   logs              gate-py-old/run.log and gate-py-new/run.log both name c2 (the newer one wins); gate-py-nosummary/publish.log
-                    names c3 without any test summary; gym-loop/status
+                    names c3 without any test summary; gym-loop/status; fork-tests/<c2 8 digits>.txt (4 lines) and
+                    spireline-tests/<s1 7 digits>.txt (a worker's saved summary lines)
   referee           gym-loop/loop.log (30 lines), LAB/runner.log (50 lines), backlog/HANDOFF.md
   spireline/docs/paper/spireline-paper.html   two changelog entries
 """
@@ -69,6 +70,12 @@ def lab(tmp_path_factory):
         os.utime(f, (mtime, mtime))
     (logs / "gate-py-nosummary").mkdir()
     (logs / "gate-py-nosummary" / "publish.log").write_text(f"publish at {c3[:8]} done\n", encoding="utf-8")
+    (logs / "fork-tests").mkdir()
+    (logs / "fork-tests" / f"{c2[:8]}.txt").write_text("Ran 459 tests in 124.462s\nOK\nfull gate: 4061 tests, 0 new\n", encoding="utf-8")
+    (logs / "fork-tests" / "0000000.txt").write_text("someone else's commit\n", encoding="utf-8")  # not a prefix of any commit here
+    (logs / "fork-tests" / "notes.txt").write_text("not a hash name\n", encoding="utf-8")
+    (logs / "spireline-tests").mkdir()
+    (logs / "spireline-tests" / f"{s1[:7]}.txt").write_text("175 passed in 37.83s\n", encoding="utf-8")
     (logs / "gym-loop").mkdir()
     (logs / "gym-loop" / "status").write_text('{\n "pid": 4242,\n "root": "D:\\\\spireline\\\\referee\\\\gym-loop",\n "commit": "%s"\n}' % c2[:8],
                                               encoding="utf-8")
@@ -136,6 +143,50 @@ def test_gate_summary_comes_from_the_newest_log(lab, capsys):
 def test_a_log_without_a_summary_is_said_so(lab, capsys):
     out = run(lab, capsys, "--fork-commit", lab["c3"])
     assert "none carries a test summary line" in out and "logs/gate-py-nosummary/publish.log" in out
+
+
+# ---------------------------------------------------------------------------------------------------- saved test summaries
+def test_fork_commit_prints_its_saved_test_summary(lab, capsys):
+    out = run(lab, capsys, "--fork-commit", lab["c2"][:8])
+    assert f"tests: saved summary logs/fork-tests/{lab['c2'][:8]}.txt" in out
+    assert "| Ran 459 tests in 124.462s" in out and "| full gate: 4061 tests, 0 new" in out
+    assert "someone else's commit" not in out and "not a hash name" not in out
+
+
+def test_spireline_commit_prints_its_saved_test_summary(lab, capsys):
+    out = run(lab, capsys, "--spireline-commit", lab["s1"][:7])
+    assert f"tests: saved summary logs/spireline-tests/{lab['s1'][:7]}.txt" in out and "| 175 passed in 37.83s" in out
+    assert "logs/fork-tests" not in out  # each repository reads its own folder
+
+
+def test_saved_summary_found_by_any_longer_form_of_the_hash(lab, capsys):
+    for form in (lab["c2"], lab["c2"][:12]):
+        out = run(lab, capsys, "--fork-commit", form)
+        assert f"saved summary logs/fork-tests/{lab['c2'][:8]}.txt" in out and "Ran 459 tests" in out
+
+
+def test_no_saved_summary_is_said_so(lab, capsys):
+    out = run(lab, capsys, "--fork-commit", lab["c3"])
+    assert f"tests: no saved summary (no file logs/fork-tests/{lab['c3'][:8]}.txt" in out
+    assert "Ran 459 tests" not in out
+
+
+def test_saved_summary_folder_missing(tmp_path, capsys):
+    root = tmp_path
+    fork = root / "fork" / "sts2"
+    fork.mkdir(parents=True)
+    git(fork, "init", "-b", "main")
+    c = commit(fork, {"a.txt": "x\n"}, "only")
+    (root / "logs").mkdir()
+    assert le.main(["--root", str(root), "--fork-commit", c[:8]]) == 0
+    assert "tests: no saved summary (fork-tests folder not found" in capsys.readouterr().out
+
+
+def test_long_saved_summary_is_cut_to_a_few_lines(lab, capsys):
+    f = lab["root"] / "logs" / "fork-tests" / f"{lab['c1'][:9]}.txt"
+    f.write_text("".join(f"line {i}\n" for i in range(20)), encoding="utf-8")
+    out = run(lab, capsys, "--fork-commit", lab["c1"])
+    assert "| line 7" in out and "| line 8" not in out and "12 more lines in the file" in out
 
 
 # ---------------------------------------------------------------------------------------------------- loop, runner, HANDOFF, paper

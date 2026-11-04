@@ -10,8 +10,10 @@ when asked for:
   --fork-commit HASH...        for each: on `main` of <root>/fork/sts2?, the local and remote branches that hold it, the
                                subject line, the number of files changed, and the newest gate summary in <root>/logs that
                                names the commit (its `run.log` / `gate.out` / `results.json` style lines: tip, python
-                               counts, C# and EmuDump counts, corpus, byte proof)
-  --spireline-commit HASH...   the same for <root>/spireline (the logs rarely name these; "none" then)
+                               counts, C# and EmuDump counts, corpus, byte proof), and the worker's saved test summary
+                               <root>/logs/fork-tests/<short hash>.txt when there is one
+  --spireline-commit HASH...   the same for <root>/spireline (the logs rarely name these; "none" then), with the saved
+                               summary <root>/logs/spireline-tests/<short hash>.txt (the last lines of the pytest output)
   --loop                       the gym loop's status file and the last 15 lines of its log
   --runner N                   the last N lines of the lab runner's log
   --handoff TEXT               the HANDOFF.md lines holding TEXT (line number, the line cut to a readable length and its
@@ -41,6 +43,8 @@ LINE_CUT = 300
 HANDOFF_CUT = 1400
 HANDOFF_TAIL = 260
 MAX_HANDOFF_MATCHES = 8
+TEST_FILE_LINES = 8
+TEST_FILE_MAX = 3
 LOOP_LOG_TAIL = 15
 LOG_SIZE_CAP = 2_000_000
 HASH_RE = re.compile(r"^[0-9a-fA-F]{7,40}$")
@@ -143,7 +147,37 @@ def gate_evidence(logs: Path, root: Path, full_hash: str) -> list[str]:
     return out
 
 
-def commit_evidence(repo: Path, label: str, commit: str, root: Path, logs: Path | None) -> list[str]:
+def test_file_evidence(logs: Path, folder: str, full_hash: str, root: Path) -> list[str]:
+    """The summary lines a worker saved after its suite or gate passed: logs/<folder>/<short hash>.txt.
+
+    The file name is any hex prefix (7 or more digits) of the landed commit, so a 7, 8 or 12 digit short hash all match.
+    """
+    d = logs / folder
+    shown = f"logs/{folder}/{full_hash[:8]}.txt"
+    if not d.is_dir():
+        return [f"tests: no saved summary ({folder} folder not found; the worker saves one at {shown})"]
+    files = sorted((p for p in d.glob("*.txt") if p.is_file() and len(p.stem) >= 7 and HASH_RE.match(p.stem)
+                    and full_hash.lower().startswith(p.stem.lower())), key=lambda p: p.stat().st_mtime, reverse=True)
+    if not files:
+        return [f"tests: no saved summary (no file {shown}; the worker saves the last 5 summary lines there)"]
+    out: list[str] = []
+    for p in files[:TEST_FILE_MAX]:
+        try:
+            lines = [ln for ln in p.read_text(encoding="utf-8", errors="replace").splitlines() if ln.strip()]
+        except OSError:
+            out.append(f"tests: {rel(p, root)} unreadable")
+            continue
+        out.append(f"tests: saved summary {rel(p, root)} (modified {utc_stamp(p.stat().st_mtime)}):")
+        out += ["  | " + cut(ln, 260) for ln in lines[:TEST_FILE_LINES]]
+        if len(lines) > TEST_FILE_LINES:
+            out.append(f"  | ... {len(lines) - TEST_FILE_LINES} more lines in the file")
+    if len(files) > TEST_FILE_MAX:
+        out.append(f"  ({len(files) - TEST_FILE_MAX} more files match this commit)")
+    return out
+
+
+def commit_evidence(repo: Path, label: str, commit: str, root: Path, logs: Path | None,
+                    tests_folder: str | None = None) -> list[str]:
     out = [f"{label} commit {commit}"]
     if not HASH_RE.match(commit):
         return out + ["  NOT A HASH (7 to 40 hex digits expected)"]
@@ -176,6 +210,8 @@ def commit_evidence(repo: Path, label: str, commit: str, root: Path, logs: Path 
                                                        if files else ""))
     if logs is not None:
         out += ["  " + ln if i == 0 else ln for i, ln in enumerate(gate_evidence(logs, root, full))]
+        if tests_folder:
+            out += ["  " + ln if i == 0 else ln for i, ln in enumerate(test_file_evidence(logs, tests_folder, full, root))]
     return out
 
 
@@ -269,9 +305,9 @@ def build(args: argparse.Namespace) -> list[str]:
     logs = root / "logs"
     out: list[str] = [f"landing evidence, {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%MZ')}"]
     for c in args.fork_commit or []:
-        out += commit_evidence(root / "fork" / "sts2", "fork", c, root, logs)
+        out += commit_evidence(root / "fork" / "sts2", "fork", c, root, logs, "fork-tests")
     for c in args.spireline_commit or []:
-        out += commit_evidence(root / "spireline", "Spireline", c, root, logs)
+        out += commit_evidence(root / "spireline", "Spireline", c, root, logs, "spireline-tests")
     if args.loop:
         out += loop_evidence(root)
     if args.runner:
