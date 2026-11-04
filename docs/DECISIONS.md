@@ -1224,3 +1224,15 @@ Owner in chat (20:5xZ): "Next week cap is at 65 and yes". The week of 2026-11-03
 twice a day). First starts at the reset, on the owner's yes: the always-on trainer's library move to c4401980 (after tonight's
 block ends, at a verdict line), the test funnel in the promotion path (tests only), and the sub-problem board. Then edition 37
 from tonight's block, and the rest of PLAN.md section 14 in its order. Recorded 2026-11-03 20:54Z.
+
+## D52 · 2026-11-04 · Two token items: a cheap landing checker and a usage ledger
+
+Owner in chat, asked which items meaningfully improve token usage and told "Yes do these" for the two not yet done.
+**Decisions (orchestrator):** (1) routine verification moves off the orchestrator: a `landing-checker` agent
+(Haiku, low effort, read-only) that takes a worker's report and the evidence a script gathers (commits on main,
+gate counts, loop status, runner lines, HANDOFF placeholders, the paper's changelog) and marks each claim confirmed,
+not found or contradicted; the morning report gets a `--check` that recomputes its headline figures by a second
+path; (2) a usage ledger, `tools/usage_ledger.py`, that reads the start/end usage notes on HANDOFF lines and
+prints the cost of each item and each week, flagging overlapping items instead of pretending precision.
+One Sonnet worker, budget about 0.5, Spireline repo only; the orchestrator keeps deciding and recording.
+Recorded 2026-11-04 01:35Z.
