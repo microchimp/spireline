@@ -397,3 +397,83 @@ def test_a_block_that_has_not_closed_makes_no_report(tmp_path):
     with pytest.raises(SystemExit, match="name one with --agent"):
         shutil.copytree(lab / "nightly/2026-11-04/g11", lab / "nightly/2026-11-04/g12")
         mr.build_report(lab / "nightly" / "2026-11-04", None, lab, None, "none", None, NOW)
+
+
+# ---------------------------------------------------------------------------------------------------- --check: the second path
+def test_check_matches_on_the_fixture_night(capsys):
+    text, code = mr.run_check(NIGHT, None, LAB, NOW)
+    assert code == 0 and "MISMATCH" not in text and text.rstrip().endswith("0 mismatches")
+    row = {ln.split("  ")[0].strip(): ln for ln in text.splitlines()}
+    assert "MATCH" in row["ended runs, real"] and "8" in row["ended runs, real"]
+    assert "MATCH" in row["Act 1 boss agreement of the arms"]
+
+
+def test_second_path_gives_the_hand_worked_figures():
+    f = mr.independent_figures(NIGHT, "g11")  # straight from the rows; the numbers are the hand-worked ones of the tests above
+    assert (f["ended runs, real"], f["crash rows, real"], f["ended runs, emulator"], f["crash rows, emulator"]) == (8, 2, 10, 0)
+    assert f["mean floors, ended, real"] == pytest.approx(23.25) and f["mean floors, counted (crash = 0), real"] == pytest.approx(18.6)
+    assert f["mean floors, ended, emulator"] == pytest.approx(21.1)
+    assert (f["Act 1 boss reached, real"], f["Act 1 boss killed, real"]) == (5, 3)
+    assert f["Act 1 boss killed, share of runs, real"] == pytest.approx(3 / 8)
+    assert f["Act 1 boss killed, share of those reached, real"] == pytest.approx(0.6)
+    assert (f["Act 1 boss reached, emulator"], f["Act 1 boss killed, emulator"]) == (7, 4)
+    assert f["seeds with rows, both arms"] == 10 and f["paired seeds, ended on both arms"] == 8
+    assert sum(v for k, v in f.items() if k.startswith("crash rows of kind")) == 2
+
+
+def test_check_matches_on_the_generation_9_night():
+    text, code = mr.run_check(LAB / "nightly" / "2026-11-03", None, LAB, NOW)
+    assert code == 0 and "0 mismatches" in text and "crash rows of kind" in text
+
+
+def test_check_exits_1_and_names_the_figure_when_a_path_differs(monkeypatch, capsys):
+    real = mr.independent_figures
+
+    def off_by_one(night, agent):
+        out = real(night, agent)
+        out["ended runs, real"] += 1
+        out["mean floors, counted (crash = 0), real"] += 0.01
+        return out
+
+    monkeypatch.setattr(mr, "independent_figures", off_by_one)
+    text, code = mr.run_check(NIGHT, None, LAB, NOW)
+    assert code == 1 and text.count("MISMATCH") == 2 and "2 mismatches: ended runs, real; mean floors, counted" in text
+    assert mr.main([str(NIGHT), "--check", "--now", "2026-11-04T01:00:00Z"]) == 1
+    assert "MISMATCH" in capsys.readouterr().out
+
+
+def test_check_cli_prints_both_paths_and_no_paths(capsys):
+    assert mr.main([str(NIGHT), "--check", "--now", "2026-11-04T01:00:00Z"]) == 0
+    out = capsys.readouterr().out
+    assert out.startswith("morning_report --check: night 2026-11-04 (g11)") and "path 1" in out and "path 2" in out
+    for bad in (str(FIX), str(FIX).replace("\\", "/"), "Users", "pmpal", "C:\\"):
+        assert bad not in out, bad
+
+
+def test_check_rows_compare_counts_exactly_and_rates_to_the_reports_rounding():
+    rows = {r["figure"]: r["ok"] for r in mr.check_rows(
+        {"a": 5, "b": 0.5521, "c": None, "d": 1, "e": 2.0},
+        {"a": 6, "b": 0.55213, "c": None, "f": 3, "e": 2.0001})}
+    assert rows == {"a": False, "b": True, "c": True, "d": False, "f": False, "e": False}
+
+
+def test_second_path_crash_labels_agree_with_the_reports():
+    for err in ("RuntimeError: the engine refused action 6 in phase 5", "GameDied: game exited (3221225477)",
+                "worker process exited 1 (0x1)", "worker deadline 3600 s", "TimeoutError('no message in 180 s')",
+                "ValueError: something else", ""):
+        assert mr._crash_label(err) == mr.crash_kind(err)["kind"], err
+
+
+def test_second_path_skips_torn_lines_and_reads_missing_files(tmp_path):
+    arm = tmp_path / "g1"
+    arm.mkdir()
+    (arm / "runs.jsonl").write_text(
+        '{"ev": "end", "seed": "A", "floor": 10, "boss_damage_acts": [[0, 1.0]]}\n'
+        '{"ev": "end", "seed": "B", "floor": 20, "boss_damage_acts": [[0, 0.4], [1, 0.2]]}\n'
+        '{"ev": "crash", "seed": "C", "error": "TimeoutError(\'x\')"}\n{"ev": "end", "seed": "D", "fl\n', encoding="utf-8")
+    f = mr.independent_figures(tmp_path, "g1")  # no emulator arm file at all
+    assert (f["ended runs, real"], f["crash rows, real"], f["seeds with rows, real arm"]) == (2, 1, 3)
+    assert f["mean floors, ended, real"] == 15 and f["mean floors, counted (crash = 0), real"] == pytest.approx(10.0)
+    assert (f["Act 1 boss reached, real"], f["Act 1 boss killed, real"]) == (2, 1)
+    assert f["ended runs, emulator"] == 0 and f["mean floors, ended, emulator"] is None
+    assert f["Act 1 boss agreement of the arms"] is None

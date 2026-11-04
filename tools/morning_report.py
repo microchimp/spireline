@@ -1,7 +1,7 @@
 """The night's morning report as a script (D46 item 4, D49 item 4).
 
     python tools/morning_report.py <night folder> [--agent g11] [--out DIR] [--lab DIR] [--logs DIR]
-        [--winlog auto|none|FILE] [--usage TEXT] [--now ISO]
+        [--winlog auto|none|FILE] [--usage TEXT] [--now ISO] [--check]
 
 `<night folder>` is a lab night, e.g. `LAB/nightly/2026-11-03`, holding the real arm `g<N>` and the emulator arm `g<N>-emu`.
 With --out DIR it writes three files and prints the edition list; without it, everything goes to the screen:
@@ -10,6 +10,10 @@ With --out DIR it writes three files and prints the edition list; without it, ev
                         `not_computed` names each figure the files cannot give, with the source the lane used
   handoff_line.md       the HANDOFF morning line in the lane's format, then the lane's tables (indented)
   edition_figures.md    the short list the paper's edition takes (floors, boss rates, agreement, crashes, the comparison)
+
+With --check nothing is written or reported but the headline figures (seeds, ended runs, crash rows by kind, mean floors
+ended and counted, the Act 1 boss reached and killed, the arms' agreement) from the report and again from a second code path
+over the rows (see "--check: a second path" below), each with MATCH or MISMATCH; the exit code is 1 on any mismatch.
 
 Sources: the arms' `runs.jsonl`, `summary.json`, `result.json`, `compare.json`, `ranked.json`, `by_family.json`,
 `divergences.jsonl`, `machine.jsonl`, `wall.json`; the earlier nights' folders (history, the pooled comparison); the lab
@@ -1284,6 +1288,177 @@ def edition_figures(rep: dict) -> str:
     return "\n".join(L) + "\n"
 
 
+# ---------------------------------------------------------------------------------------------------- --check: a second path
+# The figures a reader takes from the report (seeds, ended runs, crash rows by kind, mean floors, the Act 1 boss, agreement)
+# recomputed straight from the night's two runs.jsonl files by code that shares nothing with the per-row functions above
+# (`read_jsonl`, `split_rows`, `make_agg`, `boss_hit`, `crash_kind`, `is_win`): its own reader, per-seed tables instead of
+# row sums, `math.fsum` means, its own crash-text classifier. A figure is a MATCH when the two paths agree (counts exactly,
+# means and rates within the report's own rounding to four decimals).
+CHECK_TOL = 6e-5
+
+
+def _stream_rows(path: Path):
+    """Yields the dict rows of a JSON-lines file, skipping blank, torn or non-object lines."""
+    if not path.is_file():
+        return
+    with open(path, encoding="utf-8", errors="replace") as fh:
+        for raw in fh:
+            raw = raw.strip()
+            if not raw.startswith("{"):
+                continue
+            try:
+                row = json.loads(raw)
+            except ValueError:
+                continue
+            if isinstance(row, dict):
+                yield row
+
+
+def _crash_label(text: str) -> str:
+    """The report's crash kinds, decided by the error text's wording (the report matches patterns at the start of it)."""
+    low = text.lower()
+    if low.startswith("runtimeerror") and "engine refused action" in low:
+        return "engine refused action"
+    if low.startswith("gamedied") and "game exited" in low:
+        return "game exited"
+    if low.startswith("worker process exited"):
+        return "worker process exited"
+    if low.startswith("worker deadline"):
+        return "worker deadline"
+    if "timeouterror" in low:
+        return "timeout"
+    return "other"
+
+
+def _act1_boss(row: dict) -> tuple[bool, bool]:
+    """(reached, killed) for the Act 1 boss: any `boss_damage_acts` entry for act 0; killed when its fraction is full."""
+    fractions = [e[1] for e in (row.get("boss_damage_acts") or []) if isinstance(e, (list, tuple)) and len(e) >= 2 and e[0] == 0]
+    return bool(fractions), bool(fractions) and max(fractions) >= 1.0
+
+
+def _arm_second_path(path: Path, real: bool) -> dict:
+    """Per-arm figures by a per-seed pass. `real`: rows are ended when `ev` says "end" and crashes when it says "crash";
+    emulator rows are crashes when their `crash` field is true."""
+    seeds: set[str] = set()
+    floors: list[float] = []  # one per ended row
+    boss: dict[str, tuple[bool, bool]] = {}  # seed -> Act 1 (reached, killed) of its last ended row
+    ended_seq: list[tuple[str, bool]] = []  # (seed, killed) of every ended row, in file order
+    kinds: Counter = Counter()
+    crash_rows = 0
+    reached = killed = 0
+    for row in _stream_rows(path):
+        if row.get("seed"):
+            seeds.add(row["seed"])
+        is_crash = (row.get("ev") == "crash") if real else bool(row.get("crash"))
+        is_end = (row.get("ev") == "end") if real else not row.get("crash")
+        if is_crash:
+            crash_rows += 1
+            kinds[_crash_label(str(row.get("error") or ""))] += 1
+        elif is_end:
+            floors.append(float(row["floor"]))
+            r, k = _act1_boss(row)
+            reached += r
+            killed += k
+            boss[row.get("seed")] = (r, k)
+            ended_seq.append((row.get("seed"), k))
+    n = len(floors)
+    return {"seeds": seeds, "ended": n, "crash_rows": crash_rows, "kinds": dict(kinds), "boss": boss, "ended_seq": ended_seq,
+            "mean_ended": math.fsum(floors) / n if n else None,
+            "mean_counted": math.fsum(floors) / (n + crash_rows) if n + crash_rows else None,
+            "act1_reached": reached, "act1_killed": killed,
+            "killed_of_runs": killed / n if n else None, "killed_of_reached": killed / reached if reached else None}
+
+
+def independent_figures(night: Path, agent: str) -> dict:
+    """The check's figures, name -> value, from <night>/<agent>/runs.jsonl and <night>/<agent>-emu/runs.jsonl alone."""
+    real = _arm_second_path(night / agent / "runs.jsonl", True)
+    emu = _arm_second_path(night / f"{agent}-emu" / "runs.jsonl", False)
+    out: dict = {"seeds with rows, real arm": len(real["seeds"]), "seeds with rows, emulator arm": len(emu["seeds"]),
+                 "seeds with rows, both arms": len(real["seeds"] & emu["seeds"])}
+    for tag, arm in (("real", real), ("emulator", emu)):
+        out[f"ended runs, {tag}"] = arm["ended"]
+        out[f"crash rows, {tag}"] = arm["crash_rows"]
+        out[f"mean floors, ended, {tag}"] = arm["mean_ended"]
+        out[f"mean floors, counted (crash = 0), {tag}"] = arm["mean_counted"]
+        out[f"Act 1 boss reached, {tag}"] = arm["act1_reached"]
+        out[f"Act 1 boss killed, {tag}"] = arm["act1_killed"]
+        out[f"Act 1 boss killed, share of runs, {tag}"] = arm["killed_of_runs"]
+        out[f"Act 1 boss killed, share of those reached, {tag}"] = arm["killed_of_reached"]
+    for kind, k in sorted(real["kinds"].items()):
+        out[f"crash rows of kind '{kind}', real"] = k
+    paired = [(k, emu["boss"][s][1]) for s, k in real["ended_seq"] if s in emu["boss"]]
+    out["paired seeds, ended on both arms"] = len(paired)
+    out["Act 1 boss agreement of the arms"] = (sum(1 for a, b in paired if a == b) / len(paired)) if paired else None
+    return out
+
+
+def report_check_figures(rep: dict) -> dict:
+    """The same figures as the report's own computation holds them."""
+    out: dict = {}
+    run = rep["runs"]
+    out["seeds with rows, real arm"] = run["seeds_with_rows_real"]
+    out["seeds with rows, emulator arm"] = run["seeds_with_rows_emu"]
+    out["seeds with rows, both arms"] = run["seeds_with_rows_both"]
+    for tag, arm in (("real", rep["real"]), ("emulator", rep["emu"])):
+        out[f"ended runs, {tag}"] = arm["ended"]
+        out[f"crash rows, {tag}"] = arm["crashes"]
+        out[f"mean floors, ended, {tag}"] = arm["mean_floor"]
+        out[f"mean floors, counted (crash = 0), {tag}"] = arm["mean_floor_counted"]
+        out[f"Act 1 boss reached, {tag}"] = arm["act1_reached"]
+        out[f"Act 1 boss killed, {tag}"] = arm["act1_killed"]
+        out[f"Act 1 boss killed, share of runs, {tag}"] = arm["act1_killed_of_runs"]
+        out[f"Act 1 boss killed, share of those reached, {tag}"] = arm["act1_killed_of_reached"]
+    for kind, k in sorted(rep["crashes"]["by_kind"].items()):
+        out[f"crash rows of kind '{kind}', real"] = k
+    pe = rep["paired"]["ended"]
+    out["paired seeds, ended on both arms"] = pe.get("seeds")
+    out["Act 1 boss agreement of the arms"] = pe.get("act1_agreement")
+    return out
+
+
+def _same(a, b) -> bool:
+    if a is None or b is None:
+        return a is None and b is None
+    if isinstance(a, int) and isinstance(b, int):
+        return a == b
+    return abs(float(a) - float(b)) <= CHECK_TOL
+
+
+def check_rows(first: dict, second: dict) -> list[dict]:
+    """One row per figure named by either path: {figure, first, second, ok}. A figure only one path has is a mismatch."""
+    names = list(first) + [k for k in second if k not in first]
+    return [{"figure": k, "first": first.get(k), "second": second.get(k),
+             "ok": k in first and k in second and _same(first[k], second[k])} for k in names]
+
+
+def _show(v) -> str:
+    if v is None:
+        return "n/a"
+    return f"{v:,}" if isinstance(v, int) else f"{v:.4f}"
+
+
+def check_text(night: Path, agent: str, rows: list[dict]) -> str:
+    bad = [r for r in rows if not r["ok"]]
+    w = max(len(r["figure"]) for r in rows) if rows else 10
+    L = [f"morning_report --check: night {night.name} ({agent}); path 1 is the report's own figures, path 2 recounts the rows "
+         f"by separate code", ""]
+    L.append(f"{'figure'.ljust(w)}  {'path 1'.rjust(12)}  {'path 2'.rjust(12)}  result")
+    for r in rows:
+        L.append(f"{r['figure'].ljust(w)}  {_show(r['first']).rjust(12)}  {_show(r['second']).rjust(12)}  "
+                 f"{'MATCH' if r['ok'] else 'MISMATCH'}")
+    L += ["", f"{len(rows)} figures, {len(bad)} mismatch" + ("" if len(bad) == 1 else "es")
+          + (": " + "; ".join(r["figure"] for r in bad) if bad else "")]
+    return "\n".join(L)
+
+
+def run_check(night: Path, agent: str | None, lab: Path, now: datetime) -> tuple[str, int]:
+    """(text, exit code): the report's figures against the second path's; 1 when any differ."""
+    rep = build_report(night, agent, lab, None, "none", None, now)
+    agent = rep["night"]["agent"]
+    rows = check_rows(report_check_figures(rep), independent_figures(night, agent))
+    return check_text(night, agent, rows), (1 if any(not r["ok"] for r in rows) else 0)
+
+
 # ---------------------------------------------------------------------------------------------------- CLI
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description="The night's morning report: figures, the HANDOFF line and the edition list.")
@@ -1296,11 +1471,17 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--usage", help="the usage readout to print in the line, e.g. '84%% all / 59%% Fable at 00:21Z'")
     ap.add_argument("--now", help="ISO time to stamp the line with (default: now)")
     ap.add_argument("--out", type=Path, help="folder for morning_report.json, handoff_line.md and edition_figures.md")
+    ap.add_argument("--check", action="store_true", help="recompute the headline figures by a second, independent code path "
+                    "over the rows and print both with MATCH / MISMATCH; exit 1 on any mismatch (writes nothing)")
     a = ap.parse_args(argv)
     night = a.night.resolve()
     if not night.is_dir():
         raise SystemExit(f"{a.night}: not a folder")
     lab = (a.lab or night.parent.parent).resolve()
+    if a.check:
+        text, code = run_check(night, a.agent, lab, parse_utc(a.now) if a.now else datetime.now(timezone.utc))
+        print(text)
+        return code
     logs = a.logs
     if logs is None:
         cand = lab.parent.parent / "logs" / f"w5-night-{night.name.replace('-', '')}-stdout"
