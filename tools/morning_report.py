@@ -12,8 +12,16 @@ With --out DIR it writes three files and prints the edition list; without it, ev
   edition_figures.md    the short list the paper's edition takes (floors, boss rates, agreement, crashes, the comparison)
 
 With --check nothing is written or reported but the headline figures (seeds, ended runs, crash rows by kind, mean floors
-ended and counted, the Act 1 boss reached and killed, the arms' agreement) from the report and again from a second code path
-over the rows (see "--check: a second path" below), each with MATCH or MISMATCH; the exit code is 1 on any mismatch.
+ended and counted, the Act 1 boss reached and killed, the arms' agreement, the control variate and the progress score) from the
+report and again from a second code path over the rows (see "--check: a second path" below), each with MATCH or MISMATCH; the
+exit code is 1 on any mismatch.
+
+The nightly exam's power (2026-11-04): `control_variate` holds the copy arm's floor on each paired seed as a control variate for
+the real arm's mean floor (`real.mean_floor_cv` and `_se`, `paired.rho`; the formulas are in `control_variate()`), the saving
+1 - rho^2 and the runs a night needs to see a half-floor and a one-floor change; `progress` holds six measures of the night (mean
+floor, Act 1 boss reached, Act 1 killed of those reached, Act 2 reached and killed of those reached, wins) each with its SE, and
+their differences against the previous night and the previous generation pooled with SE and z. A night whose real rows did not
+record bosses (runs past floor 17 with no Act 1 boss entry) has its boss measures unknown, not 0.
 
 Sources: the arms' `runs.jsonl`, `summary.json`, `result.json`, `compare.json`, `ranked.json`, `by_family.json`,
 `divergences.jsonl`, `machine.jsonl`, `wall.json`; the earlier nights' folders (history, the pooled comparison); the lab
@@ -26,8 +34,9 @@ Counting rules (the lane's): a run row is `ev == end` (ended) or `ev == crash` (
 rows out; "counted" figures give a crash row floor 0, no win and no boss kill (the lab's convention, `summary.json`
 `nightly`). A boss is reached when `boss_damage_acts` lists its act and killed when the fraction is 1.0. Rates of a pool are
 over its runs. Standard errors: the sample standard deviation of the floors over sqrt(n), sqrt(p(1-p)/n) for rates,
-differences by the sum of the variances. Cells of the per-fight tables under 20 fights are suppressed (D13). Results hold no
-host name, user name or absolute path (the folder is named relative to the lab).
+differences by the sum of the variances (unpaired: the nights play fresh seed blocks), z the difference over its SE. Cells of
+the per-fight tables under 20 fights are suppressed (D13). Results hold no host name, user name or absolute path (the folder is
+named relative to the lab).
 """
 
 from __future__ import annotations
@@ -48,6 +57,8 @@ from pathlib import Path
 
 MIN_CELL = 20  # D13: a cell under 20 fights is suppressed
 ACT1_BOSS_FLOOR = 17  # cards decided on floors <= 16 are in the deck entering the Act 1 boss
+BOSS_GAP_MAX = 0.10  # boss figures of a pool are unrecorded when more than this share of its runs past the Act 1 boss lack its entry
+# (judged only when at least MIN_CELL runs are past it)
 STARTER = 11  # Ironclad's 10 starting cards + Ascender's Bane at A10 (an assumption of the deck proxy)
 R1 = {"floor": 27.05, "act1": 0.546, "act2": 0.291, "wins": 0.113}  # the human reference line (boss-entry exam, held-out fifth)
 D11C = {"Gdb57549c26": "Strike", "G2f160e9505": "Defend"}  # the D11F2 proof's two groups (hand differs by one basic card)
@@ -146,6 +157,8 @@ class Agg:
     a2k: int = 0
     a3r: int = 0
     a3k: int = 0
+    past: int = 0  # ended runs past the Act 1 boss floor (they fought that boss) ...
+    bossgap: int = 0  # ... and how many of those carry no Act 1 boss entry (a block whose rows did not record the boss)
 
     def __add__(self, o: "Agg") -> "Agg":
         return Agg(*(getattr(self, f) + getattr(o, f) for f in self.__dataclass_fields__))
@@ -153,6 +166,13 @@ class Agg:
     @property
     def nc(self) -> int:  # runs counted: ended plus crash rows
         return self.n + self.crashes
+
+    @property
+    def boss_recorded(self) -> bool:
+        """False when the boss fields are empty where they cannot be: a run past the Act 1 boss floor fought that boss, so a block
+        whose such runs mostly lack the entry (the real arm of the first night, say) did not record bosses. Its boss rates are
+        unknown, not zero."""
+        return self.past < MIN_CELL or self.bossgap / self.past <= BOSS_GAP_MAX
 
     def mean(self, counted: bool = False) -> float | None:
         k = self.nc if counted else self.n
@@ -184,6 +204,9 @@ def make_agg(ended: list[dict], crashes: int = 0) -> Agg:
         g.s += f
         g.ss += f * f
         g.wins += 1 if is_win(r) else 0
+        if f > ACT1_BOSS_FLOOR:
+            g.past += 1
+            g.bossgap += 0 if boss_hit(r, 0)[0] else 1
         for act, (kr, kk) in enumerate((("a1r", "a1k"), ("a2r", "a2k"), ("a3r", "a3k"))):
             reached, killed = boss_hit(r, act)
             setattr(g, kr, getattr(g, kr) + (1 if reached else 0))
@@ -204,6 +227,7 @@ def arm_figures(ended: list[dict], crashes: list[dict], real: bool) -> dict:
     out = {
         "rows": len(ended) + len(crashes), "ended": g.n, "crashes": g.crashes,
         "mean_floor": rnd(g.mean(), 4), "sd_floor": rnd(g.sd(), 4), "median_floor": statistics.median(floors) if floors else None,
+        "mean_floor_se": rnd(g.sd() / math.sqrt(g.n), 4) if g.n >= 2 else None,
         "mean_floor_counted": rnd(g.mean(True), 4), "wins": g.wins,
         "chest_stop": sum(1 for r in ended if r.get("end") == "treasure_without_relic_picking"),
         "fight_unfinished": sum(1 for r in ended if r.get("end") == "fight_unfinished"),
@@ -244,17 +268,182 @@ def rate_diff(ka: int, na: int, kb: int, nb: int) -> dict:
 
 
 def agg_block(g: Agg) -> dict:
-    return {"runs": g.n, "crashes": g.crashes, "mean_floor": rnd(g.mean(), 4), "sd_floor": rnd(g.sd(), 4),
+    return {"runs": g.n, "crashes": g.crashes, "boss_recorded": g.boss_recorded, "mean_floor": rnd(g.mean(), 4), "sd_floor": rnd(g.sd(), 4),
             "mean_floor_counted": rnd(g.mean(True), 4), "a1_reached": g.a1r, "a1_killed": g.a1k, "a2_reached": g.a2r,
             "a2_killed": g.a2k, "a1_of_runs": rnd(ratio(g.a1k, g.n), 4), "a1_of_reached": rnd(ratio(g.a1k, g.a1r), 4),
             "a2_of_runs": rnd(ratio(g.a2k, g.n), 4), "wins": g.wins}
 
 
 def compare_blocks(cur: Agg, base: Agg) -> dict:
-    return {"base": agg_block(base), "floor_ended": mean_diff(cur, base), "floor_counted": mean_diff(cur, base, True),
-            "act1_of_runs": rate_diff(cur.a1k, cur.n, base.a1k, base.n),
-            "act1_of_reached": rate_diff(cur.a1k, cur.a1r, base.a1k, base.a1r),
-            "act2_of_runs": rate_diff(cur.a2k, cur.n, base.a2k, base.n)}
+    """The night against a base pool, unpaired (fresh seed blocks): every difference carries its SE and z. The Act 1 and Act 2
+    kill rates and the floor are the older fields; the reach rates, the Act 2 kill of those reached and the wins were added with
+    the progress score."""
+    known = cur.boss_recorded and base.boss_recorded
+
+    def boss(ka: int, na: int, kb: int, nb: int) -> dict:  # a boss rate against a pool that did not record bosses is unknown
+        return rate_diff(ka, na, kb, nb) if known else rate_diff(0, 0, 0, 0)
+
+    return {"base": agg_block(base), "boss_recorded": {"current": cur.boss_recorded, "base": base.boss_recorded},
+            "floor_ended": mean_diff(cur, base), "floor_counted": mean_diff(cur, base, True),
+            "act1_of_runs": boss(cur.a1k, cur.n, base.a1k, base.n),
+            "act1_of_reached": boss(cur.a1k, cur.a1r, base.a1k, base.a1r),
+            "act2_of_runs": boss(cur.a2k, cur.n, base.a2k, base.n),
+            "act1_reach": boss(cur.a1r, cur.n, base.a1r, base.n),
+            "act2_reach": boss(cur.a2r, cur.n, base.a2r, base.n),
+            "act2_of_reached": boss(cur.a2k, cur.a2r, base.a2k, base.a2r),
+            "wins": rate_diff(cur.wins, cur.n, base.wins, base.n)}
+
+
+# ---------------------------------------------------------------------------------------------------- progress score
+# The night's progress score: six measures over the ended runs, each with its standard error, and its difference against a base
+# pool (the previous night, the previous generation pooled) with the difference's SE and z. The nights play fresh seed blocks, so
+# the differences are unpaired (the SEs add in quadrature). Floors are in floors, the rest in percentage points.
+PROGRESS = (
+    ("mean_floor", "mean floor", "floors", None),
+    ("act1_reach", "Act 1 boss reached (of runs)", "points", "act1_reach"),
+    ("act1_kill_of_reached", "Act 1 boss killed (of those reached)", "points", "act1_of_reached"),
+    ("act2_reach", "Act 2 boss reached (of runs)", "points", "act2_reach"),
+    ("act2_kill_of_reached", "Act 2 boss killed (of those reached)", "points", "act2_of_reached"),
+    ("wins", "wins (of runs)", "points", "wins"),
+)
+
+
+def progress_counts(g: Agg) -> dict[str, tuple[int, int]]:
+    """The rate measures as (count, over): the Act 1 and Act 2 boss reach and kill, and the wins."""
+    return {"act1_reach": (g.a1r, g.n), "act1_kill_of_reached": (g.a1k, g.a1r), "act2_reach": (g.a2r, g.n),
+            "act2_kill_of_reached": (g.a2k, g.a2r), "wins": (g.wins, g.n)}
+
+
+def progress_block(g: Agg) -> dict:
+    """{measure: {value, se, n, unit}} for the night's ended runs (rates in percent, their SE sqrt(p(1-p)/n) in points), and
+    `boss_recorded`: False when the night's rows did not record bosses (the boss measures are then None)."""
+    sd = g.sd()
+    out = {"mean_floor": {"value": rnd(g.mean(), 4), "se": rnd(sd / math.sqrt(g.n), 4) if sd is not None else None, "n": g.n,
+                          "unit": "floors"}}
+    for key, (k, n) in progress_counts(g).items():
+        p = ratio(k, n) if key == "wins" or g.boss_recorded else None  # unrecorded bosses: unknown, not 0
+        out[key] = {"value": rnd(100 * p, 3) if p is not None else None,
+                    "se": rnd(100 * math.sqrt(p * (1 - p) / n), 3) if p is not None else None, "n": n, "unit": "points"}
+    out["boss_recorded"] = g.boss_recorded
+    return out
+
+
+def progress_vs(entry: dict | None) -> dict | None:
+    """The six measures' differences against one comparison entry's base: {measure: {diff, se, z}} from its `real` block."""
+    if not entry:
+        return None
+    blk = entry["real"]
+    out = {"mean_floor": {k: blk["floor_ended"][k] for k in ("diff", "se", "z")}}
+    for key, _label, _unit, field in PROGRESS[1:]:
+        d = blk[field]
+        out[key] = {"diff": d["diff_pts"], "se": d["se_pts"], "z": d["z"]}
+    return {"generation": entry["generation"], "nights": entry["nights"], "base_runs": entry["real"]["base"]["runs"],
+            "base_boss_recorded": blk["boss_recorded"]["base"], "diffs": out}
+
+
+# ---------------------------------------------------------------------------------------------------- control variate
+def _fmean(xs: list[float]) -> float:
+    return math.fsum(xs) / len(xs)
+
+
+def control_variate(y: list[float], x: list[float], x_all: list[float]) -> dict:
+    """The copy arm as a control variate for the real arm's mean floor (regression estimator with a covariate mean taken from a
+    larger sample: double sampling).
+
+    y, x: the real and the copy floor of each paired seed (equal length n). x_all: the copy floor of every copy run that ended,
+    paired or not (N >= n; the paired copy runs are among them). With the regression y = a + b x + e on the pairs,
+
+        theta = mean(y) - b * (mean(x) - mean(x_all)),      SE(theta)^2 = s_e^2 / n + b^2 s_x(all)^2 / N,
+
+    s_e^2 the residual variance (n - 2 degrees of freedom). When N = n the correction term is zero (mean(x) is mean(x_all)), theta
+    is the raw mean and SE(theta) is the raw SE: the copy runs can only help beyond the pairs. With the copy mean known exactly
+    (N -> infinity) the SE is s_e / sqrt(n), the raw SE times sqrt(1 - rho^2): the variance saving is 1 - rho^2.
+    `variance_factor` is (1 - rho^2) + rho^2 n / N, the share of the raw variance left at this n and N (large-sample)."""
+    n = len(y)
+    out: dict = {"pairs": n, "copy_runs": len(x_all), "extra_copy_runs": max(0, len(x_all) - n), "real_mean_paired": None,
+                 "copy_mean_paired": None, "copy_mean_all": None, "beta": None, "rho": None, "sd_floor": None, "raw_se": None,
+                 "mean_cv": None,
+                 "se_cv": None, "se_cv_known_copy_mean": None, "saving": None, "variance_factor": None}
+    if n < 3 or len(x) != n or len(x_all) < n:
+        return out
+    big_n = len(x_all)
+    my, mx, mxa = _fmean(y), _fmean(x), _fmean(x_all)
+    sxx = math.fsum((a - mx) ** 2 for a in x)
+    syy = math.fsum((b - my) ** 2 for b in y)
+    sxy = math.fsum((a - mx) * (b - my) for a, b in zip(x, y))
+    raw_se = math.sqrt(syy / (n - 1) / n)
+    out.update(real_mean_paired=my, copy_mean_paired=mx, copy_mean_all=mxa, raw_se=raw_se, sd_floor=math.sqrt(syy / (n - 1)))
+    if sxx <= 0.0:  # the copy floors do not vary: no slope to fit, nothing to adjust
+        out.update(mean_cv=my, se_cv=raw_se, se_cv_known_copy_mean=raw_se)
+        return out
+    beta = sxy / sxx
+    rho = sxy / math.sqrt(sxx * syy) if syy > 0.0 else None
+    s2_res = max(0.0, syy - sxy * sxy / sxx) / (n - 2)
+    s2_x_all = math.fsum((a - mxa) ** 2 for a in x_all) / (big_n - 1)
+    out.update(beta=beta, rho=rho, mean_cv=my - beta * (mx - mxa),
+               se_cv=math.sqrt(s2_res / n + beta * beta * s2_x_all / big_n), se_cv_known_copy_mean=math.sqrt(s2_res / n))
+    if rho is not None:
+        out.update(saving=1.0 - rho * rho, variance_factor=(1.0 - rho * rho) + rho * rho * n / big_n)
+    return out
+
+
+POWER_BASIS = ("real runs per night, ended; two nights of fresh seed blocks and equal size compared unpaired, two-sided 5% level, "
+               "80% power; 'vs_fixed_reference' is half (a night against a reference with no error)")
+
+
+def runs_to_see(sd: float, delta: float, factor: float = 1.0, nights: int = 2, alpha: float = 0.05, power: float = 0.8) -> int:
+    """Runs per night to see a change of `delta` floors with probability `power` at level `alpha` (two-sided): the difference of
+    `nights` nights' means has variance nights * factor * sd^2 / n, so n = nights * factor * ((z_a + z_b) sd / delta)^2."""
+    nd = statistics.NormalDist()
+    z = nd.inv_cdf(1.0 - alpha / 2.0) + nd.inv_cdf(power)
+    return math.ceil(nights * factor * (z * sd / delta) ** 2)
+
+
+def power_figures(sd: float | None, cv: dict) -> dict | None:
+    """Runs a night needs to see a half-floor and a one-floor change, raw and with the control variate (at this night's
+    pairs-to-copy-runs ratio, and with the copy mean known exactly)."""
+    if sd is None:
+        return None
+    rho, n, big_n = cv.get("rho"), cv.get("pairs") or 0, cv.get("copy_runs") or 0
+    f_now = cv.get("variance_factor")
+    f_lim = None if rho is None else 1.0 - rho * rho
+    out: dict = {"basis": POWER_BASIS, "sd_floor": rnd(sd, 4), "variance_factor_this_design": rnd(f_now, 4),
+                 "variance_factor_copy_mean_known": rnd(f_lim, 4)}
+    for key, delta in (("half_floor", 0.5), ("one_floor", 1.0)):
+        out[key] = {"raw": runs_to_see(sd, delta),
+                    "adjusted_this_design": None if f_now is None else runs_to_see(sd, delta, f_now),
+                    "adjusted_copy_mean_known": None if f_lim is None else runs_to_see(sd, delta, f_lim),
+                    "vs_fixed_reference_raw": runs_to_see(sd, delta, nights=1)}
+    return out
+
+
+def paired_pairs(cur: dict) -> list[tuple[dict, dict]]:
+    """(real row, emulator row) of every seed that ended on both arms."""
+    er = {r["seed"]: r for r in cur["emu_end"]}
+    return [(r, er[r["seed"]]) for r in cur["real_end"] if r["seed"] in er]
+
+
+def control_variate_figures(cur: dict) -> dict:
+    """The night's control-variate block: the pairs' regression, the adjusted mean and SE, the saving and the power table.
+    `available` is False when the night has no copy arm (or no seed ended on both arms)."""
+    pairs = paired_pairs(cur)
+    x_all = [float(r["floor"]) for r in {r["seed"]: r for r in cur["emu_end"]}.values()]
+    if not pairs:
+        return {"available": False, "reason": "no copy-arm run ended on a seed the real arm ended" if cur["has_emu"]
+                else "no copy arm rows for this night", "pairs": 0, "copy_runs": len(x_all), "extra_copy_runs": len(x_all)}
+    y, x = [float(a["floor"]) for a, _ in pairs], [float(b["floor"]) for _, b in pairs]
+    cv = control_variate(y, x, x_all)
+    sd = cv["sd_floor"]  # None under three pairs
+    out = {"available": True, **{k: (rnd(v, 4) if isinstance(v, float) else v) for k, v in cv.items()}}
+    out["adjustment"] = rnd(cv["mean_cv"] - cv["real_mean_paired"], 4) if cv["mean_cv"] is not None else None
+    if cv["extra_copy_runs"] == 0:
+        out["note"] = ("no copy run beyond the pairs: the copy mean of the pairs is the copy mean of all, so the adjustment term is "
+                       "zero and the adjusted mean and SE are the raw ones; the saving needs copy runs the real arm did not play")
+    else:
+        out["note"] = (f"{cv['extra_copy_runs']} copy runs beyond the {cv['pairs']} pairs: they tighten the copy mean; the saving "
+                       f"reaches 1 - rho^2 only if the copy mean were known exactly")
+    out["power"] = power_figures(sd, cv)
+    return out
 
 
 # ---------------------------------------------------------------------------------------------------- nights
@@ -712,8 +901,7 @@ def machine_figures(path: Path) -> dict:
 # ---------------------------------------------------------------------------------------------------- the report
 def paired_figures(cur: dict) -> dict:
     """Real against emulator on the same seeds: floor gap, the Act 1 boss 2x2, and the same with crash rows as floor 0."""
-    er = {r["seed"]: r for r in cur["emu_end"]}
-    pairs = [(r, er[r["seed"]]) for r in cur["real_end"] if r["seed"] in er]
+    pairs = paired_pairs(cur)
     out: dict = {"ended": {"seeds": len(pairs)}}
     if pairs:
         diff = [a["floor"] - b["floor"] for a, b in pairs]
@@ -788,6 +976,14 @@ def build_report(night: Path, agent: str | None, lab: Path, logs: Path | None, w
     comparison = {"previous_night": comparison_entry(prev_night, g_real, g_emu),
                   "same_generation_earlier": comparison_entry(same_gen, g_real, g_emu),
                   "previous_generation_pooled": comparison_entry(prev_gen, g_real, g_emu)}
+    # the control variate (the copy arm's floors on the same seeds), the pairs' correlation, and the progress score
+    cv = control_variate_figures(cur)
+    paired = paired_figures(cur)
+    paired["rho"], paired["beta"] = cv.get("rho"), cv.get("beta")
+    real["mean_floor_cv"], real["mean_floor_cv_se"] = cv.get("mean_cv"), cv.get("se_cv")
+    progress = {"unit_note": "floors for the mean floor; percentage points for the rest (value, SE and differences)",
+                "measures": progress_block(g_real), "previous_night": progress_vs(comparison["previous_night"]),
+                "previous_generation_pooled": progress_vs(comparison["previous_generation_pooled"])}
 
     # the job and the night's window
     jf = job_figures(find_job(lab, date))
@@ -892,7 +1088,8 @@ def build_report(night: Path, agent: str | None, lab: Path, logs: Path | None, w
                  "emu_rows": emu["rows"], "emu_ended": emu["ended"], "emu_crash_rows": emu["crashes"],
                  "seeds_with_rows_real": len(seeds_real), "seeds_with_rows_emu": len(seeds_emu),
                  "seeds_with_rows_both": len(seeds_real & seeds_emu)},
-        "real": real, "emu": emu, "human_r1": R1, "comparison": comparison, "paired": paired_figures(cur), "fights": fights,
+        "real": real, "emu": emu, "human_r1": R1, "comparison": comparison, "paired": paired, "control_variate": cv,
+        "progress": progress, "fights": fights,
         "crashes": {"rows": crashes, "by_kind": dict(kinds), "cumulative": cumulative},
         "fight_unfinished": {"this_night": unfinished, "earlier_nights": unfinished_hist},
         "lockstep": {**lockstep_figures(summ, corpus_text), "no_emulator_id_failures_by_earlier_night": noid},
@@ -963,6 +1160,13 @@ def not_computed(rep: dict, usage: str | None) -> list[dict]:
     if not rep["hp_recorded"]:
         items.append({"figure": "HP entering a boss, HP lost per fight",
                       "source": "recorded nowhere: no HP field in the rows (boss_damage is the share of the boss's HP removed)"})
+    if not rep["hp_recorded"]:
+        items.append({"figure": "fight-quality measures per fight kind in the real arm (damage taken per hallway fight, damage dealt per "
+                      "energy spent, block wasted)",
+                      "source": "recorded nowhere: no row field and no game-log line carries player HP, energy spent or block (the "
+                      "logs list card plays without costs or numbers). The lockstep reads them at every combat decision (the referee's "
+                      "observation holds player HP, block and energy, each hand card's cost and the enemies' HP and block), but "
+                      "rl/run_fields.RunFields keeps only the boss fight's enemy HP; a per-fight record there is the lead (fork change)"})
     if rep["fights"]["real"] is None:
         items.append({"figure": "per-fight survival of the real arm", "source": "needs the copy of the workers' game logs made while the "
                       "night ran (the block deletes them at its end); none found"})
@@ -1239,6 +1443,54 @@ def handoff_line(rep: dict) -> str:
     return " ".join(P) + "\n\n" + "\n".join("  " + ln if ln else "" for ln in tables_md(rep)) + "\n"
 
 
+def control_variate_lines(rep: dict) -> list[str]:
+    cv, rl = rep["control_variate"], rep["real"]
+    if not cv.get("available"):
+        return [f"- control variate (the copy arm's floors as covariate for the real arm's): not computed, {cv.get('reason')}"]
+    s = (f"- control variate (the copy arm's floor on the same seed as covariate; ended runs): real mean floor {num(cv['real_mean_paired'])} "
+         f"(SE {num(cv['raw_se'])}) raw and {num(cv['mean_cv'])} (SE {num(cv['se_cv'])}) adjusted on {n_(cv['pairs'])} pairs "
+         f"(all {n_(rl['ended'])} ended runs: {num(rl['mean_floor'])}, SE {num(rl['mean_floor_se'])})")
+    if cv.get("rho") is not None:
+        s += (f"; seed correlation rho {num(cv['rho'], 3)}, slope {num(cv['beta'], 3)}; implied saving 1 - rho^2 = {num(cv['saving'], 3)} of the "
+              f"variance ({pct(round(1000 * cv['rho'] ** 2), 1000)} fewer real runs for the same SE) with the copy mean known exactly "
+              f"(SE then {num(cv['se_cv_known_copy_mean'])})")
+    L = [s + f". {cv['note'][0].upper() + cv['note'][1:]}."]
+    p = cv.get("power")
+    if p:
+        h, o = p["half_floor"], p["one_floor"]
+        L.append(f"- real runs a night needs to see a change (two nights of fresh seeds compared, 80% power, 5% level, sd {num(p['sd_floor'])}): "
+                 f"half a floor {n_(h['raw'])} raw, {n_(h['adjusted_this_design'])} adjusted as run, {n_(h['adjusted_copy_mean_known'])} with the "
+                 f"copy mean known exactly; one floor {n_(o['raw'])}, {n_(o['adjusted_this_design'])}, {n_(o['adjusted_copy_mean_known'])}")
+    return L
+
+
+def progress_lines(rep: dict) -> list[str]:
+    """The progress score: each measure with its SE, then its difference against the previous night and the previous generation
+    pooled, each with SE and z (unpaired: the nights play fresh seed blocks)."""
+    pr = rep["progress"]
+    L = [f"Progress score (ended runs; value (SE); difference against each base (SE, z); {pr['unit_note']}):"]
+    bases = [(k, tag) for k, tag in (("previous_night", "previous night"), ("previous_generation_pooled", "previous generation pooled"))]
+    for key, label, unit, _field in PROGRESS:
+        m = pr["measures"][key]
+        d = 2 if unit == "floors" else 1
+        s = f"- {label}: {num(m['value'], d)} (SE {num(m['se'], d)})"
+        for bkey, tag in bases:
+            b = pr[bkey]
+            if b is None:
+                s += f"; against the {tag}: none"
+                continue
+            x = b["diffs"][key]
+            s += (f"; against the {tag} ({'+'.join(dt[5:] for dt in b['nights']) if len(b['nights']) < 4 else str(len(b['nights'])) + ' nights'}, "
+                  f"generation {b['generation']}, {n_(b['base_runs'])} runs) {sgn(x['diff'], d)} (SE {num(x['se'], d)}, z {sgn(x['z'], 1)})")
+        L.append(s)
+    if not pr["measures"]["boss_recorded"]:
+        L.append("- this night's rows did not record the boss fights (runs past floor 17 carry no Act 1 boss entry): its boss measures are unknown")
+    for bkey, tag in bases:
+        if pr[bkey] is not None and not pr[bkey]["base_boss_recorded"]:
+            L.append(f"- the {tag} did not record the boss fights (runs past floor 17 carry no Act 1 boss entry): boss differences against it are unknown")
+    return L
+
+
 def edition_figures(rep: dict) -> str:
     nt, rl, em, lk, pa, cm = rep["night"], rep["real"], rep["emu"], rep["lockstep"], rep["paired"], rep["comparison"]
     L = [f"Edition figures: night {nt['date']} ({nt['agent']}, generation {nt['generation']}), from morning_report.py", ""]
@@ -1258,6 +1510,7 @@ def edition_figures(rep: dict) -> str:
         if pa.get("counted", {}).get("seeds"):
             s += f", {sgn(pa['counted']['floor_emu_minus_real_mean'], 3)} (emulator minus real, crash = 0) on {n_(pa['counted']['seeds'])} seeds"
         L.append(s)
+    L += control_variate_lines(rep)
     L.append(f"- crashes: {rl['crashes']} of {n_(rl['rows'])} real rows, kinds "
              + (", ".join(f"{k} {v}" for k, v in rep["crashes"]["by_kind"].items()) or "none") + f"; emulator arm {em['crashes']}")
     wl = rep["winlog"]
@@ -1279,6 +1532,7 @@ def edition_figures(rep: dict) -> str:
     if g.get("present"):
         L.append(f"- D11C proof: Strike rank {g['d11c']['Strike']['rank']}, Defend rank {g['d11c']['Defend']['rank']}, together "
                  f"{100 * g['d11c_share']:.1f}% of the weight")
+    L += [""] + progress_lines(rep)
     pgp = cm.get("previous_generation_pooled")
     if pgp:
         r = pgp["real"]
@@ -1293,8 +1547,13 @@ def edition_figures(rep: dict) -> str:
 # recomputed straight from the night's two runs.jsonl files by code that shares nothing with the per-row functions above
 # (`read_jsonl`, `split_rows`, `make_agg`, `boss_hit`, `crash_kind`, `is_win`): its own reader, per-seed tables instead of
 # row sums, `math.fsum` means, its own crash-text classifier. A figure is a MATCH when the two paths agree (counts exactly,
-# means and rates within the report's own rounding to four decimals).
+# means and rates within the report's own rounding to four decimals). The second path also recomputes the control variate (the
+# pairs' correlation and slope by statistics.correlation / linear_regression, the adjusted mean and its SEs from explicit
+# residuals) and the progress score (each measure and its differences against the previous night and the previous generation
+# pooled, found by its own scan of the earlier nights' folders); figures the report rounds to three decimals (points, z) are
+# compared to within half of that rounding.
 CHECK_TOL = 6e-5
+CHECK_TOL_3 = 6e-4
 
 
 def _stream_rows(path: Path):
@@ -1330,10 +1589,15 @@ def _crash_label(text: str) -> str:
     return "other"
 
 
-def _act1_boss(row: dict) -> tuple[bool, bool]:
-    """(reached, killed) for the Act 1 boss: any `boss_damage_acts` entry for act 0; killed when its fraction is full."""
-    fractions = [e[1] for e in (row.get("boss_damage_acts") or []) if isinstance(e, (list, tuple)) and len(e) >= 2 and e[0] == 0]
+def _boss_of_act(row: dict, act: int) -> tuple[bool, bool]:
+    """(reached, killed) for the boss of 0-based act `act`: any `boss_damage_acts` entry for it; killed when its fraction is full."""
+    fractions = [e[1] for e in (row.get("boss_damage_acts") or []) if isinstance(e, (list, tuple)) and len(e) >= 2 and e[0] == act]
     return bool(fractions), bool(fractions) and max(fractions) >= 1.0
+
+
+def _act1_boss(row: dict) -> tuple[bool, bool]:
+    """(reached, killed) for the Act 1 boss."""
+    return _boss_of_act(row, 0)
 
 
 def _arm_second_path(path: Path, real: bool) -> dict:
@@ -1346,6 +1610,10 @@ def _arm_second_path(path: Path, real: bool) -> dict:
     kinds: Counter = Counter()
     crash_rows = 0
     reached = killed = 0
+    by_seed: dict[str, float] = {}  # seed -> floor of its last ended row
+    act2 = [0, 0]  # Act 2 boss reached, killed
+    past = gap = 0  # ended runs past the Act 1 boss floor, and those of them with no Act 1 boss entry
+    wins = 0
     for row in _stream_rows(path):
         if row.get("seed"):
             seeds.add(row["seed"])
@@ -1361,12 +1629,22 @@ def _arm_second_path(path: Path, real: bool) -> dict:
             killed += k
             boss[row.get("seed")] = (r, k)
             ended_seq.append((row.get("seed"), k))
+            by_seed[row.get("seed")] = float(row["floor"])
+            if row["floor"] > ACT1_BOSS_FLOOR:
+                past += 1
+                gap += 0 if r else 1
+            r2, k2 = _boss_of_act(row, 1)
+            act2[0] += r2
+            act2[1] += k2
+            wins += 1 if (row.get("end") == "win" or row.get("win") is True) else 0
     n = len(floors)
     return {"seeds": seeds, "ended": n, "crash_rows": crash_rows, "kinds": dict(kinds), "boss": boss, "ended_seq": ended_seq,
             "mean_ended": math.fsum(floors) / n if n else None,
             "mean_counted": math.fsum(floors) / (n + crash_rows) if n + crash_rows else None,
             "act1_reached": reached, "act1_killed": killed,
-            "killed_of_runs": killed / n if n else None, "killed_of_reached": killed / reached if reached else None}
+            "killed_of_runs": killed / n if n else None, "killed_of_reached": killed / reached if reached else None,
+            "floors": floors, "by_seed": by_seed, "act2_reached": act2[0], "act2_killed": act2[1], "wins": wins,
+            "past": past, "gap": gap}
 
 
 def independent_figures(night: Path, agent: str) -> dict:
@@ -1389,6 +1667,174 @@ def independent_figures(night: Path, agent: str) -> dict:
     paired = [(k, emu["boss"][s][1]) for s, k in real["ended_seq"] if s in emu["boss"]]
     out["paired seeds, ended on both arms"] = len(paired)
     out["Act 1 boss agreement of the arms"] = (sum(1 for a, b in paired if a == b) / len(paired)) if paired else None
+    out["SE of mean floor, ended, real"] = statistics.stdev(real["floors"]) / math.sqrt(real["ended"]) if real["ended"] >= 2 else None
+    out.update(_cv_second_path(real["by_seed"], emu["by_seed"]))
+    out.update(_progress_second_path(night, agent, real))
+    return out
+
+
+# -- the control variate by a second route: the standard library's correlation and least-squares fit, residuals written out
+CV_NAMES = {
+    "pairs": "control variate: pairs ended on both arms",
+    "copy_runs": "control variate: copy runs ended (all seeds)",
+    "extra_copy_runs": "control variate: copy runs beyond the pairs",
+    "beta": "control variate: slope of the real floor on the copy floor (beta)",
+    "rho": "control variate: seed correlation (rho)",
+    "sd_floor": "control variate: SD of the real floors (the pairs)",
+    "variance_factor": "control variate: share of the variance left at this design",
+    "real_mean_paired": "control variate: mean floor, real, raw (the pairs)",
+    "raw_se": "control variate: SE of the raw mean floor (the pairs)",
+    "mean_cv": "control variate: mean floor, real, adjusted",
+    "se_cv": "control variate: SE of the adjusted mean floor",
+    "se_cv_known_copy_mean": "control variate: SE with the copy mean known exactly",
+    "saving": "control variate: implied saving (1 - rho^2)",
+}
+
+
+POWER_NAMES = {(key, field): f"control variate: runs a night needs to see {what}, {how}"
+               for key, what in (("half_floor", "half a floor"), ("one_floor", "one floor"))
+               for field, how in (("raw", "raw"), ("adjusted_this_design", "adjusted as run"),
+                                  ("adjusted_copy_mean_known", "adjusted, copy mean known"),
+                                  ("vs_fixed_reference_raw", "raw, against a fixed reference"))}
+Z_TWO_SIDED_5_POWER_80 = 1.959963984540054 + 0.8416212335729143  # written out; the report takes it from statistics.NormalDist
+
+
+def _cv_second_path(real_by_seed: dict[str, float], emu_by_seed: dict[str, float]) -> dict:
+    """CV_NAMES figures from the two arms' floors by seed. Fewer than three pairs gives counts only; a copy arm whose floors do not
+    vary gives the raw mean and SE (no slope)."""
+    seeds = sorted(set(real_by_seed) & set(emu_by_seed))
+    y = [real_by_seed[sd] for sd in seeds]
+    x = [emu_by_seed[sd] for sd in seeds]
+    x_all = list(emu_by_seed.values())
+    n, big_n = len(seeds), len(x_all)
+    out = {name: None for name in list(CV_NAMES.values()) + list(POWER_NAMES.values())}
+    out[CV_NAMES["pairs"]], out[CV_NAMES["copy_runs"]], out[CV_NAMES["extra_copy_runs"]] = n, big_n, max(0, big_n - n)
+    if n < 3:
+        return out
+    my, mx, mxa = statistics.fmean(y), statistics.fmean(x), statistics.fmean(x_all)
+    raw_se = statistics.stdev(y) / math.sqrt(n)
+    out[CV_NAMES["real_mean_paired"]], out[CV_NAMES["raw_se"]] = my, raw_se
+    sd_y = statistics.stdev(y)
+    out[CV_NAMES["sd_floor"]] = sd_y
+
+    def runs(delta: float, factor: float = 1.0, nights: int = 2) -> int:  # 2 (z sd / delta)^2 x share of variance left, rounded up
+        return math.ceil(nights * factor * (Z_TWO_SIDED_5_POWER_80 * sd_y / delta) ** 2)
+
+    for key, delta in (("half_floor", 0.5), ("one_floor", 1.0)):
+        out[POWER_NAMES[(key, "raw")]] = runs(delta)
+        out[POWER_NAMES[(key, "vs_fixed_reference_raw")]] = runs(delta, nights=1)
+    if statistics.pvariance(x) <= 0.0:
+        out[CV_NAMES["mean_cv"]], out[CV_NAMES["se_cv"]], out[CV_NAMES["se_cv_known_copy_mean"]] = my, raw_se, raw_se
+        return out
+    fit = statistics.linear_regression(x, y)
+    beta, alpha = fit.slope, fit.intercept
+    resid = [b - (alpha + beta * a) for a, b in zip(x, y)]
+    s2 = math.fsum(r * r for r in resid) / (n - 2)
+    var_all = statistics.variance(x_all)
+    out[CV_NAMES["beta"]] = beta
+    out[CV_NAMES["mean_cv"]] = my - beta * (mx - mxa)
+    out[CV_NAMES["se_cv"]] = math.sqrt(s2 / n + beta * beta * var_all / big_n)
+    out[CV_NAMES["se_cv_known_copy_mean"]] = math.sqrt(s2 / n)
+    if statistics.pvariance(y) > 0.0:
+        rho = statistics.correlation(x, y)
+        out[CV_NAMES["rho"]], out[CV_NAMES["saving"]] = rho, 1.0 - rho * rho
+        out[CV_NAMES["variance_factor"]] = (1.0 - rho * rho) + rho * rho * n / big_n
+        for key, delta in (("half_floor", 0.5), ("one_floor", 1.0)):
+            out[POWER_NAMES[(key, "adjusted_this_design")]] = runs(delta, out[CV_NAMES["variance_factor"]])
+            out[POWER_NAMES[(key, "adjusted_copy_mean_known")]] = runs(delta, 1.0 - rho * rho)
+    return out
+
+
+# -- the progress score by a second route: the earlier nights are found by a scan of the folders and pooled from their rows
+def _prog_name(label: str, unit: str, what: str) -> str:
+    return f"progress: {label}{' (points)' if unit == 'points' else ''}, {what}"
+
+
+BASE_TAGS = (("previous_night", "previous night"), ("previous_generation_pooled", "previous generation pooled"))
+
+
+def _pool_second(parts: list[dict]) -> dict:
+    return {"floors": [f for q in parts for f in q["floors"]],
+            **{k: sum(q[k] for q in parts) for k in ("act1_reached", "act1_killed", "act2_reached", "act2_killed", "wins", "past", "gap")}}
+
+
+def _boss_known_second(st: dict) -> bool:
+    return st["past"] < MIN_CELL or st["gap"] / st["past"] <= BOSS_GAP_MAX
+
+
+def _rates_second(st: dict) -> dict[str, tuple[int, int]]:
+    n = len(st["floors"])
+    return {"act1_reach": (st["act1_reached"], n), "act1_kill_of_reached": (st["act1_killed"], st["act1_reached"]),
+            "act2_reach": (st["act2_reached"], n), "act2_kill_of_reached": (st["act2_killed"], st["act2_reached"]),
+            "wins": (st["wins"], n)}
+
+
+def _bases_second(night: Path, agent: str) -> dict[str, dict | None]:
+    """The previous night (the newest earlier date holding a real arm; its arms pooled) and the previous generation pooled (the
+    arms of the highest generation below this one, every night), as pooled row sums; None when there is no such pool."""
+    m = re.fullmatch(r"g(\d+)", agent)
+    gen = int(m.group(1)) if m else 0
+    arms: list[tuple[str, int, dict]] = []
+    try:
+        folders = sorted(night.parent.iterdir())
+    except OSError:
+        folders = []
+    for d in folders:
+        if not (d.is_dir() and re.fullmatch(r"\d{4}-\d{2}-\d{2}", d.name) and d.name < night.name):
+            continue
+        for a in sorted(d.iterdir()):
+            ma = re.fullmatch(r"g(\d+)", a.name)
+            if a.is_dir() and ma and (a / "runs.jsonl").is_file():
+                arms.append((d.name, int(ma.group(1)), _arm_second_path(a / "runs.jsonl", True)))
+    out: dict[str, dict | None] = {"previous_night": None, "previous_generation_pooled": None}
+    if arms:
+        last = max(a[0] for a in arms)
+        out["previous_night"] = _pool_second([a[2] for a in arms if a[0] == last])
+        below = [a[1] for a in arms if a[1] < gen]
+        if below:
+            out["previous_generation_pooled"] = _pool_second([a[2] for a in arms if a[1] == max(below)])
+    return out
+
+
+def _value_second(st: dict, key: str) -> tuple[float | None, float | None]:
+    """(value, SE) of one progress measure over a pool's ended runs: the mean floor in floors, a rate in points."""
+    if key == "mean_floor":
+        fl = st["floors"]
+        return (statistics.fmean(fl) if fl else None, statistics.stdev(fl) / math.sqrt(len(fl)) if len(fl) >= 2 else None)
+    k, n = _rates_second(st)[key]
+    if not n or (key != "wins" and not _boss_known_second(st)):
+        return None, None
+    p = k / n
+    return 100.0 * p, 100.0 * math.sqrt(p * (1.0 - p) / n)
+
+
+def _diff_second(cur: dict, base: dict, key: str) -> tuple[float | None, float | None, float | None]:
+    """(difference, SE, z) of one measure, current pool minus base pool, unpaired."""
+    if key == "mean_floor":
+        a, b = cur["floors"], base["floors"]
+        if len(a) < 2 or len(b) < 2:
+            return None, None, None
+        d = statistics.fmean(a) - statistics.fmean(b)
+        se = math.sqrt(statistics.variance(a) / len(a) + statistics.variance(b) / len(b))
+        return d, se, (d / se if se else None)
+    (k1, n1), (k2, n2) = _rates_second(cur)[key], _rates_second(base)[key]
+    if not n1 or not n2 or (key != "wins" and not (_boss_known_second(cur) and _boss_known_second(base))):
+        return None, None, None
+    p1, p2 = k1 / n1, k2 / n2
+    se = math.sqrt(p1 * (1.0 - p1) / n1 + p2 * (1.0 - p2) / n2)
+    return 100.0 * (p1 - p2), 100.0 * se, ((p1 - p2) / se if se else None)
+
+
+def _progress_second_path(night: Path, agent: str, real: dict) -> dict:
+    cur = _pool_second([real])
+    bases = _bases_second(night, agent)
+    out: dict = {}
+    for key, label, unit, _field in PROGRESS:
+        out[_prog_name(label, unit, "value")], out[_prog_name(label, unit, "SE")] = _value_second(cur, key)
+        for bkey, tag in BASE_TAGS:
+            names = [_prog_name(label, unit, f"against {tag}, {w}") for w in ("difference", "SE", "z")]
+            vals = _diff_second(cur, bases[bkey], key) if bases[bkey] is not None else (None, None, None)
+            out.update(zip(names, vals))
     return out
 
 
@@ -1413,22 +1859,41 @@ def report_check_figures(rep: dict) -> dict:
     pe = rep["paired"]["ended"]
     out["paired seeds, ended on both arms"] = pe.get("seeds")
     out["Act 1 boss agreement of the arms"] = pe.get("act1_agreement")
+    out["SE of mean floor, ended, real"] = rep["real"]["mean_floor_se"]
+    cv = rep["control_variate"]
+    for key, name in CV_NAMES.items():
+        out[name] = cv.get(key)
+    for (key, field), name in POWER_NAMES.items():
+        out[name] = ((cv.get("power") or {}).get(key) or {}).get(field)
+    pr = rep["progress"]
+    for key, label, unit, _field in PROGRESS:
+        m = pr["measures"][key]
+        out[_prog_name(label, unit, "value")], out[_prog_name(label, unit, "SE")] = m["value"], m["se"]
+        for bkey, tag in BASE_TAGS:
+            d = ((pr[bkey] or {}).get("diffs") or {}).get(key) or {}
+            for w, f in (("difference", "diff"), ("SE", "se"), ("z", "z")):
+                out[_prog_name(label, unit, f"against {tag}, {w}")] = d.get(f)
     return out
 
 
-def _same(a, b) -> bool:
+def _same(a, b, tol: float = CHECK_TOL) -> bool:
     if a is None or b is None:
         return a is None and b is None
     if isinstance(a, int) and isinstance(b, int):
         return a == b
-    return abs(float(a) - float(b)) <= CHECK_TOL
+    return abs(float(a) - float(b)) <= tol
+
+
+def _tol_of(figure: str) -> float:
+    """The report rounds points and z to three decimals, everything else to four."""
+    return CHECK_TOL_3 if "(points)" in figure or figure.endswith(", z") else CHECK_TOL
 
 
 def check_rows(first: dict, second: dict) -> list[dict]:
     """One row per figure named by either path: {figure, first, second, ok}. A figure only one path has is a mismatch."""
     names = list(first) + [k for k in second if k not in first]
     return [{"figure": k, "first": first.get(k), "second": second.get(k),
-             "ok": k in first and k in second and _same(first[k], second[k])} for k in names]
+             "ok": k in first and k in second and _same(first[k], second[k], _tol_of(k))} for k in names]
 
 
 def _show(v) -> str:
