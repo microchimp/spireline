@@ -23,6 +23,14 @@ floor, Act 1 boss reached, Act 1 killed of those reached, Act 2 reached and kill
 their differences against the previous night and the previous generation pooled with SE and z. A night whose real rows did not
 record bosses (runs past floor 17 with no Act 1 boss entry) has its boss measures unknown, not 0.
 
+The night block's chance covariate, stage 1 (2026-11-04): `chance_covariate` corrects the real arm's mean floor by the luck of the draw
+read from the game-log copies: the act's variant and each hallway, elite and boss encounter the game dealt, valued by a table of the
+previous generation's real runs and taken against the draws' own frequencies over the earlier nights (the section "the chance
+covariate" below has the rules). It reports the corrected SE beside the raw one, rho and 1 - rho^2, and the mean of the correction, which
+is zero when the frequencies are the game's odds (the check). A night without a game-log copy, or with no earlier night to build the
+table from, reads "not measured". With --out the table the correction used is written as `chance_table.json`; `--chance-read` prints the
+night-by-night table of the reading over every night of the folder (under the report's rule and under a sensitivity rule).
+
 Sources: the arms' `runs.jsonl`, `summary.json`, `result.json`, `compare.json`, `ranked.json`, `by_family.json`,
 `divergences.jsonl`, `machine.jsonl`, `wall.json`; the earlier nights' folders (history, the pooled comparison); the lab
 runner's log and the job record (start, end, tree, interruptions); `jobs.json` (spacing of the next night); the copy of the
@@ -444,6 +452,414 @@ def control_variate_figures(cur: dict) -> dict:
                        f"reaches 1 - rho^2 only if the copy mean were known exactly")
     out["power"] = power_figures(sd, cv)
     return out
+
+
+# ---------------------------------------------------------------------------------------------------- the chance covariate, stage 1
+# The night block's yardstick, run-level chance terms (2026-11-04, brief 4c; docs/design/2026-11-04-training-design.md section 4.4).
+# The real arm's floor is a skill part plus luck: which Act 1 the game rolled, which encounters each room drew, which boss waited. The
+# draws are the game's, not the agent's, so a term "the value after the draw minus its expectation over the pool's odds" has mean
+# zero for any agent and any value table (AIVAT's property). Valued with a table fixed before the night (the previous generation's
+# real runs: mean final floor of the runs that met each encounter), the sum of a run's terms is a covariate of known mean zero for the
+# run's floor; subtracting beta x it keeps the night's mean unbiased and removes the share of the variance the draws explain. Only
+# chance terms enter (not the run head's value of a state, which would subtract skill too). Stage 2 (the draws inside the fights) needs
+# per-decision states the past nights did not keep and is not read here.
+#
+# What counts as a draw (read from the game-log copies, parse_logs): every combat room of a run, by its encounter id's pool: boss
+# (_BOSS), elite (_ELITE), hallway weak (_WEAK, the act's first rooms) and hallway normal (_NORMAL, and the unsuffixed pool names such
+# as OVERGROWTH_CRAWLERS); an event's fight (_EVENT_ENCOUNTER) is a choice, not a draw, and is left out. The act is the number of bosses
+# passed. The act's variant (Act 1 is rolled from two pools of encounters and bosses) is found in the table's own runs: encounters
+# that share a run's act are one variant (connected components), and a run's variant is that of its first known encounter; the draw of
+# the variant is a term too (its value: mean final floor of the table's runs that played it).
+CHANCE_KINDS = ("variant", "hallway", "elite", "boss")
+CHANCE_BASIS = ("chance terms only (the act's variant, each hallway, elite and boss encounter drawn from the pool of its act and variant); "
+                "value of a draw = mean final floor of the table's runs that met it (pool mean when the cell holds under "
+                f"{MIN_CELL} draws); expectation = the table's own draw frequencies; table = the previous generation's real runs with a "
+                "game-log copy, fixed before the night; corrected mean = mean - beta x mean(correction), SE = residual SD / sqrt(n)")
+CHANCE_Z_FLAG = 3.0  # the mean of the correction should sit within this many SE of zero
+
+
+def chance_class(encounter: str) -> str | None:
+    """The pool a combat room's encounter was drawn from: boss, elite, weak, normal; None for an event's fight (a choice)."""
+    if encounter.endswith("_BOSS"):
+        return "boss"
+    if encounter.endswith("_ELITE"):
+        return "elite"
+    if encounter.endswith("_EVENT_ENCOUNTER"):
+        return None
+    if encounter.endswith("_WEAK"):
+        return "weak"
+    return "normal"
+
+
+def chance_kind(cls: str) -> str:
+    return "hallway" if cls in ("weak", "normal") else cls
+
+
+def chance_events(encounters: list[str]) -> list[tuple[int, str, str]]:
+    """(act, pool class, encounter id) of each draw of a run, in room order; the act is 1 plus the bosses passed."""
+    act, out = 1, []
+    for enc in encounters:
+        cls = chance_class(enc)
+        if cls is not None:
+            out.append((act, cls, enc))
+        if enc.endswith("_BOSS"):
+            act += 1
+    return out
+
+
+def encounters_by_seed(fights: list[dict]) -> dict[str, list[str]]:
+    """parse_logs records -> {seed: encounter ids in room order}."""
+    by: dict[str, list[dict]] = defaultdict(list)
+    for f in fights:
+        by[f["seed"]].append(f)
+    return {s: [f["encounter"] for f in sorted(fs, key=lambda f: f["i"])] for s, fs in by.items()}
+
+
+def _cell_values(cells: dict[str, list[float]], odds: dict[str, int], min_cell: int) -> tuple[dict[str, dict], float, float]:
+    """cells: key -> [n, sum of floors] over the value runs; odds: key -> number of draws over the odds runs. Returns (key -> {n,
+    mean_floor, odds_n, value}, the value runs' pool mean, the expectation of the values under the odds' frequencies (the value runs'
+    own when the odds runs hold none)). A cell under `min_cell` draws takes the pool mean as its value."""
+    total = sum(c[0] for c in cells.values())
+    pool_mean = sum(c[1] for c in cells.values()) / total
+    out = {}
+    for key in sorted(set(cells) | set(odds)):
+        n, s = cells.get(key, (0, 0.0))
+        out[key] = {"n": int(n), "mean_floor": round(s / n, 6) if n else None, "odds_n": int(odds.get(key, 0)),
+                    "value": round(s / n if n >= min_cell else pool_mean, 6)}
+    weight = "odds_n" if sum(odds.values()) else "n"
+    wsum = sum(v[weight] for v in out.values())
+    return out, pool_mean, sum(v[weight] / wsum * v["value"] for v in out.values())
+
+
+def build_chance_table(runs: list[tuple[list[tuple[int, str, str]], float]], min_cell: int = MIN_CELL,
+                       odds_runs: list[tuple[list[tuple[int, str, str]], float]] | None = None) -> dict:
+    """The value table from earlier real runs: runs = [(chance_events(run), final floor)] give each draw its value (mean final floor of
+    the runs that met it); `odds_runs` (default: the same runs) give the draws' frequencies, the odds the expectation is taken under:
+    the draws are the game's, so any earlier night serves, whichever agent played it. Keys are strings so the table is JSON as it
+    stands (`<act>|<encounter>`, `<act>|<variant>`, `<act>|<variant>|<pool class>`). A pool or act none of the value runs met has no
+    value and no entry: its draws are "unknown" to the table."""
+    same = odds_runs is None
+    odds_runs = runs if same else odds_runs
+    parent: dict[tuple[int, str], tuple[int, str]] = {}
+
+    def find(k):
+        parent.setdefault(k, k)
+        while parent[k] != k:
+            parent[k] = parent[parent[k]]
+            k = parent[k]
+        return k
+
+    for events, _ in (runs if same else runs + odds_runs):
+        first: dict[int, str] = {}
+        for act, _cls, enc in events:
+            find((act, enc))
+            if act in first:
+                parent[find((act, enc))] = find((act, first[act]))
+            else:
+                first[act] = enc
+    members: dict[tuple[int, str], list[str]] = defaultdict(list)
+    for key in list(parent):
+        members[find(key)].append(key[1])
+    label_of: dict[tuple[int, str], str] = {}
+    for root, encs in members.items():
+        for e in encs:
+            label_of[(root[0], e)] = min(encs)
+
+    def tally(rs):
+        variants: dict[tuple[int, str], list[float]] = defaultdict(lambda: [0, 0.0])
+        pools: dict[tuple[int, str, str], dict[str, list[float]]] = defaultdict(lambda: defaultdict(lambda: [0, 0.0]))
+        n_events = 0
+        for events, floor in rs:
+            seen_acts: set[int] = set()
+            for act, cls, enc in events:
+                lab = label_of[(act, enc)]
+                if act not in seen_acts:
+                    seen_acts.add(act)
+                    variants[(act, lab)][0] += 1
+                    variants[(act, lab)][1] += floor
+                cell = pools[(act, lab, cls)][enc]
+                cell[0] += 1
+                cell[1] += floor
+                n_events += 1
+        return variants, pools, n_events
+
+    v_val, p_val, n_events = tally(runs)
+    v_odds, p_odds, n_odds_events = (v_val, p_val, n_events) if same else tally(odds_runs)
+    table: dict = {"min_cell": min_cell, "runs": len(runs), "draws": n_events, "odds_runs": len(odds_runs), "odds_draws": n_odds_events,
+                   "variant_of": {f"{a}|{e}": lab for (a, e), lab in sorted(label_of.items())},
+                   "variants": {}, "variant_expect": {}, "pools": {}}
+    for act in sorted({a for a, _ in v_val}):
+        vals, _mean, expect = _cell_values({lab: v_val[(a, lab)] for a, lab in v_val if a == act},
+                                           {lab: v_odds[(a, lab)][0] for a, lab in v_odds if a == act}, min_cell)
+        table["variant_expect"][str(act)] = round(expect, 6)
+        for lab, v in vals.items():
+            table["variants"][f"{act}|{lab}"] = {**v, "members": sorted(e for (a, e), l in label_of.items() if a == act and l == lab)}
+    for (act, lab, cls), cells in sorted(p_val.items()):
+        odds = {e: c[0] for e, c in p_odds.get((act, lab, cls), {}).items()}
+        vals, mean, expect = _cell_values(cells, odds, min_cell)
+        table["pools"][f"{act}|{lab}|{cls}"] = {"n": sum(v["n"] for v in vals.values()), "mean_floor": round(mean, 6),
+                                                "expect": round(expect, 6), "cells": vals}
+    return table
+
+
+def chance_terms(table: dict, events: list[tuple[int, str, str]]) -> dict:
+    """A run's correction by kind (variant, hallway, elite, boss), their sum, the draws counted and those the table does not know
+    (an encounter or act it has never seen: left out of the sum, counted). Each pool is drawn from without replacement within an act
+    (an encounter never came twice in an act's weak, normal or elite pool in nine nights of logs), so a draw's expectation is taken over
+    the pool's encounters not yet drawn in that act, at the odds' frequencies: the value of the draw minus that expectation has mean zero
+    given the run's earlier draws, whatever the run's later fate (a run that died on a hard encounter has not drawn it again)."""
+    out: dict = {k: 0.0 for k in CHANCE_KINDS}
+    variant_of_act: dict[int, str] = {}
+    for act, _cls, enc in events:
+        lab = table["variant_of"].get(f"{act}|{enc}")
+        if lab is not None and act not in variant_of_act and f"{act}|{lab}" in table["variants"]:
+            variant_of_act[act] = lab
+    for act, lab in variant_of_act.items():
+        out["variant"] += table["variants"][f"{act}|{lab}"]["value"] - table["variant_expect"][str(act)]
+    unknown = 0
+    drawn: dict[tuple[int, str], set[str]] = defaultdict(set)
+    for act, cls, enc in events:
+        pool = table["pools"].get(f"{act}|{variant_of_act[act]}|{cls}") if act in variant_of_act else None
+        cell = pool["cells"].get(enc) if pool else None
+        if cell is None:
+            unknown += 1
+            continue
+        weight = "odds_n" if any(v["odds_n"] for v in pool["cells"].values()) else "n"
+        rest = [v for e, v in pool["cells"].items() if e not in drawn[(act, cls)] and v[weight] > 0]
+        drawn[(act, cls)].add(enc)
+        if not rest:
+            unknown += 1
+            continue
+        out[chance_kind(cls)] += cell["value"] - sum(v[weight] * v["value"] for v in rest) / sum(v[weight] for v in rest)
+    out["total"] = math.fsum(out[k] for k in CHANCE_KINDS)
+    out["draws"], out["unknown"] = len(events), unknown
+    return out
+
+
+def _share_left(y: list[float], x: list[float]) -> float | None:
+    """1 - rho^2 of x against y (the share of y's variance left after a least-squares adjustment on x); None when x or y is flat."""
+    n = len(y)
+    if n < 3:
+        return None
+    mx, my = _fmean(x), _fmean(y)
+    sxx = math.fsum((a - mx) ** 2 for a in x)
+    syy = math.fsum((b - my) ** 2 for b in y)
+    if sxx <= 0.0 or syy <= 0.0:
+        return None
+    sxy = math.fsum((a - mx) * (b - my) for a, b in zip(x, y))
+    return 1.0 - sxy * sxy / (sxx * syy)
+
+
+def chance_adjustment(y: list[float], c: list[float], by_kind: dict[str, list[float]] | None = None, odds_runs: int | None = None) -> dict:
+    """The real floors y and their corrections c (mean zero when the odds are the game's): raw mean and SE, the correction's mean (it
+    should be near zero: SE and z), the slope and correlation, the corrected mean y - beta c and its SE, the share of the variance left
+    1 - rho^2, the plain AIVAT form y - c (no fitted slope), and each kind's share alone.
+
+    The odds were estimated from `odds_runs` earlier runs (None: known exactly). Then the correction's mean carries their sampling
+    error too, SD(c) sqrt(1/n + 1/odds_runs), and the corrected mean's variance gains beta^2 SD(c)^2 / odds_runs beside the residual
+    s_e^2 / n (n - 2 degrees of freedom): the double-sampling form of `control_variate`, with the draws' frequencies as the larger sample."""
+    n = len(y)
+    out: dict = {"n": n, "mean_raw": None, "sd_floor": None, "raw_se": None, "mean_correction": None, "se_correction": None,
+                 "z_correction": None, "beta": None, "rho": None, "mean_corrected": None, "se_corrected": None,
+                 "share_left": None, "mean_aivat": None, "se_aivat": None, "share_left_by_kind": {}}
+    if n < 3 or len(c) != n:
+        return out
+    odds_term = 0.0 if not odds_runs else 1.0 / odds_runs
+    my, mc = _fmean(y), _fmean(c)
+    sxx = math.fsum((a - mc) ** 2 for a in c)
+    syy = math.fsum((b - my) ** 2 for b in y)
+    sxy = math.fsum((a - mc) * (b - my) for a, b in zip(c, y))
+    raw_se = math.sqrt(syy / (n - 1) / n)
+    var_c = sxx / (n - 1)
+    se_c = math.sqrt(var_c * (1.0 / n + odds_term))
+    out.update(mean_raw=my, sd_floor=math.sqrt(syy / (n - 1)), raw_se=raw_se, mean_correction=mc, se_correction=se_c,
+               z_correction=(mc / se_c) if se_c > 0 else None)
+    d = [b - a for a, b in zip(c, y)]
+    md = _fmean(d)
+    out.update(mean_aivat=md, se_aivat=math.sqrt(math.fsum((v - md) ** 2 for v in d) / (n - 1) / n + var_c * odds_term))
+    if sxx <= 0.0:  # no draw varied: nothing to adjust
+        out.update(mean_corrected=my, se_corrected=raw_se, share_left=1.0)
+        return out
+    beta = sxy / sxx
+    s2_res = max(0.0, syy - sxy * sxy / sxx) / (n - 2)
+    out.update(beta=beta, mean_corrected=my - beta * mc, se_corrected=math.sqrt(s2_res / n + beta * beta * var_c * odds_term))
+    if syy > 0.0:
+        rho = sxy / math.sqrt(sxx * syy)
+        out.update(rho=rho, share_left=1.0 - rho * rho)
+    for kind, xs in (by_kind or {}).items():
+        out["share_left_by_kind"][kind] = _share_left(y, xs)
+    return out
+
+
+def chance_power(sd: float, share_left: float | None) -> dict:
+    """Runs a night needs to see a half-floor and a one-floor change (the power basis of POWER_BASIS), raw and corrected."""
+    return {key: {"raw": runs_to_see(sd, delta), "corrected": None if share_left is None else runs_to_see(sd, delta, share_left)}
+            for key, delta in (("half_floor", 0.5), ("one_floor", 1.0))}
+
+
+def logs_dir_of(logs_root: Path | None, date: str) -> Path | None:
+    """The copy of a night's workers' game logs under `logs_root`, when there is one with logs in it."""
+    if logs_root is None:
+        return None
+    cand = logs_root / f"w5-night-{date.replace('-', '')}-stdout"
+    return cand if cand.is_dir() and any(cand.glob("*.log")) else None
+
+
+def chance_night_runs(h: dict, logs: Path, cache: dict | None = None, fights: list[dict] | None = None
+                      ) -> list[tuple[str, list[tuple[int, str, str]], int]]:
+    """(seed, chance events, final floor) of each ended real run of night `h` that its game-log copy holds."""
+    key = f"{h['date']}|{h['agent']}"
+    if cache is not None and key in cache:
+        return cache[key]
+    enc = encounters_by_seed(fights if fights is not None else parse_logs(logs)[0])
+    floors = {r["seed"]: r["floor"] for r in h["real_end"] if r.get("seed")}
+    out = [(s, chance_events(enc[s]), floors[s]) for s in sorted(enc) if s in floors]
+    if cache is not None:
+        cache[key] = out
+    return out
+
+
+def chance_table_nights(cur: dict, others: list[dict], logs_root: Path | None, rule: str = "previous_generation"
+                        ) -> tuple[list[dict], list[dict], str]:
+    """(value nights, odds nights, the rule in words). "previous_generation" (the rule of the report): the draws are valued by the
+    nights of the highest generation below the night's own that have a game-log copy, and the odds are the draws' frequencies over every
+    earlier night with a copy (the game's odds do not depend on who played). "other_nights": every other night with a copy, later ones
+    too, for both (a sensitivity reading, never a rule: it uses nights the night's table could not have had)."""
+    if rule == "previous_generation":
+        earlier = [h for h in others if h["date"] < cur["date"] and logs_dir_of(logs_root, h["date"])]
+        older = sorted({h["generation"] for h in others if h["date"] < cur["date"] and h["generation"] < cur["generation"]})
+        if not older:
+            return [], [], "no earlier generation"
+        gen = older[-1]
+        value = [h for h in earlier if h["generation"] == gen]
+        return value, earlier, f"values from the previous generation (g{gen}), odds from every earlier night with a game-log copy"
+    every = [h for h in others if h["date"] != cur["date"] and logs_dir_of(logs_root, h["date"])]
+    return every, every, "values and odds from every other night with a game-log copy (sensitivity reading, not the rule)"
+
+
+def chance_covariate_figures(cur: dict, fights: list[dict] | None, others: list[dict], logs_root: Path | None,
+                             rule: str = "previous_generation", cache: dict | None = None) -> dict:
+    """The night's stage-1 block: `available` False with the reason ("not measured: ...") when the night has no game-log copy or no
+    table can be built; else the table, the corrections' check (mean near zero) and the corrected SE beside the raw one."""
+    base = {"available": False, "stage": 1, "basis": CHANCE_BASIS, "rule": rule}
+    cache = {} if cache is None else cache
+    if not fights:
+        return {**base, "status": "not measured: no copy of this night's game logs (the encounter ids of the rooms are only there)"}
+    nights, odds_nights, how = chance_table_nights(cur, others, logs_root, rule)
+    if not nights:
+        return {**base, "status": f"not measured: no table can be fixed before the night ({how}: no night with a game-log copy)"}
+
+    def runs_of(hs: list[dict]) -> list[tuple[list[tuple[int, str, str]], int]]:
+        return [(ev, floor) for h in hs for _s, ev, floor in chance_night_runs(h, logs_dir_of(logs_root, h["date"]), cache)]
+
+    table = build_chance_table(runs_of(nights), MIN_CELL, runs_of(odds_nights))
+    own = chance_night_runs(cur, Path("."), cache, fights)
+    y, c, kinds = [], [], {k: [] for k in CHANCE_KINDS}
+    draws = unknown = 0
+    for _s, ev, floor in own:
+        t = chance_terms(table, ev)
+        y.append(float(floor))
+        c.append(t["total"])
+        for k in CHANCE_KINDS:
+            kinds[k].append(t[k])
+        draws += t["draws"]
+        unknown += t["unknown"]
+    adj = chance_adjustment(y, c, kinds, table["odds_runs"])
+    if adj["n"] < 3:
+        return {**base, "status": "not measured: fewer than three runs in the game-log copy"}
+    by_kind = {}
+    for k in CHANCE_KINDS:
+        by_kind[k] = {"mean_correction": rnd(_fmean(kinds[k]), 4), "sd_correction": rnd(statistics.pstdev(kinds[k]), 4),
+                      "share_left_alone": rnd(adj["share_left_by_kind"].get(k), 4)}
+    ended = len(cur["real_end"])
+    odds_ok = adj["z_correction"] is None or abs(adj["z_correction"]) <= CHANCE_Z_FLAG
+    return {**base, "available": True, "status": "measured",
+            "table_nights": sorted(h["date"] for h in nights), "table_generation": nights[0]["generation"],
+            "odds_nights": sorted(h["date"] for h in odds_nights), "table_rule": how,
+            "table_runs": table["runs"], "table_draws": table["draws"], "odds_runs": table["odds_runs"],
+            "runs_used": adj["n"], "ended_runs": ended, "coverage": rnd(adj["n"] / ended, 4) if ended else None,
+            "draws": draws, "unknown_draws": unknown,
+            "odds_check": {"mean_correction": rnd(adj["mean_correction"], 4), "se": rnd(adj["se_correction"], 4),
+                           "z": rnd(adj["z_correction"], 3), "within_3_se": odds_ok,
+                           "note": "the correction has mean zero when the table's frequencies are the game's odds (SE counts the odds' own sampling "
+                                   "error); the copy arm's rows hold no encounter ids, so the check is read on the real arm's own draws"},
+            "sd_floor": rnd(adj["sd_floor"], 4), "raw_mean": rnd(adj["mean_raw"], 4), "raw_se": rnd(adj["raw_se"], 4),
+            "beta": rnd(adj["beta"], 4), "rho": rnd(adj["rho"], 4), "share_left": rnd(adj["share_left"], 4),
+            "corrected_mean": rnd(adj["mean_corrected"], 4), "corrected_se": rnd(adj["se_corrected"], 4),
+            "se_ratio": rnd(adj["se_corrected"] / adj["raw_se"], 4) if adj["raw_se"] else None,
+            "aivat_mean": rnd(adj["mean_aivat"], 4), "aivat_se": rnd(adj["se_aivat"], 4), "by_kind": by_kind,
+            "power": chance_power(adj["sd_floor"], adj["share_left"]) if adj["sd_floor"] else None, "table": table}
+
+
+def chance_pooled(rows: list[dict]) -> dict:
+    """Pooled over the nights' figures that were measured: Fisher z of rho weighted by n - 3, then the share of variance left 1 - rho^2."""
+    ok = [r for r in rows if r.get("available") and r.get("rho") is not None]
+    if not ok:
+        return {"nights": 0, "runs": 0, "rho": None, "share_left": None}
+    w = [r["runs_used"] - 3 for r in ok]
+    z = sum(wi * math.atanh(r["rho"]) for wi, r in zip(w, ok)) / sum(w)
+    rho = math.tanh(z)
+    return {"nights": len(ok), "runs": sum(r["runs_used"] for r in ok), "rho": rnd(rho, 4), "share_left": rnd(1.0 - rho * rho, 4)}
+
+
+def chance_reading(parent: Path, logs_root: Path | None, rules: tuple[str, ...] = ("previous_generation", "other_nights")) -> dict:
+    """Stage 1 on every night under `parent` (a lab's nightly folder), each under each table rule; each game-log copy is read once."""
+    entries = [load_arm_pair(nd, real_arms(nd)[0]) for nd in list_nights(parent) if real_arms(nd)]
+    fights_of: dict[str, list[dict]] = {}
+    cache: dict = {}
+    for h in entries:
+        d = logs_dir_of(logs_root, h["date"])
+        if d is not None:
+            fights_of[h["date"]] = parse_logs(d)[0]
+            chance_night_runs(h, d, cache, fights_of[h["date"]])
+    out: dict = {"nights": [h["date"] for h in entries], "by_rule": {}}
+    for rule in rules:
+        rows = [{"date": h["date"], "generation": h["generation"],
+                 **chance_covariate_figures(h, fights_of.get(h["date"]), [e for e in entries if e is not h], logs_root, rule, cache)}
+                for h in entries]
+        out["by_rule"][rule] = {"nights": rows, "pooled": chance_pooled(rows)}
+    return out
+
+
+def chance_reading_md(reading: dict) -> str:
+    L: list[str] = []
+    for rule, blk in reading["by_rule"].items():
+        L += [f"Table rule `{rule}`:", ""]
+        head = ["night", "gen", "table from", "runs (of ended)", "sd of floors", "raw mean (SE)", "corrected mean (SE)", "corrected SE / raw SE",
+                "rho", "1 - rho^2", "AIVAT form SE", "mean of the correction (z)", "unknown draws", "one floor: raw", "one floor: corrected"]
+        rows = []
+        for r in blk["nights"]:
+            if not r.get("available"):
+                rows.append([r["date"][5:], str(r["generation"]), r["status"]] + [""] * (len(head) - 3))
+                continue
+            oc, p = r["odds_check"], r["power"]["one_floor"]
+            rows.append([r["date"][5:], str(r["generation"]), "+".join(d[5:] for d in r["table_nights"]) + f" (g{r['table_generation']})",
+                         f"{n_(r['runs_used'])} ({n_(r['ended_runs'])})", num(r["sd_floor"]), f"{num(r['raw_mean'])} ({num(r['raw_se'], 3)})",
+                         f"{num(r['corrected_mean'])} ({num(r['corrected_se'], 3)})", num(r["se_ratio"], 3), num(r["rho"], 3), num(r["share_left"], 3),
+                         num(r["aivat_se"], 3), f"{sgn(oc['mean_correction'], 3)} (z {sgn(oc['z'], 1)})", f"{r['unknown_draws']} of {n_(r['draws'])}",
+                         n_(p["raw"]), n_(p["corrected"])])
+        L += table_md(head, rows)
+        pl = blk["pooled"]
+        L += ["", f"Pooled over {pl['nights']} nights ({n_(pl['runs'])} runs, Fisher z): rho {num(pl['rho'], 3)}, 1 - rho^2 = {num(pl['share_left'], 3)}", ""]
+    return "\n".join(L)
+
+
+def chance_lines(rep: dict) -> list[str]:
+    """The edition's lines for the stage-1 covariate."""
+    cc = rep["chance_covariate"]
+    if not cc.get("available"):
+        return [f"- chance covariate, stage 1 (the draws of the game as covariate for the real arm's floor): {cc['status']}"]
+    oc, p = cc["odds_check"], (cc["power"] or {}).get("one_floor") or {}
+    s = (f"- chance covariate, stage 1 (act variant, hallway, elite and boss draws valued by the table of "
+         f"{'+'.join(d[5:] for d in cc['table_nights'])}, generation {cc['table_generation']}; {n_(cc['runs_used'])} of {n_(cc['ended_runs'])} ended "
+         f"runs): real mean floor {num(cc['raw_mean'])} (SE {num(cc['raw_se'], 3)}) raw and {num(cc['corrected_mean'])} (SE {num(cc['corrected_se'], 3)}) "
+         f"corrected; rho {num(cc['rho'], 3)}, 1 - rho^2 = {num(cc['share_left'], 3)} of the variance left; the correction averages "
+         f"{sgn(oc['mean_correction'], 3)} (SE {num(oc['se'], 3)}, z {sgn(oc['z'], 1)})")
+    if not oc["within_3_se"]:
+        s += "; THE MEAN IS OUTSIDE 3 SE, the table's frequencies are not the game's odds"
+    if p:
+        s += f"; one floor needs {n_(p['raw'])} real runs a night raw, {n_(p['corrected'])} corrected"
+    return [s]
 
 
 # ---------------------------------------------------------------------------------------------------- nights
@@ -942,7 +1358,7 @@ def comparison_entry(entries: list[dict], g_real: Agg, g_emu: Agg) -> dict | Non
 
 
 def build_report(night: Path, agent: str | None, lab: Path, logs: Path | None, winlog_source: str, usage: str | None,
-                 now: datetime, runner=subprocess.run) -> dict:
+                 now: datetime, runner=subprocess.run, logs_root: Path | None = None) -> dict:
     agents = real_arms(night)
     if agent is None:
         if len(agents) != 1:
@@ -1033,8 +1449,10 @@ def build_report(night: Path, agent: str | None, lab: Path, logs: Path | None, w
 
     # per-fight tables
     fights = {"emu": cells_json(fight_table_from_nodes(cur["emu_end"])), "real": None, "real_notes": None}
+    night_fights = None
     if logs is not None and logs.is_dir() and any(logs.glob("*.log")):
         fl, seen = parse_logs(logs)
+        night_fights = fl
         cells, notes, kmap = real_fight_table(fl)
         fights["real"] = cells_json(cells)
         fights["real_notes"] = {"runs_ended_in_logs": seen["runs ended in logs"], "fights": len(fl), "notes": dict(notes),
@@ -1089,6 +1507,7 @@ def build_report(night: Path, agent: str | None, lab: Path, logs: Path | None, w
                  "seeds_with_rows_real": len(seeds_real), "seeds_with_rows_emu": len(seeds_emu),
                  "seeds_with_rows_both": len(seeds_real & seeds_emu)},
         "real": real, "emu": emu, "human_r1": R1, "comparison": comparison, "paired": paired, "control_variate": cv,
+        "chance_covariate": chance_covariate_figures(cur, night_fights, earlier, logs_root),
         "progress": progress, "fights": fights,
         "crashes": {"rows": crashes, "by_kind": dict(kinds), "cumulative": cumulative},
         "fight_unfinished": {"this_night": unfinished, "earlier_nights": unfinished_hist},
@@ -1511,6 +1930,7 @@ def edition_figures(rep: dict) -> str:
             s += f", {sgn(pa['counted']['floor_emu_minus_real_mean'], 3)} (emulator minus real, crash = 0) on {n_(pa['counted']['seeds'])} seeds"
         L.append(s)
     L += control_variate_lines(rep)
+    L += chance_lines(rep)
     L.append(f"- crashes: {rl['crashes']} of {n_(rl['rows'])} real rows, kinds "
              + (", ".join(f"{k} {v}" for k, v in rep["crashes"]["by_kind"].items()) or "none") + f"; emulator arm {em['crashes']}")
     wl = rep["winlog"]
@@ -1645,6 +2065,212 @@ def _arm_second_path(path: Path, real: bool) -> dict:
             "killed_of_runs": killed / n if n else None, "killed_of_reached": killed / reached if reached else None,
             "floors": floors, "by_seed": by_seed, "act2_reached": act2[0], "act2_killed": act2[1], "wins": wins,
             "past": past, "gap": gap}
+
+
+# -- the chance covariate by a second route: its own log reader, set-merging for the variants, per-cell lists of floors, and the
+# regression by the standard library; it shares no function with the section above.
+CHANCE_NAMES = {
+    "runs_used": "chance covariate: runs used (ended, in the game-log copy)",
+    "draws": "chance covariate: draws",
+    "unknown_draws": "chance covariate: draws the table does not know",
+    "table_runs": "chance covariate: runs that value the draws",
+    "odds_runs": "chance covariate: runs that give the odds",
+    "raw_mean": "chance covariate: mean floor, raw",
+    "raw_se": "chance covariate: SE of the raw mean floor",
+    "beta": "chance covariate: slope of the floor on the correction",
+    "rho": "chance covariate: correlation of the floor with the correction",
+    "share_left": "chance covariate: share of the variance left (1 - rho^2)",
+    "mean_correction": "chance covariate: mean of the correction",
+    "corrected_mean": "chance covariate: mean floor, corrected",
+    "corrected_se": "chance covariate: SE of the corrected mean floor",
+    "aivat_se": "chance covariate: SE of the plain AIVAT form (floor minus correction)",
+}
+
+
+def _chance_figures_first(rep: dict) -> dict:
+    """CHANCE_NAMES figures as the report's chance block holds them (none when the night was not measured)."""
+    cc = rep["chance_covariate"]
+    if not cc.get("available"):
+        return {}
+    out = {name: cc.get(key) for key, name in CHANCE_NAMES.items() if key != "mean_correction"}
+    out[CHANCE_NAMES["mean_correction"]] = cc["odds_check"]["mean_correction"]
+    return out
+
+
+def _read_draws_second(logs: Path) -> dict[str, list[str]]:
+    """seed -> the encounter ids of its combat rooms in order, by a line scan of a game-log copy (a run ends at its `ended:` line)."""
+    out: dict[str, list[str]] = {}
+    for fn in sorted(logs.glob("*.log")):
+        rooms: list[str] = []
+        for line in fn.read_text(encoding="utf-8", errors="replace").splitlines():
+            if line.startswith("[referee] run decision 0 "):
+                rooms = []
+            elif line.startswith("[INFO] Creating NCombatRoom") and "encounter=" in line:
+                name = ""
+                for ch in line.split("encounter=", 1)[1]:
+                    if not (ch.isupper() or ch.isdigit() or ch == "_"):
+                        break
+                    name += ch
+                rooms.append(name)
+            elif line.startswith("[referee] run ") and " ended: " in line:
+                out[line.split()[2]] = rooms
+                rooms = []
+    return out
+
+
+def _draws_second(rooms: list[str]) -> list[tuple[int, str, str]]:
+    """(act, pool, encounter) of the draws among a run's rooms; an event's fight is no draw, a boss closes the act."""
+    out, act = [], 1
+    for name in rooms:
+        if not name.endswith("_EVENT_ENCOUNTER"):
+            pool = "boss" if name.endswith("_BOSS") else "elite" if name.endswith("_ELITE") else "weak" if name.endswith("_WEAK") else "normal"
+            out.append((act, pool, name))
+        if name.endswith("_BOSS"):
+            act += 1
+    return out
+
+
+def _night_runs_second(folder: Path, agent: str, logs_root: Path) -> list[tuple[list[tuple[int, str, str]], float]] | None:
+    """The night's (draws, final floor) of every ended real run in its game-log copy; None when it has no copy."""
+    logs = logs_root / f"w5-night-{folder.name.replace('-', '')}-stdout"
+    if not logs.is_dir() or not any(logs.glob("*.log")):
+        return None
+    floors = {}
+    for row in _stream_rows(folder / agent / "runs.jsonl"):
+        if row.get("ev") == "end" and row.get("seed"):
+            floors[row["seed"]] = float(row["floor"])
+    rooms = _read_draws_second(logs)
+    return [(_draws_second(rooms[sd]), floors[sd]) for sd in sorted(rooms) if sd in floors]
+
+
+def _chance_second_path(night: Path, agent: str, logs_root: Path | None) -> dict:
+    """CHANCE_NAMES figures for `night`: the previous generation's nights value the draws, every earlier night with a copy gives the
+    odds; {} when the night has no copy, no valuing night exists or fewer than three runs are left."""
+    if logs_root is None:
+        return {}
+    own = _night_runs_second(night, agent, logs_root)
+    if not own or len(own) < 3:
+        return {}
+    gen = int(agent[1:])
+    earlier: list[tuple[Path, str, int]] = []
+    for folder in sorted(p for p in night.parent.iterdir() if p.is_dir() and DATE_RE.match(p.name) and p.name < night.name):
+        for sub in sorted(q.name for q in folder.iterdir() if q.is_dir() and re.fullmatch(r"g\d+", q.name) and (q / "runs.jsonl").is_file()):
+            earlier.append((folder, sub, int(sub[1:])))
+    below = sorted({g for _f, _a, g in earlier if g < gen})
+    if not below:
+        return {}
+    value_runs, odds_runs = [], []
+    for folder, sub, g in earlier:
+        runs = _night_runs_second(folder, sub, logs_root)
+        if runs is None:
+            continue
+        odds_runs += runs
+        if g == below[-1]:
+            value_runs += runs
+    if not value_runs:
+        return {}
+    # variants: encounters met in one act of one run belong together; groups merge when they share an encounter
+    group_of: dict[tuple[int, str], int] = {}
+    next_id = 0
+    for draws, _floor in value_runs + odds_runs:
+        for act in sorted({a for a, _p, _e in draws}):
+            keys = {(act, e) for a, _p, e in draws if a == act}
+            ids = {group_of[k] for k in keys if k in group_of}
+            gid = min(ids) if ids else next_id
+            next_id += 0 if ids else 1
+            for k, v in list(group_of.items()):
+                if v in ids:
+                    group_of[k] = gid
+            for k in keys:
+                group_of[k] = gid
+    name_of_group: dict[int, str] = {}
+    for (a, e), gid in group_of.items():
+        name_of_group[gid] = min(name_of_group.get(gid, e), e)
+    variant = {k: name_of_group[v] for k, v in group_of.items()}
+
+    def value_of(floors: list[float], mean_all: float) -> float:
+        return statistics.fmean(floors) if len(floors) >= MIN_CELL else mean_all
+
+    v_floors: dict[tuple[int, str], list[float]] = defaultdict(list)  # (act, variant) -> floor of each run that played it
+    c_floors: dict[tuple[int, str, str, str], list[float]] = defaultdict(list)  # (act, variant, pool, enc) -> floors of its draws
+    for draws, floor in value_runs:
+        for act in sorted({a for a, _p, _e in draws}):
+            v_floors[(act, variant[(act, next(e for a, _p, e in draws if a == act))])].append(floor)
+        for act, pool, enc in draws:
+            c_floors[(act, variant[(act, enc)], pool, enc)].append(floor)
+    v_odds: Counter = Counter()
+    c_odds: Counter = Counter()
+    for draws, _floor in odds_runs:
+        for act in sorted({a for a, _p, _e in draws}):
+            v_odds[(act, variant[(act, next(e for a, _p, e in draws if a == act))])] += 1
+        for act, pool, enc in draws:
+            c_odds[(act, variant[(act, enc)], pool, enc)] += 1
+    act_mean = {act: statistics.fmean([f for (a, _v), fs in v_floors.items() if a == act for f in fs]) for act in {a for a, _v in v_floors}}
+    v_value = {k: value_of(fs, act_mean[k[0]]) for k, fs in v_floors.items()}
+    for k in v_odds:  # a variant only the odds runs met has no value of its own: the act's mean (an act no valuing run met has none)
+        if k[0] in act_mean:
+            v_value.setdefault(k, act_mean[k[0]])
+    pool_mean: dict[tuple[int, str, str], float] = {}
+    for pk in {(a, v, p) for (a, v, p, _e) in c_floors}:
+        pool_mean[pk] = statistics.fmean([f for k, fs in c_floors.items() if k[:3] == pk for f in fs])
+    c_value = {k: value_of(fs, pool_mean[k[:3]]) for k, fs in c_floors.items()}
+    for k in c_odds:
+        if k[:3] in pool_mean:
+            c_value.setdefault(k, pool_mean[k[:3]])
+    n_odds = len(odds_runs)
+    ys, cs, draws_n, unknown_n = [], [], 0, 0
+    for draws, floor in own:
+        total = 0.0
+        first_variant: dict[int, str] = {}
+        for act, _p, enc in draws:
+            if act not in first_variant and (act, enc) in variant and (act, variant[(act, enc)]) in v_value:
+                first_variant[act] = variant[(act, enc)]
+        for act, v in first_variant.items():
+            keys = [k for k in v_value if k[0] == act]
+            w = {k: v_odds[k] for k in keys} if any(v_odds[k] for k in keys) else {k: len(v_floors.get(k, ())) for k in keys}
+            total += v_value[(act, v)] - sum(w[k] * v_value[k] for k in keys) / sum(w.values())
+        seen: dict[tuple[int, str], set[str]] = defaultdict(set)
+        for act, pool, enc in draws:
+            draws_n += 1
+            if act not in first_variant or (act, first_variant[act], pool, enc) not in c_value:
+                unknown_n += 1
+                continue
+            pk = (act, first_variant[act], pool)
+            members = [k for k in c_value if k[:3] == pk]
+            use_odds = any(c_odds[k] for k in members)
+            w = {k: (c_odds[k] if use_odds else len(c_floors.get(k, ()))) for k in members}
+            rest = [k for k in members if k[3] not in seen[(act, pool)] and w[k] > 0]
+            seen[(act, pool)].add(enc)
+            if not rest:
+                unknown_n += 1
+                continue
+            total += c_value[pk + (enc,)] - sum(w[k] * c_value[k] for k in rest) / sum(w[k] for k in rest)
+        ys.append(floor)
+        cs.append(total)
+    n = len(ys)
+    out = {name: None for name in CHANCE_NAMES.values()}
+    out[CHANCE_NAMES["runs_used"]], out[CHANCE_NAMES["draws"]], out[CHANCE_NAMES["unknown_draws"]] = n, draws_n, unknown_n
+    out[CHANCE_NAMES["table_runs"]], out[CHANCE_NAMES["odds_runs"]] = len(value_runs), n_odds
+    my, mc = statistics.fmean(ys), statistics.fmean(cs)
+    out[CHANCE_NAMES["raw_mean"]], out[CHANCE_NAMES["raw_se"]] = my, statistics.stdev(ys) / math.sqrt(n)
+    out[CHANCE_NAMES["mean_correction"]] = mc
+    var_c = statistics.variance(cs)
+    diff = [a - b for a, b in zip(ys, cs)]
+    out[CHANCE_NAMES["aivat_se"]] = math.sqrt(statistics.variance(diff) / n + var_c / n_odds)
+    if var_c <= 0.0:
+        out[CHANCE_NAMES["corrected_mean"]], out[CHANCE_NAMES["corrected_se"]] = my, out[CHANCE_NAMES["raw_se"]]
+        out[CHANCE_NAMES["share_left"]] = 1.0
+        return out
+    fit = statistics.linear_regression(cs, ys)
+    resid = [b - (fit.intercept + fit.slope * a) for a, b in zip(cs, ys)]
+    s2 = math.fsum(r * r for r in resid) / (n - 2)
+    out[CHANCE_NAMES["beta"]] = fit.slope
+    out[CHANCE_NAMES["corrected_mean"]] = my - fit.slope * mc
+    out[CHANCE_NAMES["corrected_se"]] = math.sqrt(s2 / n + fit.slope ** 2 * var_c / n_odds)
+    if statistics.pvariance(ys) > 0.0:
+        rho = statistics.correlation(cs, ys)
+        out[CHANCE_NAMES["rho"]], out[CHANCE_NAMES["share_left"]] = rho, 1.0 - rho * rho
+    return out
 
 
 def independent_figures(night: Path, agent: str) -> dict:
@@ -1873,6 +2499,7 @@ def report_check_figures(rep: dict) -> dict:
             d = ((pr[bkey] or {}).get("diffs") or {}).get(key) or {}
             for w, f in (("difference", "diff"), ("SE", "se"), ("z", "z")):
                 out[_prog_name(label, unit, f"against {tag}, {w}")] = d.get(f)
+    out.update(_chance_figures_first(rep))
     return out
 
 
@@ -1918,9 +2545,13 @@ def check_text(night: Path, agent: str, rows: list[dict]) -> str:
 
 def run_check(night: Path, agent: str | None, lab: Path, now: datetime) -> tuple[str, int]:
     """(text, exit code): the report's figures against the second path's; 1 when any differ."""
-    rep = build_report(night, agent, lab, None, "none", None, now)
+    logs_root = lab.parent.parent / "logs"
+    cand = logs_root / f"w5-night-{night.name.replace('-', '')}-stdout"
+    rep = build_report(night, agent, lab, cand if cand.is_dir() else None, "none", None, now, logs_root=logs_root)
     agent = rep["night"]["agent"]
-    rows = check_rows(report_check_figures(rep), independent_figures(night, agent))
+    second = independent_figures(night, agent)
+    second.update(_chance_second_path(night, agent, logs_root))  # the game-log copies: the chance covariate, when the night has one
+    rows = check_rows(report_check_figures(rep), second)
     return check_text(night, agent, rows), (1 if any(not r["ok"] for r in rows) else 0)
 
 
@@ -1936,6 +2567,9 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--usage", help="the usage readout to print in the line, e.g. '84%% all / 59%% Fable at 00:21Z'")
     ap.add_argument("--now", help="ISO time to stamp the line with (default: now)")
     ap.add_argument("--out", type=Path, help="folder for morning_report.json, handoff_line.md and edition_figures.md")
+    ap.add_argument("--chance-read", action="store_true", help="read the night block's chance covariate (stage 1) on every night under "
+                    "the night folder's parent: the table of raw SE, corrected SE and 1 - rho^2 per night under each table rule "
+                    "(with --out: chance_reading.md and .json)")
     ap.add_argument("--check", action="store_true", help="recompute the headline figures by a second, independent code path "
                     "over the rows and print both with MATCH / MISMATCH; exit 1 on any mismatch (writes nothing)")
     a = ap.parse_args(argv)
@@ -1947,20 +2581,37 @@ def main(argv: list[str] | None = None) -> int:
         text, code = run_check(night, a.agent, lab, parse_utc(a.now) if a.now else datetime.now(timezone.utc))
         print(text)
         return code
+    logs_root = lab.parent.parent / "logs"
+    if a.chance_read:
+        reading = chance_reading(night.parent, logs_root)
+        text = chance_reading_md(reading)
+        print(text)
+        if a.out:
+            a.out.mkdir(parents=True, exist_ok=True)
+            (a.out / "chance_reading.md").write_text(text + "\n", encoding="utf-8")
+            slim = {rule: {"nights": [{k: v for k, v in r.items() if k != "table"} for r in blk["nights"]], "pooled": blk["pooled"]}
+                    for rule, blk in reading["by_rule"].items()}
+            (a.out / "chance_reading.json").write_text(json.dumps({"nights": reading["nights"], "by_rule": slim}, indent=1) + "\n",
+                                                       encoding="utf-8")
+        return 0
     logs = a.logs
     if logs is None:
-        cand = lab.parent.parent / "logs" / f"w5-night-{night.name.replace('-', '')}-stdout"
+        cand = logs_root / f"w5-night-{night.name.replace('-', '')}-stdout"
         logs = cand if cand.is_dir() else None
     now = parse_utc(a.now) if a.now else datetime.now(timezone.utc)
-    rep = build_report(night, a.agent, lab, logs, a.winlog, a.usage, now)
+    rep = build_report(night, a.agent, lab, logs, a.winlog, a.usage, now, logs_root=logs_root)
     line, ed = handoff_line(rep), edition_figures(rep)
     if a.out:
         a.out.mkdir(parents=True, exist_ok=True)
         (a.out / "morning_report.json").write_text(json.dumps(rep, indent=1) + "\n", encoding="utf-8")
         (a.out / "handoff_line.md").write_text(line, encoding="utf-8")
         (a.out / "edition_figures.md").write_text(ed, encoding="utf-8")
+        wrote = "morning_report.json, handoff_line.md, edition_figures.md"
+        if rep["chance_covariate"].get("available"):  # the table the night's correction used, fixed before the night, beside the report
+            (a.out / "chance_table.json").write_text(json.dumps(rep["chance_covariate"]["table"], indent=1) + "\n", encoding="utf-8")
+            wrote += ", chance_table.json"
         print(ed)
-        print(f"wrote morning_report.json, handoff_line.md, edition_figures.md in {a.out.name}/")
+        print(f"wrote {wrote} in {a.out.name}/")
     else:
         print(line)
         print(ed)
