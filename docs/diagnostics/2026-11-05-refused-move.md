@@ -88,7 +88,7 @@ Python only, in the fork (`referee/lockstep.py` and its tests). `reward_items()`
 and the game's answers are all stepped at their position in that one list. The other readers of list 6 (the copy's own screen
 reader, the replay and probe scripts, `play.py`, `commands.py`) were checked and already count by presence.
 
-Fork: branch `fix/refused-move`, commit 85a5eb7e on e1e94e19 (worktree `fork/wt-refused`). Not landed yet: the Python-only gate was queued behind another worker's quiet lock when this worker handed back; `tests.python.test_lockstep` passes on it (94 tests), and the two new tests fail on the old code with the nights' message.
+Landed on the fork main as 6c42702d (85a5eb7e put on a8d972b5), pushed 2026-11-04 21:12Z. Python-only gate on the change: 4,337 tests, 19 failures, none new from it (60 on the baseline list; the 3 outside it are the two known tests fixed on main before the landing and the AOT site test, which needs a build output Python-only worktrees do not have); test_lockstep 94 OK on the landed tree.
 
 ## Not done, and options
 
