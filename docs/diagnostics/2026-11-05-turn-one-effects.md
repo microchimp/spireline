@@ -1,6 +1,6 @@
 # Turn-one effects after the Act 2 hand fix: what runs on a fight's first turn, and what is left (audit, 2026-11-05)
 
-Written 2026-11-04 20:20Z (sim-worker, Sonnet). No engine code changed and nothing landed on the fork. Read: fork main `e1e94e19` (the
+Written 2026-11-04 20:15Z (sim-worker, Sonnet). No engine code changed and nothing landed on the fork. Read: fork main `e1e94e19` (the
 diff of `8db0b791` and the turn-start code it left: `CombatEngine.cs` `EndTurn`, `StartFirstTurn`, `ContinueFirstTurn`,
 `FirstTurnSide`, `SideTurnStart`, `AfterPlayerTurnStartPowers`; `CombatFactory.cs` `Reset`, `DrawOpeningHand`;
 `RelicEffects.cs` `ApplyBeforeOpeningHand`, `ApplyFirstTurnAfterSideTurnStart`, `ApplyStartOfPlayerTurn`, `HandDrawBonus`,
