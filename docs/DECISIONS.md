@@ -1236,3 +1236,18 @@ path; (2) a usage ledger, `tools/usage_ledger.py`, that reads the start/end usag
 prints the cost of each item and each week, flagging overlapping items instead of pretending precision.
 One Sonnet worker, budget about 0.5, Spireline repo only; the orchestrator keeps deciding and recording.
 Recorded 2026-11-04 01:35Z.
+
+## D53 · 2026-11-04 · The training-and-testing memo's items start
+
+Owner in chat ("okay do all the changes you think"; and, on the compute part, "do this"), after the memo
+`docs/research/2026-11-04-train-and-test-ideas.md`. **Decisions (orchestrator):** four Sonnet workers start together on disjoint
+files: (1) the fight exam (`rl/fight_exam.py`: stratified starts from the nights' replays, four paired draws, judge-value
+adjustment, held-out halves, the champion's calibration run under a `fight-exam` lock line) as a parallel instrument; the promotion
+rule (`PROMOTION_RULE`, D43) is not switched to it until it has read several gates; (2) practice starts from the human corpus's
+four fifths (`rl/human_starts.py`, Act 2 and bosses first, the exam fifth excluded by id) and a regret-weighted sampler with a
+staleness term and pre-loss states in `gym_loop.py`; the loop is relaunched onto it after tonight's block, not during the day;
+(3) the nightly exam's power in `tools/morning_report.py` (copy-arm control variate, progress score with SEs, fight-quality
+measures where the rows carry them); (4) the compute-allocation measurement (`docs/diagnostics/2026-11-04-compute-allocation.md`),
+which the owner asked for before the teacher-depth design. Queued behind them: the Opus design of the deeper training-time
+teacher and of hindsight labels for human run decisions (memo 3.3 and 6.2), then the trainer's auxiliary targets and resets
+(memo 3.4) once (1) and (2) have landed. Every heavy run ends by 15:45Z and every landing by 16:00Z for the night. Recorded 2026-11-04 10:16Z.
