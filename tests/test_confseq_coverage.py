@@ -9,10 +9,12 @@ Positive control: a fixed-n 95% Wald interval re-checked after every observation
 "peeking" the design forbids) must fail this test on the same paths, which shows the
 harness can detect an anytime-invalid procedure.
 
-Budget: the whole module runs in a few seconds; it must stay under 20 s.
+Budget: counted in work, not seconds. A wall-clock limit failed whenever the machine was busy (the same
+simulation took 1 s idle and 16 s beside other jobs), so each test counts the cells its confidence-sequence
+calls evaluate (observations x grid points for the betting CS, observations for the empirical-Bernstein CS)
+and must stay within a fixed cell budget. That bounds the simulation's size (the cause of the old 20 s
+limit) the same way on every machine, and a change to P, T or the grid has to change the budget with it.
 """
-
-import time
 
 import numpy as np
 import pytest
@@ -20,6 +22,29 @@ import pytest
 from spireline.eval import stats as S
 
 ALPHA = 0.05
+# The cell budgets: what each test's simulation evaluates today (see the tests), with no slack, so enlarging
+# the simulation is a visible edit here rather than a slower suite.
+EB_CELL_BUDGET = 2 * 2000 * 1000  # two cases, P = 2000 streams, T = 1000 observations, one cell per observation
+BETTING_CELL_BUDGET = 2 * 1000 * 500 * 250  # two cases, P = 1000 streams, T = 500 observations, G = 250 grid points
+
+
+class _Cells:
+    """Counts the cells the confidence-sequence routines evaluate; wraps them in place (monkeypatch undoes it)."""
+
+    def __init__(self, monkeypatch):
+        self.n = 0
+        eb, betting = S.eb_confseq, S.betting_confseq
+
+        def counted_eb(x, *args, **kwargs):
+            self.n += int(np.size(x))
+            return eb(x, *args, **kwargs)
+
+        def counted_betting(x, *args, grid_size=500, **kwargs):
+            self.n += int(np.size(x)) * grid_size
+            return betting(x, *args, grid_size=grid_size, **kwargs)
+
+        monkeypatch.setattr(S, "eb_confseq", counted_eb)
+        monkeypatch.setattr(S, "betting_confseq", counted_betting)
 
 
 def _time_uniform_coverage(lower: np.ndarray, upper: np.ndarray, mu: float) -> float:
@@ -37,8 +62,8 @@ def _peeking_wald_coverage(x: np.ndarray, mu: float, t0: int = 10) -> float:
 
 
 @pytest.mark.slow
-def test_empirical_bernstein_cs_coverage_under_optional_stopping():
-    start = time.perf_counter()
+def test_empirical_bernstein_cs_coverage_under_optional_stopping(monkeypatch):
+    work = _Cells(monkeypatch)
     rng = np.random.default_rng(20261010)
     P, T = 2000, 1000
     cases = []
@@ -62,12 +87,12 @@ def test_empirical_bernstein_cs_coverage_under_optional_stopping():
         assert cov >= 0.95, (name, cov)
         peek = _peeking_wald_coverage(x, mu)
         assert peek < 0.93, (name, peek)  # positive control: peeking a fixed-n CI fails
-    assert time.perf_counter() - start < 20
+    assert work.n == EB_CELL_BUDGET, work.n  # the whole simulation ran, and no more than budgeted
 
 
 @pytest.mark.slow
-def test_betting_cs_coverage_under_optional_stopping():
-    start = time.perf_counter()
+def test_betting_cs_coverage_under_optional_stopping(monkeypatch):
+    work = _Cells(monkeypatch)
     rng = np.random.default_rng(1010)
     P, T, G = 1000, 500, 250  # P=2000 offline: coverage 0.967-0.990 (LOG.md)
     for name, draw, mu in (
@@ -83,4 +108,4 @@ def test_betting_cs_coverage_under_optional_stopping():
         assert cov >= 0.95, (name, cov)
         peek = _peeking_wald_coverage(xs, mu)
         assert peek < 0.93, (name, peek)
-    assert time.perf_counter() - start < 20
+    assert work.n == BETTING_CELL_BUDGET, work.n  # the whole simulation ran, and no more than budgeted

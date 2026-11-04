@@ -128,6 +128,11 @@ def n_(x) -> str:
     return "n/a" if x is None else f"{x:,}"
 
 
+def rank_text(name: str, rank) -> str:
+    """'Strike rank 2', or 'Strike absent' when the card has no rank that night."""
+    return f"{name} absent" if rank is None else f"{name} rank {rank}"
+
+
 def num(x, d: int = 2) -> str:
     return "n/a" if x is None else f"{x:.{d}f}"
 
@@ -1843,8 +1848,8 @@ def handoff_line(rep: dict) -> str:
         d1, d2, hc = g["d11c"]["Strike"], g["d11c"]["Defend"], g["hand_count"]
         trend = "; ".join(f"{k[5:]}: {v:.0f}" for k, v in sorted(rep["hand_count_per_100k_by_night"].items())[-3:])
         rec = lambda k: f"{k} record" + ("" if k == 1 else "s")  # noqa: E731
-        P.append(f"**D11C / D11F2 proof:** Strike rank {d1['rank']}, weight {d1['weight']:.1f} ({rec(d1['records'])}); Defend rank "
-                 f"{d2['rank']}, weight {d2['weight']:.1f} ({rec(d2['records'])}); together {g['d11c_together_weight']:.1f}, "
+        P.append(f"**D11C / D11F2 proof:** {rank_text('Strike', d1['rank'])}, weight {d1['weight']:.1f} ({rec(d1['records'])}); "
+                 f"{rank_text('Defend', d2['rank'])}, weight {d2['weight']:.1f} ({rec(d2['records'])}); together {g['d11c_together_weight']:.1f}, "
                  f"{100 * g['d11c_share']:.1f}% of the total weight of {n_(round(g['total_weight']))}. Hand-count records (game has more "
                  f"+ emulator has more): {hc['game_more']}+{hc['emulator_more']}, per 100,000 decisions {num(hc['per_100k_decisions'], 0)}"
                  + (f" ({trend})" if trend else "") + ".")
@@ -1955,7 +1960,7 @@ def edition_figures(rep: dict) -> str:
                      f"{pct(rl['act1_killed'], rl['act1_reached'])} against {pct(r['base']['a1_killed'], r['base']['a1_reached'])}")
     g = rep["groups"]
     if g.get("present"):
-        L.append(f"- D11C proof: Strike rank {g['d11c']['Strike']['rank']}, Defend rank {g['d11c']['Defend']['rank']}, together "
+        L.append(f"- D11C proof: {rank_text('Strike', g['d11c']['Strike']['rank'])}, {rank_text('Defend', g['d11c']['Defend']['rank'])}, together "
                  f"{100 * g['d11c_share']:.1f}% of the weight")
     L += [""] + progress_lines(rep)
     pgp = cm.get("previous_generation_pooled")
@@ -2548,11 +2553,13 @@ def check_text(night: Path, agent: str, rows: list[dict]) -> str:
     return "\n".join(L)
 
 
-def run_check(night: Path, agent: str | None, lab: Path, now: datetime) -> tuple[str, int]:
-    """(text, exit code): the report's figures against the second path's; 1 when any differ."""
+def run_check(night: Path, agent: str | None, lab: Path, now: datetime, rep: dict | None = None) -> tuple[str, int]:
+    """(text, exit code): the report's figures against the second path's; 1 when any differ.
+    `rep` is a report already built for the night (main builds one for every mode so --out can write it); else one is built here."""
     logs_root = lab.parent.parent / "logs"
-    cand = logs_root / f"w5-night-{night.name.replace('-', '')}-stdout"
-    rep = build_report(night, agent, lab, cand if cand.is_dir() else None, "none", None, now, logs_root=logs_root)
+    if rep is None:
+        cand = logs_root / f"w5-night-{night.name.replace('-', '')}-stdout"
+        rep = build_report(night, agent, lab, cand if cand.is_dir() else None, "none", None, now, logs_root=logs_root)
     agent = rep["night"]["agent"]
     second = independent_figures(night, agent)
     second.update(_chance_second_path(night, agent, logs_root))  # the game-log copies: the chance covariate, when the night has one
@@ -2561,6 +2568,19 @@ def run_check(night: Path, agent: str | None, lab: Path, now: datetime) -> tuple
 
 
 # ---------------------------------------------------------------------------------------------------- CLI
+def write_report_files(out: Path, rep: dict) -> str:
+    """The --out files of the night's report (every mode writes them): the names written, comma-joined."""
+    out.mkdir(parents=True, exist_ok=True)
+    (out / "morning_report.json").write_text(json.dumps(rep, indent=1) + "\n", encoding="utf-8")
+    (out / "handoff_line.md").write_text(handoff_line(rep), encoding="utf-8")
+    (out / "edition_figures.md").write_text(edition_figures(rep), encoding="utf-8")
+    wrote = "morning_report.json, handoff_line.md, edition_figures.md"
+    if rep["chance_covariate"].get("available"):  # the table the night's correction used, fixed before the night, beside the report
+        (out / "chance_table.json").write_text(json.dumps(rep["chance_covariate"]["table"], indent=1) + "\n", encoding="utf-8")
+        wrote += ", chance_table.json"
+    return wrote
+
+
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description="The night's morning report: figures, the HANDOFF line and the edition list.")
     ap.add_argument("night", type=Path, help="a lab night folder, e.g. LAB/nightly/2026-11-03")
@@ -2568,25 +2588,41 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--lab", type=Path, help="the lab folder (default: two levels above the night)")
     ap.add_argument("--logs", type=Path, help="the copy of the real arm's workers' game logs "
                     "(default: <lab>/../../logs/w5-night-<yyyymmdd>-stdout when it exists)")
-    ap.add_argument("--winlog", default="auto", help="auto (Get-WinEvent), none, or a JSON file of events")
+    ap.add_argument("--winlog", default=None, help="auto (Get-WinEvent; the default), none (the default with --check), or a JSON file of events")
     ap.add_argument("--usage", help="the usage readout to print in the line, e.g. '84%% all / 59%% Fable at 00:21Z'")
     ap.add_argument("--now", help="ISO time to stamp the line with (default: now)")
-    ap.add_argument("--out", type=Path, help="folder for morning_report.json, handoff_line.md and edition_figures.md")
+    ap.add_argument("--out", type=Path, help="folder for morning_report.json, handoff_line.md and edition_figures.md "
+                    "(every mode writes them; chance_table.json too when the night has one)")
     ap.add_argument("--chance-read", action="store_true", help="read the night block's chance covariate (stage 1) on every night under "
                     "the night folder's parent: the table of raw SE, corrected SE and 1 - rho^2 per night under each table rule "
                     "(with --out: chance_reading.md and .json)")
     ap.add_argument("--check", action="store_true", help="recompute the headline figures by a second, independent code path "
-                    "over the rows and print both with MATCH / MISMATCH; exit 1 on any mismatch (writes nothing)")
+                    "over the rows and print both with MATCH / MISMATCH; exit 1 on any mismatch")
     a = ap.parse_args(argv)
     night = a.night.resolve()
     if not night.is_dir():
         raise SystemExit(f"{a.night}: not a folder")
     lab = (a.lab or night.parent.parent).resolve()
-    if a.check:
-        text, code = run_check(night, a.agent, lab, parse_utc(a.now) if a.now else datetime.now(timezone.utc))
-        print(text)
-        return code
     logs_root = lab.parent.parent / "logs"
+    now = parse_utc(a.now) if a.now else datetime.now(timezone.utc)
+
+    def build() -> dict:
+        logs = a.logs
+        if logs is None:
+            cand = logs_root / f"w5-night-{night.name.replace('-', '')}-stdout"
+            logs = cand if cand.is_dir() else None
+        return build_report(night, a.agent, lab, logs, a.winlog or ("none" if a.check else "auto"), a.usage, now, logs_root=logs_root)
+
+    def wrote_line(wrote: str) -> None:
+        print(f"wrote {wrote} in {a.out.name}/")
+
+    if a.check:
+        rep = build()
+        text, code = run_check(night, a.agent, lab, now, rep)
+        print(text)
+        if a.out:
+            wrote_line(write_report_files(a.out, rep))
+        return code
     if a.chance_read:
         reading = chance_reading(night.parent, logs_root)
         text = chance_reading_md(reading)
@@ -2598,28 +2634,21 @@ def main(argv: list[str] | None = None) -> int:
                     for rule, blk in reading["by_rule"].items()}
             (a.out / "chance_reading.json").write_text(json.dumps({"nights": reading["nights"], "by_rule": slim}, indent=1) + "\n",
                                                        encoding="utf-8")
+            wrote = "chance_reading.md, chance_reading.json"
+            try:  # the night's own report beside the reading, when its block has closed
+                wrote = write_report_files(a.out, build()) + ", " + wrote
+            except SystemExit as e:
+                print(f"report files not written: {e}")
+            wrote_line(wrote)
         return 0
-    logs = a.logs
-    if logs is None:
-        cand = logs_root / f"w5-night-{night.name.replace('-', '')}-stdout"
-        logs = cand if cand.is_dir() else None
-    now = parse_utc(a.now) if a.now else datetime.now(timezone.utc)
-    rep = build_report(night, a.agent, lab, logs, a.winlog, a.usage, now, logs_root=logs_root)
-    line, ed = handoff_line(rep), edition_figures(rep)
+    rep = build()
     if a.out:
-        a.out.mkdir(parents=True, exist_ok=True)
-        (a.out / "morning_report.json").write_text(json.dumps(rep, indent=1) + "\n", encoding="utf-8")
-        (a.out / "handoff_line.md").write_text(line, encoding="utf-8")
-        (a.out / "edition_figures.md").write_text(ed, encoding="utf-8")
-        wrote = "morning_report.json, handoff_line.md, edition_figures.md"
-        if rep["chance_covariate"].get("available"):  # the table the night's correction used, fixed before the night, beside the report
-            (a.out / "chance_table.json").write_text(json.dumps(rep["chance_covariate"]["table"], indent=1) + "\n", encoding="utf-8")
-            wrote += ", chance_table.json"
-        print(ed)
-        print(f"wrote {wrote} in {a.out.name}/")
+        wrote = write_report_files(a.out, rep)
+        print(edition_figures(rep))
+        wrote_line(wrote)
     else:
-        print(line)
-        print(ed)
+        print(handoff_line(rep))
+        print(edition_figures(rep))
     return 1 if any(c["ok"] is False for c in rep["cross_checks"]) else 0
 
 

@@ -490,3 +490,57 @@ def test_second_path_skips_torn_lines_and_reads_missing_files(tmp_path):
     assert (f["Act 1 boss reached, real"], f["Act 1 boss killed, real"]) == (2, 1)
     assert f["ended runs, emulator"] == 0 and f["mean floors, ended, emulator"] is None
     assert f["Act 1 boss agreement of the arms"] is None
+
+
+# ---------------------------------------------------------------------------------------------------- --out in every mode, absent ranks
+def test_check_with_out_writes_the_files_and_keeps_the_table_and_exit_code(tmp_path, capsys):
+    out = tmp_path / "rep"
+    assert mr.main([str(NIGHT), "--check", "--now", "2026-11-04T01:00:00Z", "--out", str(out)]) == 0
+    printed = capsys.readouterr().out
+    assert printed.startswith("morning_report --check: night 2026-11-04 (g11)") and "0 mismatches" in printed
+    assert "wrote morning_report.json, handoff_line.md, edition_figures.md" in printed
+    assert {"edition_figures.md", "handoff_line.md", "morning_report.json"} <= {p.name for p in out.iterdir()}
+    data = json.loads((out / "morning_report.json").read_text(encoding="utf-8"))
+    assert data["night"]["folder"] == "nightly/2026-11-04" and data["real"]["ended"] == 8
+    blob = "".join((out / n).read_text(encoding="utf-8") for n in ("morning_report.json", "handoff_line.md", "edition_figures.md"))
+    for bad in (str(FIX), str(FIX).replace("\\", "/"), "Users", "pmpal", "C:\\", ":/"):
+        assert bad not in blob, bad
+
+
+def test_check_with_out_still_exits_1_on_a_mismatch_and_writes(tmp_path, monkeypatch, capsys):
+    real = mr.independent_figures
+
+    def off_by_one(night, agent):
+        out = real(night, agent)
+        out["ended runs, real"] += 1
+        return out
+
+    monkeypatch.setattr(mr, "independent_figures", off_by_one)
+    out = tmp_path / "rep"
+    assert mr.main([str(NIGHT), "--check", "--now", "2026-11-04T01:00:00Z", "--out", str(out)]) == 1
+    assert "MISMATCH" in capsys.readouterr().out and (out / "morning_report.json").is_file()
+
+
+def test_check_without_out_writes_nothing(tmp_path, monkeypatch, capsys):
+    monkeypatch.chdir(tmp_path)
+    assert mr.main([str(NIGHT), "--check", "--now", "2026-11-04T01:00:00Z"]) == 0
+    assert "wrote " not in capsys.readouterr().out and list(tmp_path.iterdir()) == []
+
+
+def test_chance_read_with_out_writes_the_report_files_beside_the_reading(tmp_path, capsys):
+    out = tmp_path / "rep"
+    assert mr.main([str(NIGHT), "--chance-read", "--now", "2026-11-04T01:00:00Z", "--winlog", "none", "--out", str(out)]) == 0
+    names = {p.name for p in out.iterdir()}
+    assert {"chance_reading.md", "chance_reading.json", "morning_report.json", "handoff_line.md", "edition_figures.md"} <= names
+    assert "wrote " in capsys.readouterr().out
+
+
+def test_a_missing_rank_reads_absent_not_none(rep):
+    import copy
+
+    r = copy.deepcopy(rep)
+    r["groups"]["d11c"]["Strike"].update(rank=None, weight=0, records=0)
+    for text in (mr.edition_figures(r), mr.handoff_line(r)):
+        assert "Strike absent" in text and "rank None" not in text and "Defend rank 3" in text
+    assert "Strike rank 2" in mr.edition_figures(rep)
+    assert mr.rank_text("Strike", None) == "Strike absent" and mr.rank_text("Defend", 7) == "Defend rank 7"
