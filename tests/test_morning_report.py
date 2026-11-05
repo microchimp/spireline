@@ -544,3 +544,157 @@ def test_a_missing_rank_reads_absent_not_none(rep):
         assert "Strike absent" in text and "rank None" not in text and "Defend rank 3" in text
     assert "Strike rank 2" in mr.edition_figures(rep)
     assert mr.rank_text("Strike", None) == "Strike absent" and mr.rank_text("Defend", 7) == "Defend rank 7"
+
+
+# ---------------------------------------------------------------------------------------------------- keep test v2: headline, confirmation, ledger
+LEDGER_V1 = ("written", "cand_gen", "base_gen", "seed_block", "seeds", "d_floor", "floor_lower", "p_floor", "boss_cand", "boss_base", "p_boss",
+             "wins_cand", "wins_base", "decision", "cand_sha", "cand_dir", "attempt", "drift", "guard", "run_head_sha", "macro")
+LEDGER_V2 = LEDGER_V1 + ("rule", "frontier", "route", "k2_cand", "k2_base", "d_deep", "deep_lower", "p_deep", "floor_lower95")
+OLD_ROW = {"written": "2026-11-05T17:49:35Z", "cand_gen": "12", "base_gen": "11", "seed_block": "E12-2026-11-05-r3", "seeds": "2000", "d_floor": "-0.3060",
+           "floor_lower": "-0.7660", "p_floor": "0.93900", "boss_cand": "965", "boss_base": "1043", "p_boss": "0.99944", "wins_cand": "0", "wins_base": "0",
+           "decision": "rejected", "cand_dir": "candidate-imit-l05", "attempt": "1", "drift": "clear", "guard": "kill FIRES"}
+V2_ROW = {**OLD_ROW, "written": "2026-11-06T01:02:03Z", "decision": "promoted", "rule": "v2", "frontier": "B2", "route": "A", "k2_cand": "107", "k2_base": "49",
+          "d_deep": "3.0500", "deep_lower": "1.5000", "p_deep": "0.00005", "floor_lower95": "-0.6325"}
+
+
+def write_ledger(path: Path, header: tuple[str, ...], rows: list[dict]) -> Path:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text("\t".join(header) + "\n" + "".join("\t".join(r.get(c, "") for c in header) + "\n" for r in rows), encoding="utf-8")
+    return path
+
+
+def test_headline_is_act2_kills_per_100_runs(rep):
+    # the night: 1 Act 2 boss kill in 8 ended runs; generation 9 pooled over its two nights: 1 in 9 (the fixture's hand-worked rows)
+    assert mr.PROGRESS[0][0] == "act2_of_runs" and mr.PROGRESS[0][2] == "points"
+    m = rep["progress"]["measures"]["act2_of_runs"]
+    p1, p2 = 1 / 8, 1 / 9
+    se = math.sqrt(p1 * (1 - p1) / 8 + p2 * (1 - p2) / 9)
+    assert m["value"] == pytest.approx(12.5) and m["n"] == 8 and m["se"] == pytest.approx(100 * math.sqrt(p1 * (1 - p1) / 8), abs=1e-3)
+    d = rep["progress"]["previous_generation_pooled"]["diffs"]["act2_of_runs"]
+    assert d["diff"] == pytest.approx(100 * (p1 - p2), abs=1e-2) and d["se"] == pytest.approx(100 * se, abs=1e-2) and d["z"] == pytest.approx((p1 - p2) / se, abs=2e-3)
+    assert rep["progress"]["previous_night"]["diffs"]["act2_of_runs"]["diff"] is not None
+    head = rep["act2_headline"]
+    assert head.startswith("Act 2 boss beaten per 100 runs: 12.50 (1 of 8 ended runs); generation 9 pooled over its 2 real-arm nights 11.11 (1 of 9); "
+                           "difference +1.39 points (SE ")
+    assert f"z {(p1 - p2) / se:+.1f})" in head
+    # it comes first: in the HANDOFF line (after the preamble and the run times), in the edition list, in the progress score
+    line = mr.handoff_line(rep)
+    assert line.index(f"**{head}.**") < line.index("**Generation 11, real arm")
+    assert line.startswith("- 2026-11-04T01:00Z morning_report.py")
+    edition = mr.edition_figures(rep)
+    assert edition.splitlines()[2] == f"- {head}"
+    assert mr.progress_lines(rep)[1].startswith("- Act 2 boss beaten (of runs): 12.5 (SE ")
+    assert "against the previous generation pooled (" in mr.progress_lines(rep)[1]
+    # a night whose rows did not record the boss fights has no headline figure, not a zero
+    import copy
+
+    r = copy.deepcopy(rep)
+    r["progress"]["measures"]["boss_recorded"] = False
+    assert mr.act2_headline(r) == "Act 2 boss beaten per 100 runs: unknown (this night's rows did not record the boss fights)"
+    r = copy.deepcopy(rep)
+    r["comparison"]["previous_generation_pooled"] = None
+    assert mr.act2_headline(r).endswith("(1 of 8 ended runs); no earlier generation to compare with")
+    # the second path agrees with the report on the new measure
+    text, code = mr.run_check(NIGHT, None, LAB, NOW, rep)
+    assert code == 0 and "progress: Act 2 boss beaten (of runs) (points), value" in text and "MISMATCH" not in text
+
+
+def _pools(night_kills: int, night_runs: int, night_floor: float, pool_kills: int, pool_runs: int, pool_floor: float, sd: float = 8.8) -> dict:
+    """A comparison entry from two pools' sums (the report's own `compare_blocks`), for the confirmation's arithmetic."""
+    def agg(kills, runs, floor):
+        total = round(floor * runs)
+        return mr.Agg(n=runs, s=total, ss=round(sd * sd * (runs - 1) + total * total / runs), a2k=kills)
+
+    cur, base = agg(night_kills, night_runs, night_floor), agg(pool_kills, pool_runs, pool_floor)
+    return {"generation": 11, "nights": ["2026-11-03", "2026-11-04", "2026-11-05", "2026-11-06"], "real": mr.compare_blocks(cur, base),
+            "emu": None}
+
+
+def _rep_for(entry: dict | None, kills: int, runs: int, floor: float, generation: int = 12, earlier: bool = False) -> dict:
+    return {"night": {"generation": generation}, "progress": {"measures": {"boss_recorded": True}}, "real": {"act2_killed": kills, "ended": runs, "mean_floor": floor},
+            "comparison": {"previous_generation_pooled": entry, "same_generation_earlier": {"nights": ["x"]} if earlier else None}}
+
+
+def test_confirmation_block_after_route_a_promotion(tmp_path):
+    rows = [{**V2_ROW, "cand_gen": "12", "decision": "promoted"}]
+    # the design's example: generation 11's pool 119 in 3,500 runs (3.40 per 100, floor 23.33); the night, at the copy's ratio, about 7.4
+    ok = mr.confirmation_block(_rep_for(_pools(148, 2000, 23.2, 119, 3500, 23.33), 148, 2000, 23.2), rows)
+    assert ok["verdict"] == "confirmed" and ok["failed"] == [] and ok["route"] == "A" and ok["generation"] == 12 and ok["previous_generation"] == 11
+    a = ok["act2"]
+    assert (a["night_per_100"], a["pool_per_100"], a["pool_kills"], a["pool_runs"]) == (7.4, 3.4, 119, 3500)
+    se = 100 * math.sqrt(0.074 * 0.926 / 2000 + (119 / 3500) * (1 - 119 / 3500) / 3500)
+    assert a["diff_pts"] == pytest.approx(4.0, abs=1e-3) and a["lower95"] == pytest.approx(4.0 - 1.645 * se, abs=2e-3) and a["holds"] is True
+    assert ok["floor"]["diff"] == pytest.approx(-0.13, abs=1e-3) and ok["floor"]["holds"] is True
+    text = mr.confirmation_text(ok)
+    assert "Confirmation of the route A promotion of generation 12 (E12-2026-11-05-r3; frontier B2): **confirmed.**" in text
+    assert "7.40 per 100 runs (148 of 2,000) against generation 11 pooled 3.40 (119 of 3,500): +4.00 points" in text and "needs above 0" in text
+    # not confirmed: the Act 2 boss rate does not beat the pool's (lower bound under 0) ...
+    bad = mr.confirmation_block(_rep_for(_pools(80, 2000, 23.2, 119, 3500, 23.33), 80, 2000, 23.2), rows)
+    assert bad["verdict"] == "NOT confirmed" and bad["failed"] == ["the Act 2 boss rate"] and bad["act2"]["holds"] is False and bad["floor"]["holds"] is True
+    assert "restores the previous current.json" in mr.confirmation_text(bad)
+    # ... or the mean floor is more than 1.0 under the pool's at 95% (here -1.3, SE 0.27: lower bound -1.7)
+    low = mr.confirmation_block(_rep_for(_pools(148, 2000, 22.03, 119, 3500, 23.33), 148, 2000, 22.03), rows)
+    assert low["verdict"] == "NOT confirmed" and low["failed"] == ["the mean floor"] and low["floor"]["lower95"] < -1.0
+    # no previous generation to pool: not measured, never confirmed
+    assert mr.confirmation_block(_rep_for(None, 148, 2000, 23.2), rows)["verdict"] == "not measured"
+    # it applies only to the first night after a route A promotion by the rule v2 of this generation
+    entry = _pools(148, 2000, 23.2, 119, 3500, 23.33)
+    assert mr.confirmation_block(_rep_for(entry, 148, 2000, 23.2, earlier=True), rows) is None  # not the first night
+    assert mr.confirmation_block(_rep_for(entry, 148, 2000, 23.2, generation=13), rows) is None  # another generation
+    assert mr.confirmation_block(_rep_for(entry, 148, 2000, 23.2), [{**rows[0], "route": "F"}]) is None  # route F is not confirmed in the game
+    assert mr.confirmation_block(_rep_for(entry, 148, 2000, 23.2), [{**rows[0], "route": "AF"}])["verdict"] == "confirmed"
+    assert mr.confirmation_block(_rep_for(entry, 148, 2000, 23.2), [{**rows[0], "rule": ""}]) is None  # a v1 promotion
+    assert mr.confirmation_block(_rep_for(entry, 148, 2000, 23.2), [{**rows[0], "decision": "rejected"}]) is None
+    assert mr.confirmation_block(_rep_for(entry, 148, 2000, 23.2), []) is None
+    # through the report: the fixture's night is generation 11, the first of its generation; with a route A row in a ledger it carries the block
+    ledger = write_ledger(tmp_path / "agent" / "promotions.tsv", LEDGER_V2, [{**V2_ROW, "cand_gen": "11", "decision": "promoted"}])
+    r = mr.build_report(NIGHT, None, LAB, LOGS, str(WINLOG), "test usage", NOW, agent_root=ledger.parent)
+    c = r["confirmation"]
+    assert c["applies"] is True and c["generation"] == 11 and c["previous_generation"] == 9 and c["act2"]["night_kills"] == 1 and c["act2"]["pool_runs"] == 9
+    assert c["verdict"] == "NOT confirmed"  # 8 runs against 9: nothing can be confirmed on a toy night
+    assert "Confirmation of the route A promotion of generation 11" in mr.handoff_line(r)
+    assert f"- {mr.confirmation_text(c)}" in mr.edition_figures(r)
+    # without a ledger, or with one that holds no such promotion, the block is absent and the report is as before
+    plain = mr.build_report(NIGHT, None, LAB, LOGS, str(WINLOG), "test usage", NOW)
+    assert plain["confirmation"] is None and "Confirmation of" not in mr.handoff_line(plain)
+    other = write_ledger(tmp_path / "other" / "promotions.tsv", LEDGER_V2, [{**V2_ROW, "cand_gen": "11", "decision": "promoted", "route": "F"}])
+    assert mr.build_report(NIGHT, None, LAB, LOGS, str(WINLOG), "test usage", NOW, agent_root=other.parent)["confirmation"] is None
+
+
+def test_ledger_line_reads_old_and_v2_rows(tmp_path, capsys):
+    # an old file (no v2 columns): the newest row reads as v1, the floor figures stand and the Act 2 boss is said not to be recorded
+    old = write_ledger(tmp_path / "old" / "promotions.tsv", LEDGER_V1, [OLD_ROW])
+    led = mr.ledger_figures(mr.read_ledger(old))
+    assert led["available"] and led["rule"] == "v1" and led["decision"] == "rejected" and led["route"] is None and led["k2_cand"] is None
+    assert led["line"] == ("Newest ledger row (2026-11-05T17:49Z, block E12-2026-11-05-r3, generation 12 against 11, 2000 seeds): rule v1 (the floor test), "
+                           "floor -0.31 (99% lower bound -0.77), Act 1 boss 965 against 1043, Act 2 boss kills not recorded in the row, decision rejected.")
+    # a file with the v2 columns whose newest row is v2: rule, frontier, route, K2, deep_f and its bound, the floor bound, the decision
+    new = write_ledger(tmp_path / "new" / "promotions.tsv", LEDGER_V2, [OLD_ROW, V2_ROW])
+    led = mr.ledger_figures(mr.read_ledger(new))
+    assert led["rule"] == "v2" and led["rows"] == 2 and (led["frontier"], led["route"], led["k2_cand"], led["k2_base"]) == ("B2", "A", "107", "49")
+    assert (led["d_deep"], led["deep_lower"], led["floor_lower95"]) == (3.05, 1.5, -0.6325)
+    assert led["line"] == ("Newest ledger row (2026-11-06T01:02Z, block E12-2026-11-05-r3, generation 12 against 11, 2000 seeds): rule v2, frontier B2, "
+                           "route A, Act 2 boss 107 against 49, deep +3.05 per 100 (0.005 bound +1.50), floor 95% lower bound -0.63, decision promoted.")
+    # the same file when an old row is the newest (its nine cells are empty): v1 again; and a v2 row that took no route reads "route none"
+    mixed = write_ledger(tmp_path / "mixed" / "promotions.tsv", LEDGER_V2, [V2_ROW, OLD_ROW])
+    assert mr.ledger_figures(mr.read_ledger(mixed))["rule"] == "v1"
+    refused = write_ledger(tmp_path / "refused" / "promotions.tsv", LEDGER_V2, [{**V2_ROW, "route": "", "decision": "rejected"}])
+    assert "route none" in mr.ledger_figures(mr.read_ledger(refused))["line"]
+    # a torn or missing figure reads "n/a", a missing file says so
+    odd = write_ledger(tmp_path / "odd" / "promotions.tsv", LEDGER_V2, [{**V2_ROW, "d_deep": "", "floor_lower95": "x"}])
+    odd_line = mr.ledger_figures(mr.read_ledger(odd))["line"]
+    assert "deep n/a per 100" in odd_line and "floor 95% lower bound n/a" in odd_line
+    assert mr.ledger_figures(mr.read_ledger(tmp_path / "none" / "promotions.tsv")) == {"available": False, "line": "no promotions ledger was found"}
+    # in the report: the line is in the HANDOFF line, the edition list and the JSON, and no path is
+    out = tmp_path / "rep"
+    assert mr.main([str(NIGHT), "--winlog", str(WINLOG), "--now", "2026-11-04T01:00:00Z", "--agent-root", str(new.parent), "--out", str(out)]) == 0
+    capsys.readouterr()
+    for name in ("handoff_line.md", "edition_figures.md"):
+        assert led["line"] in (out / name).read_text(encoding="utf-8"), name
+    data = json.loads((out / "morning_report.json").read_text(encoding="utf-8"))
+    assert data["ledger"]["rule"] == "v2" and data["confirmation"] is None  # the ledger's promoted row is generation 12; the night is 11
+    blob = "".join((out / n).read_text(encoding="utf-8") for n in ("morning_report.json", "handoff_line.md", "edition_figures.md"))
+    for bad in (str(tmp_path), str(tmp_path).replace("\\", "/"), "Users", "pmpal", "C:\\"):
+        assert bad not in blob, bad
+    # without a ledger beside the lab the report says so and is otherwise unchanged
+    assert mr.build_report(NIGHT, None, LAB, LOGS, str(WINLOG), "test usage", NOW)["ledger"] == {"available": False, "line": "no promotions ledger was found"}

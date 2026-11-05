@@ -18,8 +18,8 @@ exit code is 1 on any mismatch.
 
 The nightly exam's power (2026-11-04): `control_variate` holds the copy arm's floor on each paired seed as a control variate for
 the real arm's mean floor (`real.mean_floor_cv` and `_se`, `paired.rho`; the formulas are in `control_variate()`), the saving
-1 - rho^2 and the runs a night needs to see a half-floor and a one-floor change; `progress` holds six measures of the night (mean
-floor, Act 1 boss reached, Act 1 killed of those reached, Act 2 reached and killed of those reached, wins) each with its SE, and
+1 - rho^2 and the runs a night needs to see a half-floor and a one-floor change; `progress` holds seven measures of the night (the
+Act 2 boss beaten of runs, the headline since 2026-11-06; mean floor, Act 1 boss reached, Act 1 killed of those reached, Act 2 reached and killed of those reached, wins) each with its SE, and
 their differences against the previous night and the previous generation pooled with SE and z. A night whose real rows did not
 record bosses (runs past floor 17 with no Act 1 boss entry) has its boss measures unknown, not 0.
 
@@ -37,6 +37,14 @@ runner's log and the job record (start, end, tree, interruptions); `jobs.json` (
 real arm's workers' game logs when one exists (the only record of the real arm's per-fight results; the block deletes the
 originals when it closes); and the Windows application log for the night's window (emulator fail-fasts, the game's own
 deaths), read with `Get-WinEvent`.
+
+The keep test v2 (fork docs/rl/KEEP_TEST_V2.md; Spireline docs/design/2026-11-05-keep-test-v2.md section 5): the headline is the Act 2 boss
+beaten per 100 runs (the night, the previous generation pooled, the difference with its SE and z; `act2_of_runs` is the first measure of
+`progress`); the newest row of the promotions ledger is read in one line (`ledger`: rule, frontier, route, the Act 2 boss's kills, deep_f and
+its bound, the floor bound, the decision; rows from before the rule read as v1); and on the first night after a route A promotion a
+`confirmation` block gives the verdict of the design's section 3 (the night's Act 2 boss kills per 100 runs beat the previous generation's
+pooled real-game rate, one-sided 95% lower bound of the unpaired difference above 0, and the mean floor is not below that pool's by more than
+1.0 at 95%). The ledger is `<lab>/../agent/promotions.tsv` unless `--agent-root` names the agent folder.
 
 Counting rules (the lane's): a run row is `ev == end` (ended) or `ev == crash` (a crash row). "Ended" figures leave crash
 rows out; "counted" figures give a crash row floor 0, no win and no boss kill (the lab's convention, `summary.json`
@@ -308,10 +316,11 @@ def compare_blocks(cur: Agg, base: Agg) -> dict:
 
 
 # ---------------------------------------------------------------------------------------------------- progress score
-# The night's progress score: six measures over the ended runs, each with its standard error, and its difference against a base
+# The night's progress score: seven measures over the ended runs, each with its standard error, and its difference against a base
 # pool (the previous night, the previous generation pooled) with the difference's SE and z. The nights play fresh seed blocks, so
 # the differences are unpaired (the SEs add in quadrature). Floors are in floors, the rest in percentage points.
 PROGRESS = (
+    ("act2_of_runs", "Act 2 boss beaten (of runs)", "points", "act2_of_runs"),  # the headline (keep test v2): per 100 runs, as points
     ("mean_floor", "mean floor", "floors", None),
     ("act1_reach", "Act 1 boss reached (of runs)", "points", "act1_reach"),
     ("act1_kill_of_reached", "Act 1 boss killed (of those reached)", "points", "act1_of_reached"),
@@ -323,7 +332,7 @@ PROGRESS = (
 
 def progress_counts(g: Agg) -> dict[str, tuple[int, int]]:
     """The rate measures as (count, over): the Act 1 and Act 2 boss reach and kill, and the wins."""
-    return {"act1_reach": (g.a1r, g.n), "act1_kill_of_reached": (g.a1k, g.a1r), "act2_reach": (g.a2r, g.n),
+    return {"act2_of_runs": (g.a2k, g.n), "act1_reach": (g.a1r, g.n), "act1_kill_of_reached": (g.a1k, g.a1r), "act2_reach": (g.a2r, g.n),
             "act2_kill_of_reached": (g.a2k, g.a2r), "wins": (g.wins, g.n)}
 
 
@@ -342,12 +351,14 @@ def progress_block(g: Agg) -> dict:
 
 
 def progress_vs(entry: dict | None) -> dict | None:
-    """The six measures' differences against one comparison entry's base: {measure: {diff, se, z}} from its `real` block."""
+    """The seven measures' differences against one comparison entry's base: {measure: {diff, se, z}} from its `real` block."""
     if not entry:
         return None
     blk = entry["real"]
     out = {"mean_floor": {k: blk["floor_ended"][k] for k in ("diff", "se", "z")}}
-    for key, _label, _unit, field in PROGRESS[1:]:
+    for key, _label, _unit, field in PROGRESS:
+        if key == "mean_floor":
+            continue
         d = blk[field]
         out[key] = {"diff": d["diff_pts"], "se": d["se_pts"], "z": d["z"]}
     return {"generation": entry["generation"], "nights": entry["nights"], "base_runs": entry["real"]["base"]["runs"],
@@ -1362,8 +1373,119 @@ def comparison_entry(entries: list[dict], g_real: Agg, g_emu: Agg) -> dict | Non
             "real": compare_blocks(g_real, pooled("real")), "emu": compare_blocks(g_emu, pooled("emu")) if has_emu else None}
 
 
+# ---------------------------------------------------------------------------------------------------- the headline, the ledger, the confirmation
+CONFIRM_Z = 1.645  # one-sided 95%: the confirmation's two bounds
+CONFIRM_FLOOR_MARGIN = 1.0  # the night's mean floor may be below the previous generation's pool by this much (95% lower bound)
+
+
+def read_ledger(path: Path) -> list[dict]:
+    """The rows of the promotions ledger by column name, oldest first; [] when the file is not there. Rows written before a column
+    existed have no such key (`.get` reads them as empty: a row without `rule` is v1)."""
+    if not path.is_file():
+        return []
+    lines = [x for x in path.read_text(encoding="utf-8", errors="replace").splitlines() if x.strip()]
+    head = lines[0].split("\t") if lines else []
+    return [dict(zip(head, x.split("\t"), strict=False)) for x in lines[1:]]
+
+
+def _ledger_num(row: dict, key: str) -> float | None:
+    try:
+        return float(row[key])
+    except (KeyError, TypeError, ValueError):
+        return None
+
+
+def ledger_figures(rows: list[dict]) -> dict:
+    """The newest ledger row (the file is append-only: the last) as figures and as one line; `available` False when there is no ledger."""
+    if not rows:
+        return {"available": False, "line": "no promotions ledger was found"}
+    r = rows[-1]
+    v2 = (r.get("rule") or "") == "v2"
+    seeds, d_floor, floor_lo = r.get("seeds") or "?", _ledger_num(r, "d_floor"), _ledger_num(r, "floor_lower")
+    head = (f"Newest ledger row ({(r.get('written') or '?')[:16]}Z, block {r.get('seed_block') or '?'}, generation {r.get('cand_gen') or '?'} "
+            f"against {r.get('base_gen') or '?'}, {seeds} seeds): ")
+    if v2:
+        k2c, k2b = r.get("k2_cand") or "?", r.get("k2_base") or "?"
+        d_deep, deep_lo, f95 = _ledger_num(r, "d_deep"), _ledger_num(r, "deep_lower"), _ledger_num(r, "floor_lower95")
+        body = (f"rule v2, frontier {r.get('frontier') or '?'}, route {r.get('route') or 'none'}, Act 2 boss {k2c} against {k2b}, "
+                f"deep {sgn(d_deep)} per 100 (0.005 bound {sgn(deep_lo)}), floor 95% lower bound {sgn(f95)}, decision {r.get('decision') or '?'}")
+    else:
+        body = (f"rule v1 (the floor test), floor {sgn(d_floor)} (99% lower bound {sgn(floor_lo)}), Act 1 boss {r.get('boss_cand') or '?'} against "
+                f"{r.get('boss_base') or '?'}, Act 2 boss kills not recorded in the row, decision {r.get('decision') or '?'}")
+    return {"available": True, "rows": len(rows), "rule": "v2" if v2 else "v1", "written": r.get("written"), "seed_block": r.get("seed_block"),
+            "cand_gen": r.get("cand_gen"), "base_gen": r.get("base_gen"), "seeds": r.get("seeds"), "decision": r.get("decision"),
+            "frontier": r.get("frontier") or None, "route": r.get("route") or None, "k2_cand": r.get("k2_cand") or None,
+            "k2_base": r.get("k2_base") or None, "d_deep": _ledger_num(r, "d_deep"), "deep_lower": _ledger_num(r, "deep_lower"),
+            "floor_lower95": _ledger_num(r, "floor_lower95"), "d_floor": d_floor, "floor_lower": floor_lo, "line": head + body + "."}
+
+
+def act2_headline(rep: dict) -> str:
+    """The headline: the Act 2 boss beaten per 100 runs, the night against the previous generation pooled, with the difference, SE and z."""
+    rl, pgp = rep["real"], rep["comparison"].get("previous_generation_pooled")
+    if not rep["progress"]["measures"]["boss_recorded"]:
+        return "Act 2 boss beaten per 100 runs: unknown (this night's rows did not record the boss fights)"
+    s = f"Act 2 boss beaten per 100 runs: {num(100.0 * rl['act2_killed'] / rl['ended'] if rl['ended'] else None)} ({rl['act2_killed']} of {n_(rl['ended'])} ended runs)"
+    if pgp:
+        b, d = pgp["real"]["base"], pgp["real"]["act2_of_runs"]
+        if d["diff_pts"] is None:
+            return s + f"; generation {pgp['generation']} pooled: unknown (its rows did not record the boss fights)"
+        s += (f"; generation {pgp['generation']} pooled over its {len(pgp['nights'])} real-arm nights {num(100.0 * b['a2_killed'] / b['runs'] if b['runs'] else None)} "
+              f"({b['a2_killed']} of {n_(b['runs'])}); difference {sgn(d['diff_pts'])} points (SE {num(d['se_pts'])}, z {sgn(d['z'], 1)})")
+    else:
+        s += "; no earlier generation to compare with"
+    return s
+
+
+def confirmation_block(rep: dict, rows: list[dict]) -> dict | None:
+    """The design's section 3 verdict on the first night after a route A promotion, or None when this night is not one: the ledger's newest
+    promoted row is of this night's generation, was judged by the keep test v2 and found route A (`route` holds an A), and no earlier night
+    of this generation exists. Confirmed when the night's Act 2 boss kills per 100 runs beat the previous generation's pooled real-game rate
+    (the one-sided 95% lower bound of the unpaired difference is above 0) and its mean floor (ended runs) is not below that pool's by more
+    than 1.0 at 95% (the lower bound of the difference is at least -1.0). A route F promotion is not confirmed (the copy agrees on floors)."""
+    gen = rep["night"]["generation"]
+    promoted = [r for r in rows if r.get("decision") == "promoted" and str(r.get("cand_gen")) == str(gen)]
+    if not promoted or rep["comparison"].get("same_generation_earlier"):
+        return None
+    row = promoted[-1]
+    if (row.get("rule") or "") != "v2" or "A" not in (row.get("route") or ""):
+        return None
+    out = {"applies": True, "generation": gen, "promoted_block": row.get("seed_block"), "promoted_written": row.get("written"),
+           "route": row.get("route"), "frontier": row.get("frontier") or None, "z": CONFIRM_Z, "floor_margin": CONFIRM_FLOOR_MARGIN}
+    pgp = rep["comparison"].get("previous_generation_pooled")
+    if not pgp or not rep["progress"]["measures"]["boss_recorded"]:
+        return {**out, "verdict": "not measured", "why": "no earlier night of the previous generation to pool, or the boss fights were not recorded"}
+    a2, fl, b = pgp["real"]["act2_of_runs"], pgp["real"]["floor_ended"], pgp["real"]["base"]
+    if a2["diff_pts"] is None or fl["diff"] is None:
+        return {**out, "verdict": "not measured", "why": "the previous generation's pool has no boss record or too few runs for a difference"}
+    rl = rep["real"]
+    a2_lower, fl_lower = a2["diff_pts"] - CONFIRM_Z * a2["se_pts"], fl["diff"] - CONFIRM_Z * fl["se"]
+    act2_ok, floor_ok = a2_lower > 0, fl_lower >= -CONFIRM_FLOOR_MARGIN
+    failed = [name for name, ok in (("the Act 2 boss rate", act2_ok), ("the mean floor", floor_ok)) if not ok]
+    return {**out, "previous_generation": pgp["generation"], "previous_nights": pgp["nights"],
+            "act2": {"night_per_100": rnd(100.0 * rl["act2_killed"] / rl["ended"], 3) if rl["ended"] else None, "night_kills": rl["act2_killed"],
+                     "night_runs": rl["ended"], "pool_per_100": rnd(100.0 * b["a2_killed"] / b["runs"], 3) if b["runs"] else None,
+                     "pool_kills": b["a2_killed"], "pool_runs": b["runs"], "diff_pts": a2["diff_pts"], "se_pts": a2["se_pts"], "z": a2["z"],
+                     "lower95": rnd(a2_lower, 3), "holds": act2_ok},
+            "floor": {"night": rl["mean_floor"], "pool": b["mean_floor"], "diff": fl["diff"], "se": fl["se"], "z": fl["z"],
+                      "lower95": rnd(fl_lower, 3), "holds": floor_ok},
+            "verdict": "confirmed" if not failed else "NOT confirmed", "failed": failed}
+
+
+def confirmation_text(c: dict) -> str:
+    """One sentence for the confirmation block."""
+    head = (f"Confirmation of the route {c['route']} promotion of generation {c['generation']} ({c['promoted_block']}; frontier {c.get('frontier') or '?'}): ")
+    if c["verdict"] == "not measured":
+        return head + f"not measured, {c['why']}."
+    a, f = c["act2"], c["floor"]
+    return (head + f"**{c['verdict']}.** Act 2 boss beaten {num(a['night_per_100'])} per 100 runs ({a['night_kills']} of {n_(a['night_runs'])}) against "
+            f"generation {c['previous_generation']} pooled {num(a['pool_per_100'])} ({a['pool_kills']} of {n_(a['pool_runs'])}): {sgn(a['diff_pts'])} points, "
+            f"one-sided 95% lower bound {sgn(a['lower95'])} (needs above 0); mean floor {num(f['night'])} against {num(f['pool'])}: {sgn(f['diff'])}, "
+            f"lower bound {sgn(f['lower95'])} (needs at least {-c['floor_margin']:+.1f})"
+            + (f". On a failure the orchestrator restores the previous current.json (DECISIONS); failed: {', '.join(c['failed'])}" if c["failed"] else "") + ".")
+
+
 def build_report(night: Path, agent: str | None, lab: Path, logs: Path | None, winlog_source: str, usage: str | None,
-                 now: datetime, runner=subprocess.run, logs_root: Path | None = None) -> dict:
+                 now: datetime, runner=subprocess.run, logs_root: Path | None = None, agent_root: Path | None = None) -> dict:
     agents = real_arms(night)
     if agent is None:
         if len(agents) != 1:
@@ -1405,6 +1527,10 @@ def build_report(night: Path, agent: str | None, lab: Path, logs: Path | None, w
     progress = {"unit_note": "floors for the mean floor; percentage points for the rest (value, SE and differences)",
                 "measures": progress_block(g_real), "previous_night": progress_vs(comparison["previous_night"]),
                 "previous_generation_pooled": progress_vs(comparison["previous_generation_pooled"])}
+
+    # the promotions ledger (`<lab>/../agent/promotions.tsv`): its newest row in one line, and the confirmation after a route A promotion
+    ledger_rows = read_ledger((agent_root or lab.parent / "agent") / "promotions.tsv")
+    ledger = ledger_figures(ledger_rows)
 
     # the job and the night's window
     jf = job_figures(find_job(lab, date))
@@ -1515,7 +1641,7 @@ def build_report(night: Path, agent: str | None, lab: Path, logs: Path | None, w
                  "seeds_with_rows_both": len(seeds_real & seeds_emu)},
         "real": real, "emu": emu, "human_r1": R1, "comparison": comparison, "paired": paired, "control_variate": cv,
         "chance_covariate": chance_covariate_figures(cur, night_fights, earlier, logs_root),
-        "progress": progress, "fights": fights,
+        "progress": progress, "fights": fights, "ledger": ledger,
         "crashes": {"rows": crashes, "by_kind": dict(kinds), "cumulative": cumulative},
         "fight_unfinished": {"this_night": unfinished, "earlier_nights": unfinished_hist},
         "lockstep": {**lockstep_figures(summ, corpus_text), "no_emulator_id_failures_by_earlier_night": noid},
@@ -1527,6 +1653,8 @@ def build_report(night: Path, agent: str | None, lab: Path, logs: Path | None, w
         "machine": machine_figures(night / agent / "machine.jsonl"), "history": history,
         "hp_recorded": hp_recorded(cur["real_rows"]) or hp_recorded(cur["emu_rows"]),
     }
+    report["act2_headline"] = act2_headline(report)
+    report["confirmation"] = confirmation_block(report, ledger_rows)
     report["cross_checks"] = cross_checks(report, summ, emu_summ, result, compare, nightly)
     report["not_computed"] = not_computed(report, usage)
     pn = prev_night[0] if prev_night else None
@@ -1711,6 +1839,9 @@ def handoff_line(rep: dict) -> str:
         P.append(f"Ran {hhmm(parse_utc(nt['start_utc']))}Z to {hhmm(parse_utc(nt['end_utc']))}Z (emulator arm "
                  f"{'n/a' if wm['emulator_arm'] is None else round(wm['emulator_arm'])} min, real arm "
                  f"{'n/a' if wm['real_arm'] is None else round(wm['real_arm'])} min, {stops}).")
+    P.append(f"**{rep['act2_headline']}.**")
+    if rep.get("confirmation"):
+        P.append(confirmation_text(rep["confirmation"]))
     P.append(f"**Generation {gen}, real arm, {n_(rl['ended'])} ended runs (all but {rl['crashes']} crash rows):** mean floor "
              f"{num(rl['mean_floor'])} (counted, crashes as floor 0: {num(rl['mean_floor_counted'], 3)}), Act 1 boss kill "
              f"{pct(rl['act1_killed'], rl['ended'])} ({n_(rl['act1_killed'])}), Act 2 boss kill {pct(rl['act2_killed'], rl['ended'])} "
@@ -1858,6 +1989,7 @@ def handoff_line(rep: dict) -> str:
         fams = ", ".join(f"{f['family']} {f['name']} {100 * f['share']:.0f}%" for f in g["top_families"][:3])
         P.append(f"Top groups of {n_(g['groups'])}: {tops}. Top families: {fams or 'n/a'}; architectural share "
                  f"{100 * (g['arch_share'] or 0):.0f}% of the weight.")
+    P.append(rep["ledger"]["line"])
     P.append("HP entering a boss and per-fight HP are " + ("still recorded nowhere." if not rep["hp_recorded"] else "recorded in the rows (not used here)."))
     nx = nt["next_night"]
     if nx.get("known"):
@@ -1923,6 +2055,9 @@ def progress_lines(rep: dict) -> list[str]:
 def edition_figures(rep: dict) -> str:
     nt, rl, em, lk, pa, cm = rep["night"], rep["real"], rep["emu"], rep["lockstep"], rep["paired"], rep["comparison"]
     L = [f"Edition figures: night {nt['date']} ({nt['agent']}, generation {nt['generation']}), from morning_report.py", ""]
+    L.append(f"- {rep['act2_headline']}")
+    if rep.get("confirmation"):
+        L.append(f"- {confirmation_text(rep['confirmation'])}")
     L.append(f"- floors: real {num(rl['mean_floor'])} on {n_(rl['ended'])} ended runs ({num(rl['mean_floor_counted'], 3)} counted, "
              f"{rl['crashes']} crash rows as floor 0, of {n_(rl['rows'])}); emulator {num(em['mean_floor'])} on {n_(em['ended'])} runs")
     L.append(f"- Act 1 boss kill of runs: real {pct(rl['act1_killed'], rl['ended'])} ({n_(rl['act1_killed'])}), emulator "
@@ -1962,6 +2097,7 @@ def edition_figures(rep: dict) -> str:
     if g.get("present"):
         L.append(f"- D11C proof: {rank_text('Strike', g['d11c']['Strike']['rank'])}, {rank_text('Defend', g['d11c']['Defend']['rank'])}, together "
                  f"{100 * g['d11c_share']:.1f}% of the weight")
+    L.append(f"- {rep['ledger']['line']}")
     L += [""] + progress_lines(rep)
     pgp = cm.get("previous_generation_pooled")
     if pgp:
@@ -2400,7 +2536,8 @@ def _boss_known_second(st: dict) -> bool:
 
 def _rates_second(st: dict) -> dict[str, tuple[int, int]]:
     n = len(st["floors"])
-    return {"act1_reach": (st["act1_reached"], n), "act1_kill_of_reached": (st["act1_killed"], st["act1_reached"]),
+    return {"act2_of_runs": (st["act2_killed"], n), "act1_reach": (st["act1_reached"], n),
+            "act1_kill_of_reached": (st["act1_killed"], st["act1_reached"]),
             "act2_reach": (st["act2_reached"], n), "act2_kill_of_reached": (st["act2_killed"], st["act2_reached"]),
             "wins": (st["wins"], n)}
 
@@ -2586,6 +2723,7 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("night", type=Path, help="a lab night folder, e.g. LAB/nightly/2026-11-03")
     ap.add_argument("--agent", help="the real arm's folder (g<N>) when the night holds more than one")
     ap.add_argument("--lab", type=Path, help="the lab folder (default: two levels above the night)")
+    ap.add_argument("--agent-root", type=Path, help="the agent folder holding promotions.tsv (default: <lab>/../agent)")
     ap.add_argument("--logs", type=Path, help="the copy of the real arm's workers' game logs "
                     "(default: <lab>/../../logs/w5-night-<yyyymmdd>-stdout when it exists)")
     ap.add_argument("--winlog", default=None, help="auto (Get-WinEvent; the default), none (the default with --check), or a JSON file of events")
@@ -2611,7 +2749,8 @@ def main(argv: list[str] | None = None) -> int:
         if logs is None:
             cand = logs_root / f"w5-night-{night.name.replace('-', '')}-stdout"
             logs = cand if cand.is_dir() else None
-        return build_report(night, a.agent, lab, logs, a.winlog or ("none" if a.check else "auto"), a.usage, now, logs_root=logs_root)
+        return build_report(night, a.agent, lab, logs, a.winlog or ("none" if a.check else "auto"), a.usage, now, logs_root=logs_root,
+                            agent_root=a.agent_root.resolve() if a.agent_root else None)
 
     def wrote_line(wrote: str) -> None:
         print(f"wrote {wrote} in {a.out.name}/")

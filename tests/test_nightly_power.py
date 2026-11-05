@@ -369,7 +369,7 @@ def test_edition_text_carries_the_control_variate_and_the_progress_score(tmp_pat
     text = mr.edition_figures(mr.build_report(night, None, lab, None, "none", None, NOW))
     assert "control variate (the copy arm's floor on the same seed as covariate" in text and "1 copy runs beyond the 159 pairs" in text
     assert "Progress score (ended runs; value (SE); difference against each base (SE, z)" in text
-    for label in ("mean floor", "Act 1 boss reached (of runs)", "Act 1 boss killed (of those reached)", "Act 2 boss reached (of runs)",
+    for label in ("Act 2 boss beaten (of runs)", "mean floor", "Act 1 boss reached (of runs)", "Act 1 boss killed (of those reached)", "Act 2 boss reached (of runs)",
                   "Act 2 boss killed (of those reached)", "wins (of runs)"):
         assert f"- {label}: " in text
     assert "against the previous night (11-03, generation 7" in text and "against the previous generation pooled (11-02+11-03, generation 7" in text
@@ -386,7 +386,7 @@ def test_check_lists_every_new_figure_with_a_match_on_the_fixture_night():
     assert "SE of mean floor, ended, real" in rows
     expect = [f"progress: {label}{' (points)' if unit == 'points' else ''}, {what}" for _k, label, unit, _f in mr.PROGRESS
               for what in ["value", "SE"] + [f"against {tag}, {w}" for _b, tag in mr.BASE_TAGS for w in ("difference", "SE", "z")]]
-    assert len(expect) == 6 * 8 and all(name in rows and rows[name]["ok"] for name in expect)
+    assert len(expect) == 7 * 8 and all(name in rows and rows[name]["ok"] for name in expect)
     cv_rows = [rows[n] for n in list(mr.CV_NAMES.values()) + list(mr.POWER_NAMES.values())]
     assert len(mr.CV_NAMES) == 13 and len(mr.POWER_NAMES) == 8 and len(cv_rows) == 21
     assert all(r["ok"] and r["first"] is not None and r["second"] is not None for r in cv_rows)
