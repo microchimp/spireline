@@ -1261,3 +1261,75 @@ teacher and of hindsight labels for human run decisions (memo 3.3 and 6.2), then
 Owner, in chat (2026-11-04 19:54Z): "Do all of them including the game refusing a move - it seems important", on the orchestrator's list of fixes whose cause this session had already found. Started as subagent workers (the owner is on Remote Control, so no fresh sessions): (1) Sonnet, Spireline: the morning report's check mode writes its `--out` files, the D11C line prints "absent" for a missing rank, the confidence-sequence coverage test stops depending on the wall clock; (2) Sonnet, fork: the hidden-information test failing at `rl/engine.py:760` since 11-03, the parallel-searcher niceness test that fails only in the full suite (bisected per module before being called load), the pre-loss order's tie across two writers in one nanosecond; (3) Opus, diagnosis: the real arm's `RuntimeError: the engine refused action N in phase 5` crash rows (12 since 10-30), mechanism, classification of the 12, minimal reproduction on the copy, a Python fix landed or a contained C# fix with the full gate, else the options; (4) Sonnet, audit: the turn-one effects (Clarity, Demesne, Tools of the Trade and the rest) after engine 8db0b791, with a contained fix and the full gate only if the mechanism is the same class; (5) Sonnet, lab tooling, held until the idle-time filler worker lands (same files): the yield ledger's false zero for new groups (`by_job` empty), the gate script that waits forever on the practice loop's permanent QUIET line. Not started: anything needing a diagnosis beyond these (the dozen unexplained Act 2 records, the run that ended mid-fight on 11-05, the 82 runs that lost the lockstep on a state difference). Cost about 3.5 units; usage 21% all / 9% Fable at the start.
 
 - Addendum 2026-11-04 20:47Z (owner in chat: "Fix it now", after the orchestrator's read of the enemy-health pile): the enemy-health diagnosis starts now with the stronger model, not after the day's other workers; the sweep is not pointed at its enemies separately, since the aimed sweep is now once a day and the worker has the shrunk setups. Also started: the lab's job cadence fix (mutation, invariants, probes and retest once per presorted tree), because the aimed-bugs cap left the rotation churning small jobs and the practice filler never idle.
+
+## D55 · 2026-11-05 · The strategy is rethought: the player learns from human runs and from whole runs
+
+Owner, in chat on 2026-11-05 (shortly before 08:23Z), after the orchestrator's read of the promotion ledger (`referee/agent/promotions.tsv`:
+the player ends at floor 23.1 on average, 0 wins in the ~36,000 judged runs since 2026-10-23, about one floor per promotion over
+the last three, two rejected generation-12 candidates since): "I think we need a breakthrough in our process I am not convinced we
+get there with this process"; on the two rules the orchestrator named (the run judgement trained on Act 1 only; the human corpus
+never trained on), "Okay change both of these and rethink the whole strategy".
+
+1. D13 amended again (after D38): the four training fifths of the human corpus (Ironclad A10, 14,811 runs; the exam fifth excluded
+   by id, `human-exam-fifth-ids.txt` beside the corpus) may be used as training targets, not only as practice starts: the run value
+   and the macro priors (card reward, shop, rest, route, event) may be fit on them. The held-out fifth stays the exam only (D38):
+   nothing is tuned on it, and the paper's human lines stay computed on it.
+2. The F3 gate on RL-2 beyond Act 1 (DESIGN §4 fidelity table, §5.1) is lifted: the run head trains on whole runs on the copy as it
+   stands (the 53-class full-run head, or whatever the rethink chooses), with the nightly real-game check reporting Act 2 and 3
+   accuracy beside it; divergences there stay fixes, not blockers.
+3. The whole strategy is re-examined by the strongest model in a design memo (`docs/design/2026-11-05-strategy-rethink.md`) before
+   any recipe change lands: what to keep, stop and start; the human-imitation recipe; the full-run head; compute; a two-week plan
+   with its own go or no-go test. Nothing running changes until the memo's decisions are recorded (the label run, the lab and the
+   loop continue).
+
+Recorded 2026-11-05 08:23Z by the orchestrator.
+
+- Addendum 2026-11-05 08:50Z (orchestrator, after the memo `docs/design/2026-11-05-strategy-rethink.md`, Spireline c495e30; checker: all
+  confirmed, the per-act accuracy figures and the 53-class head for generations 9 and 11 hand-checked): the memo's two-week plan
+  (section 5) is the plan of record to 2026-11-19 in place of PLAN.md's D17-D21 for that fortnight; the headline measure becomes
+  Act 2 boss kills per 100 runs (5.0 in the game, humans 28.9), mean floor stays the promotion measure; the generation-12 line
+  (self-play refit, beta, blended fit) is closed; the hindsight label run continues to its 1,200 read and on, used as the arbiter
+  between the human prior and the judgement (memo 3.5), not as a blended-refit target; milestone 1 (play or deck: generation 11's
+  fighter on 300 + 300 human boss starts from fifth 4 at a3-v1, x4, x16; the potion hold smoke if time allows) started now as a
+  Sonnet worker under a `play-or-deck` QUIET line, ending by 15:45Z. Correction to the owner's briefing: the run judgement has
+  had 53 whole-run classes since generation 5 (gen 9 and 11 `run_value.npz`: floor_head 53 x 256); only its keep test and its data
+  were Act 1, so item 2 of D55 changes the keep test and the data, as the memo's 3.4 specifies. The owner's two questions (renting
+  cores in week 2 under about $50; the no-go fallback's start) are open.
+
+- Addendum 2026-11-05 09:51Z (owner in chat: "yes we can budget spending this - but can we lower the cost anyway", on the memo's question 1):
+  rented cores are approved for week 2 (2026-11-12 to 11-19) under the memo's terms: the copy only (our binary, the player's
+  weights, seeds; the game's files, the decompile and the nightly check never leave the PC), a ceiling of about $50 for the
+  fortnight, spent only when a decided block has waited more than a day; the owner creates the machines from their own account
+  and lends the PC a key for the fortnight only (no provider credential is held by Claude). Cost-lowering measures (orchestrator):
+  the funnel's early stops (D51) and the 200-seed smoke stay the first filter so only the top one or two candidates reach a rented
+  2,000-seed block; machines are shut the hour a block ends; a rented block resumes from its finished seeds if interrupted, so
+  spot-priced machines are acceptable where the owner's provider offers them (prices unverified until the implementing worker
+  reads them); the first lever is the PC's own idle time (the compute diagnostic found the CPU half used over 11-01 to 11-03).
+  The memo's question 2 (the fight-first fallback on a no-go) is still open; until the owner says otherwise it starts at once.
+
+- Addendum 2026-11-05 09:52Z (owner in chat: "ok switch on your own"; "why you can start teaching using human play tonight"): on a no-go on
+  2026-11-19 the orchestrator switches to the fight-first fallback (memo 5.2) without a review. Milestones 2 and 3 (the human
+  decision set and the prior `pi_h`) start now rather than on 11-06/11-07: they are on the critical path whichever way
+  milestone 1 falls (memo 5.1: on "play dominates", milestone 7 follows milestone 2), they touch no file the play-or-deck
+  worker uses, and the build is light on cores (at most 4 processes, BelowNormal, stopping heavy CPU use when the night's line
+  appears; the fit itself is minutes on the card). One Sonnet worker on a fork worktree (`feat/human-prior`); landing on fork main
+  after the night if the night is active when it is ready.
+
+- Addendum 2026-11-05 11:58Z (owner in chat: "Yes, build it"): the event option-name table (event id to option titles and indices) may be built
+  with the fork's decompile reader (`scripts/generate_event_options.py`'s approach); the table is game data strings, not
+  decompiled code, and is cross-checked against the live captures in `tests/fixtures/events`. With it, the human record's
+  event choices (option title only) become decision rows for the prior, and whole-run seed replays stay in step past events.
+
+- Addendum 2026-11-05 15:01Z (orchestrator, milestone 1 result, `docs/diagnostics/2026-11-05-play-or-deck.md`, Spireline 1288c78): on the
+  humans' own boss starts (fifth 4, 300 + 300, two draws) generation 11's fighter wins the Act 1 boss 52.5 in 100 (humans 73.7 on
+  the same starts; on its own starts 57.2) and the Act 2 boss 44.4 (humans 74.3; own starts 14.7): the Act 1 gap is play, the Act 2
+  gap half play and half the hand (potions 1.68 vs 0.48 at the door, relics, HP). Thinking time pays: x4 +4.2 / +6.2 points, x16
+  +10.6 / +10.7 at the two bosses (paired, intervals above zero). Decisions (routine, memo 3.5 step 4 and 5.1): the milestone
+  order is both halves, the fight half's milestone 7 right after milestone 2; three candidates are built tonight for the lab:
+  the stakes schedule (elite x4, boss x16, as a candidate property honored by the funnel, the night and self-play), the potion
+  hold rule on top, and the win-conditioned prior v1 sampled at lambda 0.5 on top of those (the bare argmax over-takes cards:
+  the imitation sanity run skipped 5.4 in 100 against humans' 15.4 and lost 4.3 floors; lambda 0.5 was level). Landings and
+  markers after the night, after a Python re-gate of 58aaa6fe on a quiet machine. Block cost rises (x16 boss fights); renting
+  (approved for week 2) is the relief if the queue forms.
+
+**D55 addendum (2026-11-05 19:16Z, orchestrator, under the memo's milestone "a new keep test replacing D33").** The keep test v2 (`docs/design/2026-11-05-keep-test-v2.md`, Opus design) replaces D33's rule for every judgement from the day its code lands. A candidate is promoted by route A (on paired seeds it beats more bosses from the frontier on, today the Act 2 boss, the Act 3 bosses and wins, counted per 100 runs: one-sided p < 0.005, gain at least +1.0 per 100, and the mean floor's 95% lower bound no worse than -1.0) or by route F (D33's floor rule at 0.005 with the frontier measure not worse). The frontier is the deepest boss the incumbent beats in 1.5 of 100 runs over its last three blocks, so the ladder moves up by itself. The Act 1 kill and damage guards become report-only; the crash guard, drift, the attempt cap and the wins clause stay. A route A promotion stands only if the next night's real-game Act 2 boss rate beats generation 11's pooled 3.40 per 100; otherwise it is reverted. Nothing of the exam fifth is used. Sensitivity: `candidate-imit-l05` passes at the 1.0-floor margin (its lower bound is -0.63) and fails at 0.5; the margin is 1.0 because the memo's headline measure is the Act 2 boss and the real-game check guards the floor. Retroactively only that one verdict changes of 19 judged blocks. Blocks grow to 3,000 seeds once the incumbent passes 5 per 100. Corrected baseline: generation 11's pooled Act 2 boss rate is 2.36 per 100 on copy blocks and 3.40 in the real game, not the memo's single-night 5.0 / 6.5; the go/no-go bar of 2026-11-19 stays at 8 per 100 on the copy's paired blocks (the memo's absolute bar), now a 3.4x gain over the true baseline. Build: Sonnet worker on `feat/keep-test-v2` (Python-only gate), then the first use is a re-judgement of `candidate-imit-l05` from its saved rows; if promoted it becomes generation 12 and the next night's player.
