@@ -1,11 +1,17 @@
 """Stream the Spire Codex v0.107.1 export and keep A10 standard single-player runs.
 
-Usage: python3 -I filter_a10.py <export.jsonl.gz> <out_dir>
+Usage: python3 -I filter_a10.py <export.jsonl.gz> <out_dir> [--keep-player-token]
 
 Keeps runs with ascension 10, game_mode "standard", not abandoned, one player,
 no modifiers, build v0.107.1. Drops `player_token` and per-player `badges`, and
 dedupes on `run_hash` (falling back to seed + start_time). Writes
 a10_standard_single.jsonl.gz and stats.json into out_dir.
+
+`--keep-player-token` (off by default, so the published path is unchanged) keeps
+each run's `player_token` in the working file, for the strong-player set
+(tools/spire_codex/strong_players.py). Badges are dropped either way. A working
+file written with the flag holds pseudonymous player ids: it stays under data/,
+is never committed or published, and stats.json carries only counts.
 """
 
 import collections
@@ -16,7 +22,7 @@ import sys
 import time
 
 
-def main(src: str, out_dir: str) -> None:
+def main(src: str, out_dir: str, keep_player_token: bool = False) -> None:
     os.makedirs(out_dir, exist_ok=True)
     out_path = os.path.join(out_dir, "a10_standard_single.jsonl.gz")
     seen = set()
@@ -25,6 +31,7 @@ def main(src: str, out_dir: str) -> None:
     wins_by_char = collections.Counter()
     killers = collections.Counter()
     reasons = collections.Counter()
+    with_token = 0
     started = time.time()
     with gzip.open(src, "rt", encoding="utf-8") as f, gzip.open(out_path, "wt", encoding="utf-8") as out:
         for line in f:
@@ -58,7 +65,10 @@ def main(src: str, out_dir: str) -> None:
                 dupes += 1
                 continue
             seen.add(key)
-            r.pop("player_token", None)
+            if keep_player_token:
+                with_token += bool(r.get("player_token"))
+            else:
+                r.pop("player_token", None)
             for p in players:
                 p.pop("badges", None)
             out.write(json.dumps(r, separators=(",", ":")) + "\n")
@@ -82,10 +92,17 @@ def main(src: str, out_dir: str) -> None:
         "top_killers_all_characters": killers.most_common(25),
         "seconds": round(time.time() - started, 1),
     }
+    if keep_player_token:
+        stats["player_token_kept"] = True
+        stats["kept_with_player_token"] = with_token
     with open(os.path.join(out_dir, "stats.json"), "w") as fh:
         json.dump(stats, fh, indent=1)
     print(json.dumps(stats, indent=1))
 
 
 if __name__ == "__main__":
-    main(sys.argv[1], sys.argv[2])
+    args = [a for a in sys.argv[1:] if not a.startswith("--")]
+    flags = {a for a in sys.argv[1:] if a.startswith("--")}
+    if len(args) != 2 or flags - {"--keep-player-token"}:
+        sys.exit("usage: filter_a10.py <export.jsonl.gz> <out_dir> [--keep-player-token]")
+    main(args[0], args[1], "--keep-player-token" in flags)
