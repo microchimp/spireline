@@ -4,7 +4,7 @@
         [--winlog auto|none|FILE] [--usage TEXT] [--now ISO] [--check]
 
 `<night folder>` is a lab night, e.g. `LAB/nightly/2026-11-03`, holding the real arm `g<N>` and the emulator arm `g<N>-emu`. Since
-2026-11-06 a block starts when a promotion lands, so a folder is named by its UTC start, e.g. `LAB/nightly/2026-11-06T0312` (two blocks of
+2026-11-06 a block starts when the orchestrator writes LAB/nightly/pending after a promotion (or when the weekly clock is due), so a folder is named by its UTC start, e.g. `LAB/nightly/2026-11-06T0312` (two blocks of
 a day do not collide); the folders up to 2026-11-06 are named by date alone, and both forms are read (the name sorts in time order).
 With --out DIR it writes three files and prints the edition list; without it, everything goes to the screen:
 
@@ -1232,7 +1232,7 @@ def next_night(lab: Path, start: datetime | None) -> dict:
     nxt = start + timedelta(hours=every)
     return {"known": True, "every_h": every, "earliest_start_utc": iso(nxt),
             "landings_safe_until_utc": iso(nxt.replace(minute=0, second=0, microsecond=0)),
-            "on_promotion": True}  # the lab starts a block as soon as a promotion lands (LAB/nightly/pending); the clock only backs it up
+            "on_promotion": True}  # the lab starts a block as soon as LAB/nightly/pending is written (by hand, after a promotion); the clock only backs it up
 
 
 # ---------------------------------------------------------------------------------------------------- lockstep, groups, machine
@@ -1998,7 +1998,7 @@ def handoff_line(rep: dict) -> str:
     if nx.get("known"):
         e, s = parse_utc(nx["earliest_start_utc"]), parse_utc(nx["landings_safe_until_utc"])
         if nx.get("on_promotion"):
-            P.append(f"**Next block:** it starts as soon as a promotion lands, with the generation promoted (the lab does not wait for a clock); "
+            P.append(f"**Next block:** it starts as soon as LAB/nightly/pending is written after a promotion, with the generation promoted (the lab does not wait for a clock); "
                      f"the {nx['every_h']}-hour clock is the copy-accuracy watch and is due from {hhmm(e)}Z on {e.strftime('%m-%d')} if no "
                      f"promotion comes first. Landings wait for the LAB/nightly/active marker to clear.")
         else:
