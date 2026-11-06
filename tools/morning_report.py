@@ -3,7 +3,9 @@
     python tools/morning_report.py <night folder> [--agent g11] [--out DIR] [--lab DIR] [--logs DIR]
         [--winlog auto|none|FILE] [--usage TEXT] [--now ISO] [--check]
 
-`<night folder>` is a lab night, e.g. `LAB/nightly/2026-11-03`, holding the real arm `g<N>` and the emulator arm `g<N>-emu`.
+`<night folder>` is a lab night, e.g. `LAB/nightly/2026-11-03`, holding the real arm `g<N>` and the emulator arm `g<N>-emu`. Since
+2026-11-06 a block starts when a promotion lands, so a folder is named by its UTC start, e.g. `LAB/nightly/2026-11-06T0312` (two blocks of
+a day do not collide); the folders up to 2026-11-06 are named by date alone, and both forms are read (the name sorts in time order).
 With --out DIR it writes three files and prints the edition list; without it, everything goes to the screen:
 
   morning_report.json   every figure, by section; `cross_checks` set the rows against the arms' own summary files and
@@ -89,7 +91,7 @@ EXIT_NAMES = {
     0xC0000409: "stack buffer overrun (fail-fast)",
     0xC00000FD: "stack overflow",
 }
-DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
+DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}(?:T\d{4})?$")  # a night folder: the date, or the date and UTC start time of a block (2026-11-06 on)
 ARM_RE = re.compile(r"^g(\d+)$")
 
 
@@ -1229,7 +1231,8 @@ def next_night(lab: Path, start: datetime | None) -> dict:
         return {"known": False}
     nxt = start + timedelta(hours=every)
     return {"known": True, "every_h": every, "earliest_start_utc": iso(nxt),
-            "landings_safe_until_utc": iso(nxt.replace(minute=0, second=0, microsecond=0))}
+            "landings_safe_until_utc": iso(nxt.replace(minute=0, second=0, microsecond=0)),
+            "on_promotion": True}  # the lab starts a block as soon as a promotion lands (LAB/nightly/pending); the clock only backs it up
 
 
 # ---------------------------------------------------------------------------------------------------- lockstep, groups, machine
@@ -1994,8 +1997,13 @@ def handoff_line(rep: dict) -> str:
     nx = nt["next_night"]
     if nx.get("known"):
         e, s = parse_utc(nx["earliest_start_utc"]), parse_utc(nx["landings_safe_until_utc"])
-        P.append(f"**Next night:** the job's {nx['every_h']}-hour spacing allows a start from {hhmm(e)}Z on {e.strftime('%m-%d')}; landings "
-                 f"are safe only until about {hhmm(s)}Z, then wait for the LAB/nightly/active marker.")
+        if nx.get("on_promotion"):
+            P.append(f"**Next block:** it starts as soon as a promotion lands, with the generation promoted (the lab does not wait for a clock); "
+                     f"the {nx['every_h']}-hour clock is the copy-accuracy watch and is due from {hhmm(e)}Z on {e.strftime('%m-%d')} if no "
+                     f"promotion comes first. Landings wait for the LAB/nightly/active marker to clear.")
+        else:
+            P.append(f"**Next night:** the job's {nx['every_h']}-hour spacing allows a start from {hhmm(e)}Z on {e.strftime('%m-%d')}; landings "
+                     f"are safe only until about {hhmm(s)}Z, then wait for the LAB/nightly/active marker.")
     bad = [c for c in rep["cross_checks"] if c["ok"] is False]
     P.append("The rows agree with the arms' summary files in every check." if not bad else
              "The rows DISAGREE with a summary file in: " + "; ".join(c["check"] for c in bad) + ".")
@@ -2553,7 +2561,7 @@ def _bases_second(night: Path, agent: str) -> dict[str, dict | None]:
     except OSError:
         folders = []
     for d in folders:
-        if not (d.is_dir() and re.fullmatch(r"\d{4}-\d{2}-\d{2}", d.name) and d.name < night.name):
+        if not (d.is_dir() and DATE_RE.match(d.name) and d.name < night.name):
             continue
         for a in sorted(d.iterdir()):
             ma = re.fullmatch(r"g(\d+)", a.name)

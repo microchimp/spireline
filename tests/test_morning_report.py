@@ -325,7 +325,7 @@ def test_job_window_tree_and_next_night(rep):
     assert n["wall_min"] == {"real_arm": 120.0, "emulator_arm": 60.0}
     assert n["interruptions"]["count"] == 1 and n["interruptions"]["stops"][0]["utc"] == "2026-11-03T22:00:00Z"  # the 01:00 stop is later
     assert n["next_night"] == {"known": True, "every_h": 20, "earliest_start_utc": "2026-11-04T16:00:00Z",
-                               "landings_safe_until_utc": "2026-11-04T16:00:00Z"}
+                               "landings_safe_until_utc": "2026-11-04T16:00:00Z", "on_promotion": True}
     assert rep["machine"]["samples"] == 3 and rep["machine"]["cpu_pct_max"] == 80.0 and rep["machine"]["avail_mb_min"] == 7000
 
 
@@ -698,3 +698,36 @@ def test_ledger_line_reads_old_and_v2_rows(tmp_path, capsys):
         assert bad not in blob, bad
     # without a ledger beside the lab the report says so and is otherwise unchanged
     assert mr.build_report(NIGHT, None, LAB, LOGS, str(WINLOG), "test usage", NOW)["ledger"] == {"available": False, "line": "no promotions ledger was found"}
+
+
+# ---------------------------------------------------------------------------------------------------- night folders named by start time
+def test_night_folders_named_by_date_or_by_start_time_are_both_nights(tmp_path):
+    for name in ("2026-11-05", "2026-11-06", "2026-11-06T0312", "2026-11-06T2359"):
+        (tmp_path / name).mkdir()
+    for name in ("last-ok", "pending", "2026-11-06T03", "2026-11-06-g4"):
+        (tmp_path / name).mkdir()
+    (tmp_path / "2026-11-07").write_text("a file, not a night")
+    assert [p.name for p in mr.list_nights(tmp_path)] == ["2026-11-05", "2026-11-06", "2026-11-06T0312", "2026-11-06T2359"]
+
+
+def test_a_block_named_by_its_start_time_is_reported_like_a_dated_night(tmp_path):
+    import shutil
+
+    lab = tmp_path / "referee" / "LAB"
+    shutil.copytree(LAB, lab)
+    new = "2026-11-04T0312"
+    shutil.move(str(lab / "nightly" / "2026-11-04"), str(lab / "nightly" / new))
+    for d in (lab / "runs").glob("*-nightly-real"):  # the job record names its block by the result's date
+        res = json.loads((d / "result.json").read_text(encoding="utf-8")) if (d / "result.json").is_file() else None
+        if res and res.get("date") == "2026-11-04":
+            res["date"] = new
+            (d / "result.json").write_text(json.dumps(res), encoding="utf-8")
+    night = lab / "nightly" / new
+    assert [p.name for p in mr.list_nights(lab / "nightly")][-1] == new
+    r = mr.build_report(night, None, lab, None, "none", None, NOW)
+    assert r["night"]["date"] == new and r["night"]["folder"] == f"nightly/{new}"
+    assert r["night"]["job"]["name"] == "20261103T2000-nightly-real"  # found by the result's date
+    assert r["real"]["ended"] == 8 and r["runs"]["real_rows"] == 10
+    assert all(c["ok"] is not False for c in r["cross_checks"])
+    # the earlier nights are still its history (they sort before it), and a block of the same day does not hide them
+    assert r["tables"]["prev_night_date"] == "2026-11-03"
