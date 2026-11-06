@@ -63,10 +63,11 @@ The owner approved one more download of the same build's export (D55 addendum 7)
 | File | `https://spire-codex.com/exports/runs-v0.107.1.jsonl.gz`, saved in its own folder `data/spire-codex/2026-11-06/` (the October file beside it is untouched) |
 | Size | 2,816,341,088 bytes compressed, 840,381 runs (every line read and parsed; 0 unparseable) |
 | sha256 | `0e5babe6ba138da4242f21694f4ba0743088fa01c4dde4223ec8cf6283e8e7d8`, equal to the manifest's (manifest generated 2026-11-05T02:04:41Z; the manifest's size and run count match too). Downloaded 2026-11-06. |
-| `player_token` | **null in all 840,381 runs** (the same as the first row; checked on the raw lines of the whole file). `players[0].id` is 1 in every kept run. Nothing in a row names or links a player. |
+| `player_token` | **null in all 840,381 runs** (the same as the first row; checked on the raw lines of the whole file). |
+| `players[i].id` | A platform account id (17 digits; 16,220 distinct values in the file) on multiplayer runs, and the placeholder 1 on single-player runs: 506,762 of the 506,765 single-player runs carry 1 (the other 3 are abandoned runs), and so do all 74,287 runs kept by step 1. The id is sensitive: it is used only to group runs inside the data folder and is never written to a document, result or commit. |
 | Source tag | 15,424 of the kept runs carry `_sts: "slay-the-stats/v1.2.0"` (the uploading tool), 3,272 a `_spirecodex_damage` block. Neither identifies a player. |
 
-The copy of the first download on disk is a later fetch than the first row describes (dated 2026-10-13: 2,188,745,918 bytes, sha256 `92b3cc4010578877436f951fce892a48df58ee78d896ebc58a532ec2f74995cd` as recorded beside it; the human prior's build log of 2026-11-05 reads 653,733 lines from it). Seven of the 2,924 October exam ids are not among the new file's vanilla Ironclad A10 runs (dropped upstream or by the filters); they stay exam.
+**Which snapshot D13's hash belongs to.** D13's sha256 (`55557226ec1023d49d99c88555a2a102706c07281784a5edab038172fea6d9e2`) and the first row's size and count (2,136,544,513 bytes, 638,919 runs) are the manifest of the 2026-10-10 download. The file on disk beside the new folder is a later fetch of the same URL: written 2026-10-13 06:47Z, 2,188,745,918 bytes, sha256 `92b3cc4010578877436f951fce892a48df58ee78d896ebc58a532ec2f74995cd` (the sidecar `.sha256` written at that download; recomputed 2026-11-06 and equal), 653,733 lines according to the human prior's build log. The exam list of 2026-11-02 and the human prior's shards were cut from that on-disk snapshot (the pipelines' default corpus path). The 2026-10-10 file itself is not on disk. The on-disk file was not touched. Seven of the 2,924 October exam ids are not among the new file's vanilla Ironclad A10 runs (dropped upstream or by the filters); they stay exam.
 
 ### Filtering the new file (the same two steps, `filter_a10.py --keep-player-token`, then `vanilla_filter.py`)
 
@@ -106,7 +107,7 @@ The exam id list for the larger file is `data/spire-codex/human-exam-fifth-ids-2
 
 ### Strong players
 
-The brief for this download wanted a strong-player set ranked by `player_token`. There is no token to rank by: see [2026-11-06-strong-players.md](2026-11-06-strong-players.md). `tools/spire_codex/strong_players.py` is written and tested for an export that carries tokens.
+The brief for this download wanted a strong-player set ranked by a player key. The single-player runs the corpus keeps carry no key: `player_token` is null and `players[0].id` is the placeholder 1 in all 74,287 kept runs, so the set is empty. The account ids exist only on multiplayer runs. See [2026-11-06-strong-players.md](2026-11-06-strong-players.md). `tools/spire_codex/strong_players.py` is written and tested for a key that exists.
 
 ## How to use it
 
