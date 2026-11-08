@@ -218,3 +218,7 @@ schedule), about 1.7 times the labels per core-hour; the round's exploring play,
 - x8's label cost (0.6) is an estimate from board A's per-fight seconds, not a timed label run; the interaction bound is an argument,
   not a measurement. The frontier-unit and Act 2 label costs assume deep-kill probabilities of 0.04 and 0.08 a draw.
 - The round 1 parameter names are a builder's uncommitted draft read at 11:20Z.
+
+## Data note
+
+Human figures in this memo (the human prior's training choices, "about 150,000 human decisions", the human rows) are aggregates from the Spire Codex public run export for v0.107.1, training fifths only; the exam fifth is never read; no cell under 20 runs; no player id appears anywhere.
