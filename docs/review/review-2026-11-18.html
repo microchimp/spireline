@@ -1,0 +1,207 @@
+<title>Spireline Review 18 Nov</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,600&family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one reading column of about 68 characters, the paper's own palette and faces; tables scroll inside their own box on a phone. */
+:root{
+  --bg:#f4f6f5; --surface:#ffffff; --fg:#17272a; --muted:#56696b; --line:#cfd9d8; --track:#e2e9e8;
+  --accent:#1f7a6d; --accent-soft:#dcefea; --copper:#b4612a; --copper-soft:#f5e6d8;
+  --good:#2e7d4f; --warn:#a86d12; --bad:#b3392c;
+  --display:"Newsreader",Georgia,"Times New Roman",serif;
+  --body:"Atkinson Hyperlegible",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#111a1b; --surface:#192425; --fg:#e4ecea; --muted:#9fb1af; --line:#2c3b3c; --track:#243233;
+    --accent:#5cc2b0; --accent-soft:#1c3733; --copper:#e2925a; --copper-soft:#3b2a1d;
+    --good:#6cc08f; --warn:#e0b253; --bad:#e07a6e; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#111a1b; --surface:#192425; --fg:#e4ecea; --muted:#9fb1af; --line:#2c3b3c; --track:#243233;
+  --accent:#5cc2b0; --accent-soft:#1c3733; --copper:#e2925a; --copper-soft:#3b2a1d;
+  --good:#6cc08f; --warn:#e0b253; --bad:#e07a6e; color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:17px;line-height:1.55;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 64px}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
+.page{max-width:760px;margin:0 auto}
+h1,h2,h3{font-family:var(--display);font-weight:500;line-height:1.15;text-wrap:balance;margin:0}
+h1{font-size:clamp(32px,6vw,48px);letter-spacing:-0.01em}
+h2{font-size:clamp(25px,3.6vw,32px);margin-top:56px;padding-top:12px;border-top:1px solid var(--line)}
+h3{font-size:20px;margin-top:28px;font-weight:600}
+p,ul,ol,table{margin:0}
+.prose p+p,.prose p+ul,.prose ul+p,.prose p+ol,.prose ol+p,.prose p+table,.prose table+p,.prose ul+ul,.prose p+div,.prose div+p{margin-top:14px}
+.prose h3+p,.prose h3+ul,.prose h3+ol,.prose h3+div,.prose h2+p,.prose h2+ul,.prose h2+div{margin-top:12px}
+.prose li+li{margin-top:7px}
+.prose ul,.prose ol{padding-left:1.3em}
+a{color:var(--accent)}
+.eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted)}
+.muted{color:var(--muted)} .small{font-size:14px}
+strong{font-weight:700}
+.masthead{padding-block:40px 8px;display:grid;gap:14px}
+.masthead .stamp{display:flex;flex-wrap:wrap;gap:8px 22px;font-family:var(--mono);font-size:13px;color:var(--muted)}
+.lede{font-size:19px;max-width:68ch}
+.verdict{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:18px 20px;margin-top:22px}
+.verdict h2{margin-top:0;border:0;padding-top:0;font-size:24px}
+.verdict ul{margin-top:10px}
+.callout{border-left:3px solid var(--copper);background:var(--copper-soft);padding:12px 16px;border-radius:0 6px 6px 0;margin-top:16px}
+.tablewrap{overflow-x:auto;margin-top:12px}
+table{border-collapse:collapse;width:100%;font-size:15px;min-width:520px}
+th,td{text-align:left;vertical-align:top;padding:8px 10px 8px 0;border-bottom:1px solid var(--line)}
+th{font-family:var(--mono);font-size:12px;letter-spacing:0.06em;text-transform:uppercase;color:var(--muted);font-weight:500}
+td.num{font-family:var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.cap{margin-top:8px;font-size:14px;color:var(--muted)}
+.pill{font-family:var(--mono);font-size:11.5px;letter-spacing:0.05em;text-transform:uppercase;padding:2px 8px;border-radius:4px;border:1px solid var(--line);white-space:nowrap}
+.pill.bad{color:var(--bad);border-color:var(--bad)} .pill.warn{color:var(--warn);border-color:var(--warn)} .pill.good{color:var(--good);border-color:var(--good)}
+.plan li{margin-top:10px}
+.decide{background:var(--accent-soft);border-radius:8px;padding:16px 20px;margin-top:20px}
+.decide h3{margin-top:0}
+</style>
+<div class="page">
+<header class="masthead">
+  <div class="eyebrow">Spireline, the owner's review</div>
+  <h1>What is going right, what is wrong, and what we should do</h1>
+  <p class="lede">You asked for an exhaustive look before anything else is built. Three senior analysts read the whole record independently, each from one angle: the learning itself, whether our numbers are true, and where the machine and the budget went. They worked read-only and backed every claim with a file and a count. I re-counted the figures this review leans on from the raw run records. This is the result, in plain words.</p>
+  <div class="stamp"><span>Written 2026-11-18, 20:40 UTC</span><span>Evidence: 40 judgements, 16 promotions, 83,000 training runs, 10,300 real-game runs, 28 days of logs</span><span>Memos: referee/backlog/analysis-2026-11-18/</span></div>
+</header>
+
+<section class="verdict">
+  <h2>The verdict in six lines</h2>
+  <ul>
+    <li><strong>The AI wins 1 run in 1,000.</strong> The average human wins 11 in 100. The best humans an estimated 60 to 95. Our win rate has not moved in two weeks.</li>
+    <li><strong>The whole loop is aimed at the wrong thing.</strong> Every part learns to reach more floors. To the brain a win is worth four floors. The fight exam has no Act 3 fight in it. Nine tenths of the gap to the average human sits in the two Act 3 boss fights, and nothing in the system is pointed at them.</li>
+    <li><strong>Our Act 3 number was wrong.</strong> The judge counted a boss as beaten when its health bar emptied. At the first Act 3 boss, two runs in three that empty it still die in that fight. The real figure for today's champion is 2.6 in 100, not 7.9. Your new rule has been deciding on the wrong number since yesterday.</li>
+    <li><strong>The copy is honest where we checked it and unchecked where it matters.</strong> For the same player it matched the real game within a floor in Acts 1 and 2. Act 3 has 62 real arrivals ever, and the copy and the real game part ways 15 times as often per floor there. No real-game block has run for 12 days, although your own trigger for one was met on 15 November. That was my miss.</li>
+    <li><strong>The machine and the budget ran at the limit every week</strong>, and at least 18 in 100 of the logged machine hours bought nothing. Failures fixed with a written note came back; failures fixed in code did not.</li>
+    <li><strong>The method as built will not reach the goal.</strong> Whether a loop re-aimed at Act 3 can is untested, and the tests cost about a week. The honest choice is between one re-aimed week with a hard stop rule, and an orderly stop now.</li>
+  </ul>
+</section>
+
+<div class="prose">
+<h2>What went right</h2>
+<ul>
+  <li><strong>The copy of the game is trustworthy in the first two acts.</strong> For the same player and the same conditions the copy and the real game agreed within a floor: generation 13 reached 24.5 floors on the copy and 24.2 in the real game, and every step between champions pointed the same way in both, at two thirds to three quarters of the size. The gap on the scoreboard, 30 floors against 24, compared two different players twelve days apart. That was a misleading table, not a broken copy.</li>
+  <li><strong>The champion improved for real, and the gains held.</strong> From 11.5 floors to 30.3 in 26 days. Promotions summed to 19.4 floors of gain and the champion actually moved 18.8; each generation held its level on later fresh seeds. In Acts 1 and 2 the copy's champion now matches or beats the average human: it kills the Act 1 boss 77 times in 100 against the humans' 55, and the Act 2 boss 24 against 29.</li>
+  <li><strong>We know what moved it.</strong> Switching the run brain on (generation 5) gave 5 floors, confirmed in the real game. Refitting both brains on their own runs (generations 1 to 9) gave 6.6. The two late refits (16 and 17) gave 2.7, but they were a catch-up: the run brain had not been refit since generation 9. Deeper search at bosses, the student network and the fight brains gave about 1.8 floors each.</li>
+  <li><strong>The judge mostly said no for the right reasons.</strong> Of 19 refused candidates, 10 were clearly worse, 8 level, and 1 was probably a gain that we called "level" and never replayed.</li>
+  <li><strong>Some failures were fixed in code and stayed fixed:</strong> the lab now stops a failing job kind after two failures and raises an alert, and the round script no longer reuses a stale fit.</li>
+</ul>
+
+<h2>What went wrong</h2>
+
+<h3>1. Everything learns floors, and the goal is wins</h3>
+<p>Where the runs die tells the story. Take generation 17's 52,800 training runs and the humans' 14,700 finished runs, stage by stage:</p>
+<div class="tablewrap"><table>
+<thead><tr><th>Stage</th><th>Our AI</th><th>Average human</th></tr></thead>
+<tbody>
+<tr><td>Kills the Act 2 boss</td><td class="num">23 in 100 runs</td><td class="num">29 in 100</td></tr>
+<tr><td>Of those, reaches the first Act 3 boss</td><td class="num">65 in 100</td><td class="num">87 in 100</td></tr>
+<tr><td>Kills it, per arrival</td><td class="num">16 in 100</td><td class="num">71 in 100</td></tr>
+<tr><td>Then wins the last fight</td><td class="num">4 in 100</td><td class="num">62 in 100</td></tr>
+<tr><td>Wins the run</td><td class="num">0.1 in 100</td><td class="num">11 in 100</td></tr>
+</tbody></table></div>
+<p class="cap">Our rows from generation 17's plain runs (n 52,824) read strictly; human rows from the Spire Codex public run export for v0.107.1, Ironclad at Ascension 10, training portion only (n 14,725).</p>
+<p>Up to the Act 3 door we are about six tenths as good as the average human. Through the two Act 3 fights we are about two hundredths as good. Nine tenths of the whole gap, measured on the scale that matters for compounding, is in those two fights. Humans kill each of the three possible first Act 3 bosses about 70 times in 100. We kill them 22, 18 and 1.5 times in 100. When we do win that fight we come out with 31 percent of our health left against the humans' 54, and almost always die to the second boss.</p>
+<p>Nothing in the system aims there. The run brain is trained to predict the floor a run reaches. A win counts as floor 53 and a death at the last boss as 49, so a win is worth four floors and the first Act 3 boss one floor. On our own numbers, playing both Act 3 fights as well as the average human would be worth about a third of a floor to that brain, the same as two more Act 1 boss kills in 100. The fight brain's exam is 400 human fights from Acts 1 and 2 only; the 24,000 human Act 3 positions in the corpus were never built into practice. The brain has seen 54 wins in 83,000 runs to learn from. Like a runner training for a marathon by timing the first ten kilometres: the training is real and the times improve, and it says nothing about the finish.</p>
+
+<h3>2. The Act 3 number was wrong, and the new rule decides on it</h3>
+<p>The judge reads a boss as beaten when the run's record shows its health bar fully emptied. In Acts 1 and 2 that reading is exact: every one of generation 17's 6,800 Act 1 and 2,100 Act 2 "emptied" readings went on to the next act. At the first Act 3 boss it is not: of 654 such readings, 436 died on that floor and never met the second boss. The likely cause is a boss whose bar empties once before the fight is over; nobody has yet watched one of those fights to confirm it. The training-run store keeps its own boss record, and it agrees with the strict reading: 2.3 in 100 beat that boss, exactly the runs that reach the second one. Two analysts found this independently, and I re-counted it: of generation 18's 2,000 judged runs, 158 "emptied" the first Act 3 boss and 52 got past it.</p>
+<div class="callout"><strong>What it changes.</strong> The scoreboard's 7.9 in 100 at the Act 3 boss is really 2.6, against the humans' 18. Generation 17's "Act 3 gain" over 16 was 0.0 read strictly. The brain refused on Tuesday (the 46,000-run refit) was in fact better at Act 3: read strictly, 132 passes against 96 over its 4,000 paired runs, about 0.9 to 1.0 more in 100, with the interval above zero. Your rule, as built yesterday, counts two thirds of its signal from runs that emptied the bar and then died.</div>
+<p>Two more measurement faults. The judge at 2,000 pairs cannot see the gains the new rule asks for: a true gain of 1 in 100 at Act 3 passes about 28 times in 100 tries; seeing it reliably needs around 11,000 pairs, about a day of the whole machine. And the "deepest boss the lineage beats" that the rule anchors on flipped between Act 2 and Act 3 three times in four judgements on the loose reading.</p>
+
+<h3>3. No real game for twelve days, and the copy is least trusted at Act 3</h3>
+<p>The last real-game block ran on 6 November with generation 13. On 9 November you set the trigger for the next: a promotion reading 15.3 in 100 or more at the Act 2 boss on the copy. Generation 17 passed that at 21.8 on 15 November. No block was written, and neither the decision log nor the landing note mentions the trigger. Five promotions and a rule change since then rest on copy figures alone. I own that miss.</p>
+<p>It matters more than it looks, because the copy's honesty falls with depth. In the real nights of generations 9 to 13 the copy and the real game parted ways 0.7 times per 100 floors in Act 1, 4.7 in Act 2 and 10.1 in Act 3. When they part, the real game is finished by a stand-in rule that plays the first card, which loses more boss fights. Act 3 has 62 real arrivals ever; on the loose reading the real game converted 14.5 in 100 of them and the copy 36.6. On the strict reading, 2 of 62 got past. Whether the Act 3 wall is the game's or the copy's is the single biggest open question in this project, and one night of the real game answers it.</p>
+
+<h3>4. The machine and the budget</h3>
+<div class="tablewrap"><table>
+<thead><tr><th>Purpose since 22 October</th><th>Core-hours</th><th>What it bought</th></tr></thead>
+<tbody>
+<tr><td>The champion's plain runs as training data (from 14 Nov)</td><td class="num">1,104</td><td>generations 16 and 17; then four refused refits</td></tr>
+<tr><td>Fight loop (estimate)</td><td class="num">850</td><td>fight brains v2 and v3; v3 unused for nine days</td></tr>
+<tr><td>Judgements of candidates</td><td class="num">648</td><td>40 verdicts, 16 promotions</td></tr>
+<tr><td>Real-game nights and scoring</td><td class="num">613</td><td>real checks to 6 Nov; 209 of it eight failed retries</td></tr>
+<tr><td>Self-play practice</td><td class="num">580</td><td>generations 8 and 9; after 1 Nov two refused candidates</td></tr>
+<tr><td>Fidelity bug hunting</td><td class="num">577</td><td>the copy's agreement with the game; 406 of it after the 30 Oct cut</td></tr>
+<tr><td>Teacher with search</td><td class="num">566</td><td>generations 14 and 15; dropped</td></tr>
+<tr><td>Logged total</td><td class="num">about 5,000</td><td>of 10,700 thread-hours; the rest unlogged, hand-run or idle</td></tr>
+</tbody></table></div>
+<p class="cap">From the lab's job log (every job with its CPU seconds) and the fight loop's logs; before 3 November the lab logged wall time only, converted at the ratio measured after.</p>
+<p>At least 900 of the logged core-hours (18 in 100) bought nothing: a scoring job that retried silently eight times, self-play kept running after a decision said it added nothing, the fight loop improving a part no run player carried, a fit run and discarded unread. Counting work of doubtful use, up to 1,900 (38 in 100). The yield was 3.2 promotions per 1,000 core-hours, but 0.2 to 0.4 for promotions that moved Act 3 or wins. The graphics card was not the limit: it was busy about a quarter of the time.</p>
+<p>The budget: 96, 93, 94 and 96 of 100 in the four full weeks, with the weekly ceiling raised about fifteen times and never once holding. Where the points went cannot be recovered; the ledger that was to attribute them lost its inputs on 5 November. An October study found 86 in 100 of the cost is re-reading long contexts: the working log is 188,000 words, the decision log 66,000, the paper 31,000. The record outgrew its readers, including me: the fight loop's unused player, the missed real-game trigger and the retrying job were all in files that nobody read until someone asked.</p>
+<p>The pattern across all of it: where a failure was fixed in code it stayed fixed; where it was fixed by a rule in a note, it came back. About a dozen operating rules live only in my notes. Promotions were also tried until one passed: 7 of 16 followed a refusal in the same generation, and 2 passed only on the timing of a rule change, including generation 18 yesterday.</p>
+
+<h2>Where we stand against humans</h2>
+<div class="tablewrap"><table>
+<thead><tr><th>Per 100 runs</th><th>Average human</th><th>Generation 18, copy</th><th>Generation 13, real game</th></tr></thead>
+<tbody>
+<tr><td>Floors reached, average</td><td class="num">27.1</td><td class="num">30.3</td><td class="num">24.2</td></tr>
+<tr><td>Act 1 boss beaten</td><td class="num">54.6</td><td class="num">76.5</td><td class="num">56.6</td></tr>
+<tr><td>Act 2 boss beaten</td><td class="num">29.1</td><td class="num">24.5</td><td class="num">7.8</td></tr>
+<tr><td>First Act 3 boss got past</td><td class="num">18.2</td><td class="num">2.6</td><td class="num">0 of 1,995</td></tr>
+<tr><td>Wins</td><td class="num">11.3</td><td class="num">0.1</td><td class="num">0</td></tr>
+</tbody></table></div>
+<p class="cap">Humans: 14,811 finished runs; counting abandoned runs as losses, the human win rate is 8.0. Generation 18: 2,000 judged runs on the copy, read strictly. Generation 13: the last real night, 1,995 runs.</p>
+<p>Per 100 arrivals at each of the four bosses, humans win 74, 76, 73 and 62. Generation 18 wins 80, 49, 16 and 4. The floors row flatters us: we die later in Act 1 and earlier in Act 3. "The best humans" cannot be measured from our corpus, because solo runs carry no player key. Published estimates put strong players at 60 wins in 100 or more and the top player near 95. We are 600 to 950 times below that, and the only published AI wins at this difficulty are by language-model agents, which your rules forbid.</p>
+
+<h2>What the evidence cannot tell us</h2>
+<ul>
+  <li><strong>Whether the Act 3 wall is the game's or the copy's.</strong> One real block of today's champion, read strictly with out-of-step fights set apart, would tell. Nothing else will.</li>
+  <li><strong>What more search buys at Act 3 bosses.</strong> Deeper search paid in Acts 1 and 2. Act 3 is unmeasured; a replay of saved Act 3 positions at several budgets costs half a machine-day.</li>
+  <li><strong>Whether a target that counts the win can learn from 54 wins</strong>, or needs the per-boss survival steps chained together.</li>
+  <li><strong>Whether exploration helps.</strong> Every one of 150,000 sampled training choices was the brain's first choice; it has never seen the result of its second choice, though the two were within half a floor of each other 58 times in 100. Our routes are as varied as the humans'; our style is narrow: we fight two or more Act 1 elites in 6 runs in 100, humans in 60.</li>
+  <li><strong>How much of the Act 3 loss is the deck and how much the play.</strong> No exam plays our fight brain on human Act 3 positions.</li>
+  <li><strong>What the other half of the machine did.</strong> Hand-run work was never logged.</li>
+</ul>
+
+<h2>What we should do</h2>
+<p>The three analysts converge on one bet and one condition. The bet: aim the whole loop at the two Act 3 boss fights, where nine tenths of the gap is and where nothing points today. The condition: find out first whether that wall is real, because if it is the copy's, the bet is fidelity work, not learning. Both fit in one week, and most of it uses data already on disk.</p>
+
+<h3>One re-aimed week, with a hard stop</h3>
+<ol class="plan">
+  <li><strong>Day 1: read Act 3 honestly.</strong> Count a boss as beaten only when the run gets past it, in the judge, the frontier, the ledger and the scoreboard, as the training store already does. Re-score every saved judgement from the stored runs. Two hours of a worker, no machine.</li>
+  <li><strong>Night 1: one real-game block of generation 18.</strong> 2,000 runs, read strictly, out-of-step fights reported apart. About 12 machine hours, and the game running on your PC overnight. This is the decisive measurement: if the real game gets past the first Act 3 boss far more often than the copy's 16 per 100 arrivals, the wall is the copy's and the week turns to fixing Act 3 in the copy. If it matches, the bet stands.</li>
+  <li><strong>Days 2 to 3: how much search buys at Act 3.</strong> Replay a few hundred saved Act 3 boss positions at today's budget, four times it and sixteen times it. Half a machine-day. If four times the search lifts the per-arrival kill by ten points or more, the ceiling is compute and we know the price.</li>
+  <li><strong>Days 2 to 5: a brain that counts the win.</strong> Refit the run brain on the 84,000 training runs already on disk with a target built from per-boss survival chained into a win chance, instead of floors. Judge it on 4,000 fresh paired runs with the honest Act 3 reading. The refused refits learned something real about Act 3 under the old target; this is the same data aimed properly.</li>
+  <li><strong>Then, sized by what step 3 shows:</strong> the 24,000 human Act 3 positions into fight practice and the exam, and the exam weighted to where our runs die. Variety only after that, aimed at Acts 2 and 3.</li>
+</ol>
+<p><strong>The stop rule, set now.</strong> By 2 December: the first Act 3 boss killed per arrival moved from 16 toward 30 in 100, or wins to 0.5 in 100, measured on 4,000 fresh paired runs read strictly and confirmed by one real block. If neither moves, this method stops at its current level, and the only remaining question is whether you want to reopen the rule against language models in the player, since those are the only systems with published wins at this difficulty. That is your call, not mine, and I would raise it only on that date.</p>
+
+<h3>The process changes, the same week</h3>
+<ul>
+  <li><strong>Code keeps the books.</strong> Every heavy job, including hand-run ones, goes through the lab with its purpose and CPU logged; a judgement's marker carries its rule; a trainer whose latest output is in no champion or queued candidate within 24 hours pauses itself. Two worker lanes.</li>
+  <li><strong>Every line of work is registered before it starts</strong> with its expected gain in Act 3 passes and wins per 100, and its stop: two refusals or a date. The judge's rule is frozen for four weeks. A fit on the champion's own runs under the floor target is not run again.</li>
+  <li><strong>One real-game block a week, by the calendar</strong>, not by a trigger. The trigger failed the one time it fired.</li>
+  <li><strong>Five numbers replace the scoreboard:</strong> wins per 100 in the real game with its interval; first Act 3 boss passed per 100, real and copy, same player and seeds; copy honesty per act (copy minus real, paired by seed, with an alarm); distance to winning humans on the seed-matched exam; and this week's champion against last week's on fresh pairs. Every figure carries its noise.</li>
+  <li><strong>The writing is cut by about two thirds.</strong> A fresh orchestrator conversation each day from a two-page state file; the working log split into an archive and a live page; decision entries for your calls only; one page on Tuesdays. Budget ceiling 45, set once on Tuesday and not raised. The one-day test so far (5 points, two landings, one promotion) suggests the same work fits in half the budget; one day is not proof.</li>
+</ul>
+
+<h3>If you stop instead</h3>
+<p>An orderly stop costs about 3 budget points and 30 core-hours: halt the lab and the fight loop (nothing deleted); keep the fork, champions 17 and 18, every judgement with its runs, the training stores, the fight brains, the human-bar tooling with the exam fifth untouched, and the logs; record a final scoreboard on one fresh block read strictly, one 500-run real-game check so the last figure has a real counterpart, the cost table above, the open questions, and a two-page note on how to restart. Fidelity fixes that would help the open-source re-implementation can be offered upstream.</p>
+
+<div class="decide">
+<h3>Your decisions</h3>
+<ol>
+  <li><strong>Continue with the re-aimed week and its stop rule, or stop now.</strong> Nothing starts until you say.</li>
+  <li><strong>If we continue: a real-game night of generation 18 this week</strong>, which needs the game running on your PC overnight.</li>
+  <li><strong>The budget ceiling: 45 for the week, set once.</strong></li>
+  <li><strong>Whether the rule against language models in the player is open for discussion on 2 December</strong> if the stop rule fires. No answer needed before then.</li>
+</ol>
+</div>
+
+<h2>What would change this verdict</h2>
+<ul>
+  <li><strong>If the real block gets past the first Act 3 boss close to never</strong> in 200 or more arrivals, the copy's Act 3 is wrong, the new rule has been optimising a flaw in the copy, and every promotion since generation 13 needs re-weighing.</li>
+  <li><strong>If the real block comes within about 1 in 100 of the copy at that boss</strong>, the copy is honest where the judge looks, the twelve days cost nothing, and the problem is purely how fast the AI learns.</li>
+  <li><strong>If four times the search lifts the Act 3 kill by ten points per arrival</strong>, the ceiling is compute, not method.</li>
+  <li><strong>If the win-aimed refit gains 1.5 or more in 100 at the first Act 3 boss</strong> over 4,000 pairs without collapsing elsewhere, the answer moves from "no" to "maybe, slowly".</li>
+  <li><strong>If twenty hand-watched copy runs</strong> that "emptied" the first Act 3 boss and died on its floor turn out to have fought a second boss the record missed, the Act 3 rate is about 7 in 100 after all. The training store's independent record makes this unlikely.</li>
+</ul>
+
+<h2>Sources</h2>
+<p class="small muted">The three memos, with the scripts that printed every figure: <span class="pill">A-learning.md</span> <span class="pill">B-measurement.md</span> <span class="pill">C-process.md</span> under referee/backlog/analysis-2026-11-18/, scripts in its scripts/ folder. The figures this review leans on (promotion count, the Act 3 readings of generations 16 to 18, the Act 3 door counts of generation 17's training runs, the weekly budget lines) were re-counted by the orchestrator from the raw records. Human figures: Spire Codex public run export for v0.107.1, aggregates of the training portion only, no cell under 20 runs. Where two analysts' human figures differ by a few tenths (54.6 against 54.9 at the Act 1 boss), they counted finished runs slightly differently; the review uses the stricter.</p>
+</div>
+</div>
