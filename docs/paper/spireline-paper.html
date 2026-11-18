@@ -154,7 +154,7 @@ dd{margin:0}
 </header>
 
 <section class="glance" id="glance">
-<h2>At a glance (2026-11-18 09:40Z): the Tuesday review</h2>
+<h2>At a glance (2026-11-18 16:12Z): the Tuesday review, and generation 18</h2>
 <div class="board">
 <h3>The sceptic's review of the week (11-11 to 11-18)</h3>
 <p class="small muted">Written unasked every Tuesday: the five questions the owner would ask, answered before they are asked.</p>
@@ -184,14 +184,14 @@ dd{margin:0}
 <div class="board">
 <h3>Scoreboard: our AI against the average human player, Ironclad at Ascension 10</h3>
 <div class="tablewrap"><table>
-<thead><tr><th>Measure</th><th>Average human</th><th>Our AI, real game (11-06)</th><th>Our AI, on the copy (11-15 to 11-18)</th></tr></thead>
+<thead><tr><th>Measure</th><th>Average human</th><th>Our AI, real game (11-06)</th><th>Our AI, on the copy (generation 18, 2,000 runs, 11-18)</th></tr></thead>
 <tbody>
-<tr><td>Floors reached, average</td><td class="num">27</td><td class="num">24.2</td><td class="num">29.7</td></tr>
-<tr><td>Kills the Act 1 boss (share of all runs)</td><td class="num">55 in 100</td><td class="num">57 in 100</td><td class="num">73 in 100</td></tr>
-<tr><td>Kills the Act 2 boss</td><td class="num">29 in 100</td><td class="num">7.8 in 100</td><td class="num">22 in 100</td></tr>
-<tr><td>Kills the Act 3 boss</td><td class="num">not yet read</td><td class="num">·</td><td class="num">6.7 in 100</td></tr>
-<tr><td>Wins the run</td><td class="num">11 in 100</td><td class="num">0</td><td class="num">0.06 in 100 (2 of 3,300)</td></tr>
-<tr><td>Survives the humans' own 400 fights (the fight brain the run player carries, v2)</td><td class="num">80 in 100</td><td class="num" colspan="2">62 in 100 (the fight loop's v3 reads 65, but no run player carries it yet)</td></tr>
+<tr><td>Floors reached, average</td><td class="num">27</td><td class="num">24.2</td><td class="num">30.3</td></tr>
+<tr><td>Kills the Act 1 boss (share of all runs)</td><td class="num">55 in 100</td><td class="num">57 in 100</td><td class="num">77 in 100</td></tr>
+<tr><td>Kills the Act 2 boss</td><td class="num">29 in 100</td><td class="num">7.8 in 100</td><td class="num">24 in 100</td></tr>
+<tr><td>Kills the Act 3 boss</td><td class="num">not yet read</td><td class="num">·</td><td class="num">7.9 in 100</td></tr>
+<tr><td>Wins the run</td><td class="num">11 in 100</td><td class="num">0</td><td class="num">0.1 in 100 (2 of 2,000)</td></tr>
+<tr><td>Survives the humans' own 400 fights (the fight brain the run player carries)</td><td class="num">80 in 100</td><td class="num" colspan="2">65 in 100 (fight player v3, in the run player since generation 18, 11-18 16:05Z; v2 read 62)</td></tr>
 <tr><td>Our copy plays the same move as the real game</td><td class="num">·</td><td class="num" colspan="2">998 in 1,000</td></tr>
 <tr><td>What a run costs on the copy (seconds of one core)</td><td class="num">·</td><td class="num" colspan="2">52 (generation 17 thinks longer at bosses; a lighter brain cost 18 on 11-07)</td></tr>
 </tbody></table></div>
@@ -212,7 +212,7 @@ dd{margin:0}
 <ul>
 <li><strong>Variety.</strong> The champion's own runs are too alike to teach it more. The fixes: fork a run at a hard choice so both roads are played and the difference is the lesson; seek out the choices the brain is least sure of; keep the judge's thousands of paired runs as teaching material instead of discarding them.</li>
 <li><strong>Act 3 and the win.</strong> 6.7 in 100 kill the Act 3 boss on the copy; 2 runs in 3,300 won. The brain that kills it more often dies earlier otherwise; whether that trade is real is decided on fresh seeds today.</li>
-<li><strong>The fight brain is unused.</strong> The run player fights with v2 while the fight loop's v3 has stood ready since 11-09. A run candidate carrying v3 is built and judged this week; if it is level too, the fight loop stops and its machine share goes to variety.</li>
+<li><strong>The fight brain reached the run player on 11-18 (generation 18), and the new judge would have refused it.</strong> Generation 17 with fight player v3 inside: 0.7 more floors a run, the Act 1 boss 77 against 73 in 100, Act 3 level (7.9 against 8.0), promoted under the old rule two minutes before the new one was switched on. Under the new rule a change that is level on Act 3 is refused, so the fight loop's next better player has no way in. The orchestrator kept the promotion and put the question to the owner: let a fight-brain-only swap in on breakage checks alone, since the fight brain has its own exam against the humans' fights?</li>
 <li><strong>No real-game check since 11-06.</strong> The copy says 22 in 100 at the Act 2 boss; the real game last said 7.8 for an older champion. A real block of generation 17 is due once the judge's rule change settles, so the copy's gains are confirmed or not.</li>
 <li><strong>One machine.</strong> Sixteen cores and one card carry everything; a judgement, a fit and the plain runs cannot all run at once. The second machine measured on 11-16 would add about 25,000 runs a day; the owner holds the hardware question.</li>
 </ul>
@@ -221,7 +221,7 @@ dd{margin:0}
 <h3>The plan this week (11-18 to 11-24)</h3>
 <ol>
 <li><strong>Judge what we want (D66, today).</strong> The judge decides on Act 3 boss kills and wins across all runs; floors only catch a collapse; when the deep signal is ahead but uncertain it plays more seeds instead of refusing. The refused brain of this morning is replayed on 2,000 fresh seeds today and decided on all 4,000 tonight.</li>
-<li><strong>The fight brain in whole runs (today and tonight).</strong> A run candidate that is generation 17 with fight player v3 inside it, judged on 2,000 paired seeds after today's replay. Level: the fight loop stops. Better: the loop's output is wired into every candidate from now on.</li>
+<li><strong>The fight brain in whole runs (done 11-18 16:05Z).</strong> Generation 18 is generation 17 with fight player v3 inside, promoted on 2,000 paired runs: floors +0.7, Act 1 boss +3.7 in 100, Act 3 level. The fight loop keeps running; how its next player enters the run player under the new judge waits on the owner (above).</li>
 <li><strong>Variety in the runs (Wednesday to Sunday).</strong> One design lane on Wednesday, then the first build: forking a run at hard choices, with the difference between the two roads as the brain's lesson; judged over the weekend. Doubt-seeking and the judge's runs as teaching material follow.</li>
 <li><strong>Speed (by Thursday).</strong> The brain's lookups during plain runs move to the graphics card, measured at a quarter to two fifths more runs a day on the same cores.</li>
 <li><strong>Budget.</strong> Ceiling 90, at least three quarters on building; one edition of this paper next Tuesday plus a line per landing.</li>
@@ -231,7 +231,8 @@ dd{margin:0}
 <h3>Waiting on the owner</h3>
 <ul>
 <li>Hardware: a second 16-thread machine would add about 25,000 plain runs a day (measured 11-16); it needs partitioned seeds and shard transport, about a day's build.</li>
-<li>Housekeeping: nine idle worktrees under the fork folder can be removed (listed in HANDOFF); deleting is the owner's.</li>
+<li><strong>The new judge and fight-brain swaps.</strong> Under the new rule a run player that only changes its fight brain is refused when Act 3 is level. Proposal: such a swap enters on breakage checks alone (floors not collapsed, no crashes, Act 3 not worse), because the fight brain is judged on its own exam. Generation 18's promotion under the old rule stands unless the owner says otherwise.</li>
+<li>Housekeeping: eleven idle worktrees under the fork folder can be removed (listed in HANDOFF); deleting is the owner's.</li>
 </ul>
 <p class="cap">The record below is the full history in the team's own words.</p>
 </div>
@@ -689,7 +690,7 @@ dd{margin:0}
 (function(){var r=document.getElementById('record');function o(){try{if(location.hash&&r&&r.querySelector(location.hash))r.open=true;}catch(e){}}window.addEventListener('hashchange',o);o();})();
 // Everything that changes between editions is in STATE. Edit here, then republish.
 const STATE = {
-  updated: "2026-11-18 12:47Z",
+  updated: "2026-11-18 16:12Z",
   edition: 43,
   phases: [
     {key:"P0", name:"Foundations", weeks:"week 1", state:"done", note:"Measured the machine; AI runs on both engines."},
@@ -749,6 +750,7 @@ const STATE = {
     {state:"pass", text:"Recorded corpus: 71 better, 4,321 same, 0 worse of 4,392, 0 on fewer fields (122 worse on 2026-10-24)."}
   ],
   changelog: [
+    {when:"2026-11-18 16:12Z", what:"Generation 18: the champion with the fight loop's best fight brain inside it, promoted on 2,000 paired runs at 16:05Z under the old rule (0.7 more floors a run, the Act 1 boss 77 against 73 in 100, Act 3 level at 7.9 against 8.0, 2 wins against 0). The new judge rule, switched on in the lab three minutes later, would have refused it: it asks for Act 3 gains. The promotion stands by the orchestrator's call; the owner is asked how fight-brain upgrades should enter the run player from now on."},
     {when:"2026-11-18 12:47Z", what:"The fresh-seed replay (D66) refused the brain under the owner's rule too: on 2,000 new seeds it killed the Act 3 boss 141 times against the champion's 139 and won 2 against 3; pooled over 4,000 paired runs the gain on Act 3 kills and wins is 0.75 in 100, under the rule's 1.0, with the bound below zero. The champion stays. The new judge rule is landed in the fork with 34 tests; the lab switches to it after its current judgement. The run player carrying the fight loop's best fight brain is built and is being judged on 2,000 paired runs (from 12:44Z)."},
     {when:"2026-11-18 09:37Z", what:"Edition 43, the Tuesday review. Generations 16 (11-14) and 17 (11-15) promoted from the plain-run refit step: the Act 2 boss killed 22 in 100 on the copy against 11 a week before. Then three refusals: a 40,000-run pooled fit (level), a 13,000-run own fit (2.8 floors worse) and a 46,000-run own fit (1.95 floors worse, Act 1 boss 63 against 74 in 100, but the Act 3 boss 8.3 against 6.9 and 5 wins against 1); the refit loop is parked. D64 (owner): five hard-coded gates made advisory. D65: the fights inside the plain runs feed the fight brain; three level verdicts in 20 hours. D66 (owner): the judge decides on Act 3 kills and wins across all runs, floors only catch a collapse; the refused brain is replayed on 2,000 fresh seeds. The sceptic's review found the fight loop's one promoted player (v3, 11-09) was never put into the run player; a candidate carrying it is built and judged this week. My script's two faults (a fit reused by name, a second fit discarded unread) are recorded. Plan of the week: the new judge, the fight brain in whole runs, variety in the runs, the GPU prior for the data step, ceiling 90."},
     {when:"2026-11-13 14:50Z", what:"Edition 42. Generation 15 promoted: the first champion from the rebuilt learning loop, and the first student graded by the chance of killing the Act 2 boss rather than by floors reached. On 1,400 paired copy seeds: floors +0.98 a run, Act 1 boss kills +3.6 per 100, Act 2 boss reached +2.9 and killed +2.1, no crash in 2,800 runs. The gain is more runs through Act 1 alive; the Act 2 fight is not yet better. Also this week: the loop ran teacher, student, exam and verdict without a hand (its floors-graded candidate was refused); the Act 2 measurement (hallway, elite and boss deaths per 100 entrants 25, 23 and 31 against the humans' 12, 18 and 17); the owner's two rules (the player gets every piece of information winning humans use; nothing is dropped on a small test); the information-parity inputs (relics, deck roles, events, potions) built and re-tested; the first frontier candidate refused for three confounds, named and removed in the second. Next: exact Act 1 route and event labels from about 10,000 door records, the third candidate, and the lab's own student taught to keep the champion's heads for the kinds it cannot refit."},
