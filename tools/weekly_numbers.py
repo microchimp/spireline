@@ -223,7 +223,7 @@ def agents_in(block: Path) -> dict[int, dict[str, Path | None]]:
     out: dict[int, dict[str, Path | None]] = {}
     for p in block.iterdir():
         m = re.match(r"^g(\d+)$", p.name)
-        if m and p.is_dir() and (p / "runs.jsonl").is_file():
+        if m and p.is_dir() and (p / "runs.jsonl").is_file() and (p / "runs.jsonl").stat().st_size > 0:  # a block just started has an empty file
             emu = block / (p.name + "-emu") / "runs.jsonl"
             out[int(m.group(1))] = {"real": p / "runs.jsonl", "copy": emu if emu.is_file() else None, "dir": p}
     return out
@@ -697,7 +697,8 @@ def render_markdown(doc: dict[str, Any]) -> str:
         al = n3["alarm"]
         parts.append("alarm: " + ("YES, " + "; ".join(al["reasons"]) if al["flag"] else "none") + ("" if not al.get("note") else " (%s)" % al["note"]))
         lines.append("| 3 | copy honesty (copy minus real) | %s | %d pairs | - | %s g%s vs %s |" % (
-            "<br>".join(parts), n3["pairs"], n3["block"], n3["generation"], (n3["previous"] or {}).get("block", "no previous block")))
+            "<br>".join(parts), n3["pairs"], n3["block"], n3["generation"],
+            "%s g%s" % (n3["previous"]["block"], n3["previous"]["generation"]) if n3["previous"] else "no previous block"))
     # 4
     if n4["status"] == NO_DATA:
         lines.append("| 4 | distance to winning humans | %s | - | - | %s |" % (NO_DATA, n4.get("reason", "")))
@@ -730,7 +731,10 @@ def render_markdown(doc: dict[str, Any]) -> str:
                          fmt(sr["now_wins_per_100"], 2), fmt(sr["target_wins_per_100"], 1), sr["fresh_pairs"], sr["pairs_needed"],
                          "yes" if sr["real_block_of_champion"] else "not yet", fmt(sr["days_left"])))
     lines += ["", "Strict means a run won or its floor is above 48; an arrival is floor 48 reached, a win, or a boss-damage entry for Act 3. "
-              "A crashed real run counts as a loss."]
+              "A crashed real run counts as a loss. Copy-honesty rows by act are conditioned on where the real arm ended (a real run that ended "
+              "early was a low draw, so the copy tends to read higher there and lower in Act 3): only the all-runs floor difference is a plain bias; "
+              "compare the per-act rows between blocks of the same player, and read the two-point alarm beside its noise (a few hundred pairs "
+              "move several points by chance)."]
     return "\n".join(lines) + "\n"
 
 

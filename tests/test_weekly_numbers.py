@@ -233,6 +233,18 @@ def test_number1_without_the_champion_shows_the_newest_blocks_top_generation(roo
     assert n1["folder"] == "referee/LAB/nightly/2026-11-06T0852/g13"
 
 
+def test_a_block_just_started_with_an_empty_runs_file_is_skipped(root: Path):
+    nightly = root / "referee" / "LAB" / "nightly"
+    (nightly / "2026-11-19T1100" / "g14").mkdir(parents=True)
+    (nightly / "2026-11-19T1100" / "g14" / "runs.jsonl").write_text("", encoding="utf-8")
+    n1 = wn.number1(root, wn.champion_of(root), wn.list_blocks(nightly), NOW)
+    assert n1["block"] == "2026-11-06T0852"  # the empty block is not read; its rows will count once the first run ends
+    write_jsonl(nightly / "2026-11-19T1100" / "g14" / "runs.jsonl", [real_end(seed(0), 30), real_end(seed(1), 49, end="win")])
+    n1 = wn.number1(root, wn.champion_of(root), wn.list_blocks(nightly), NOW)
+    assert n1["block"] == "2026-11-19T1100" and n1["status"] == "ok" and n1["wins"]["k"] == 1 and n1["wins"]["n"] == 2
+    assert "may still be running" in n1["note"] and n1["age_days"] == 0.0
+
+
 def test_number1_no_blocks(tmp_path: Path):
     n1 = wn.number1(tmp_path, None, wn.list_blocks(tmp_path / "nothing"), NOW)
     assert n1["status"] == wn.NO_DATA and "no real block" in n1["reason"]
