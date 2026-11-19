@@ -481,8 +481,8 @@ def test_second_path_skips_torn_lines_and_reads_missing_files(tmp_path):
     arm = tmp_path / "g1"
     arm.mkdir()
     (arm / "runs.jsonl").write_text(
-        '{"ev": "end", "seed": "A", "floor": 10, "boss_damage_acts": [[0, 1.0]]}\n'
-        '{"ev": "end", "seed": "B", "floor": 20, "boss_damage_acts": [[0, 0.4], [1, 0.2]]}\n'
+        '{"ev": "end", "seed": "A", "floor": 20, "boss_damage_acts": [[0, 1.0]]}\n'
+        '{"ev": "end", "seed": "B", "floor": 10, "boss_damage_acts": [[0, 0.4], [1, 0.2]]}\n'
         '{"ev": "crash", "seed": "C", "error": "TimeoutError(\'x\')"}\n{"ev": "end", "seed": "D", "fl\n', encoding="utf-8")
     f = mr.independent_figures(tmp_path, "g1")  # no emulator arm file at all
     assert (f["ended runs, real"], f["crash rows, real"], f["seeds with rows, real arm"]) == (2, 1, 3)
@@ -731,3 +731,27 @@ def test_a_block_named_by_its_start_time_is_reported_like_a_dated_night(tmp_path
     assert all(c["ok"] is not False for c in r["cross_checks"])
     # the earlier nights are still its history (they sort before it), and a block of the same day does not hide them
     assert r["tables"]["prev_night_date"] == "2026-11-03"
+
+
+# ---------------------------------------------------------------------------------------------------- the strict boss reading (2026-11-19)
+def test_a_boss_is_killed_when_the_run_went_past_it_not_when_its_bar_reads_full():
+    full = [[0, 1.0], [1, 1.0], [2, 1.0]]
+    on_48 = {"floor": 48, "end": "death", "boss_damage_acts": full}  # the Test Subject's first form emptied: the boss returns, the run dies
+    assert mr.boss_hit(on_48, 2) == (True, False) and mr._boss_of_act(on_48, 2) == (True, False)
+    past = {"floor": 49, "end": "death", "boss_damage_acts": [*full, [2, 0.4]]}  # the second Act 3 boss's fight began
+    assert mr.boss_hit(past, 2) == (True, True) and mr._boss_of_act(past, 2) == (True, True)
+    won = {"floor": 49, "end": "win", "win": True, "boss_damage_acts": [*full, [2, 1.0]]}
+    assert mr.boss_hit(won, 2) == (True, True) and mr._boss_of_act(won, 2) == (True, True)
+    # a lost fight (the act's first entry below full) is never a boss killed, whatever the floor says; a boss not reached is not killed
+    lost = {"floor": 35, "end": "death", "boss_damage_acts": [[0, 1.0], [1, 0.8]]}
+    assert mr.boss_hit(lost, 1) == (True, False) and mr._boss_of_act(lost, 1) == (True, False)
+    assert mr.boss_hit({"floor": 40, "end": "death", "boss_damage_acts": []}, 1) == (False, False)
+    assert mr.boss_hit({"floor": 12, "end": "death", "boss_damage_acts": [[0, 1.0]]}, 0) == (True, False)  # a full bar on floor 12 is no kill
+    # a complete node string names the boss floors (the odd Act 2 of 18 floors has its boss on 35, its Act 3 boss on 50)
+    long_act2 = "M" * 15 + "B" + "A" + "M" * 16 + "B" + "A" + "M" * 13 + "B"
+    row = {"floor": 50, "end": "death", "nodes": long_act2, "boss_damage_acts": [[0, 1.0], [1, 1.0], [2, 1.0]]}
+    assert len(long_act2) + 1 == 50
+    assert mr.went_past(row, 1) and not mr.went_past(row, 2) and mr._boss_of_act(row, 2) == (True, False)
+    # the aggregate counts the Act 3 boss by the same reading
+    g = mr.make_agg([on_48, past, won])
+    assert (g.a3r, g.a3k) == (3, 2)

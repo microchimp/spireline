@@ -297,3 +297,16 @@ def test_replay_matches_the_final_deck() -> None:
     assert be.check_replay(run) == (True, True)
     run["players"][0]["deck"].append({"id": "CARD.ANGER"})
     assert be.check_replay(run)[0] is False
+
+
+def test_the_strict_boss_reading_governs_the_killed_cohort() -> None:
+    # a run that ended on floor 35 with its Act 2 boss's bar at 0.8 did not kill it (the odd Act 2 of 18 floors has its boss on 35)
+    row = {"seed": "X", "floor": 35, "win": False, "end": "death", "boss_damage_acts": [[0, 1.0], [1, 0.8]], "nodes": "MMMMMMMMMMMMMMMBAMMMM",
+           "cards": [], "rests": []}
+    s = be.night_summary(row)
+    assert s["a"][0]["k"] == 1 and s["a"][1]["r"] == 1 and s["a"][1]["k"] == 0
+    assert be.went_past({**row, "boss_damage_acts": [[0, 1.0], [1, 1.0]]}, 1) is True  # no complete string: the cut 33 says it fell
+    full = [[0, 1.0], [1, 1.0], [2, 1.0]]
+    assert be.went_past({"floor": 48, "boss_damage_acts": full}, 2) is False  # a full bar on floor 48 is not the first Act 3 boss killed
+    assert be.went_past({"floor": 49, "boss_damage_acts": [*full, [2, 0.5]]}, 2) is True
+    assert be.went_past({"floor": 20, "win": True}, 0) and not be.went_past({"floor": 40, "crash": True}, 0)

@@ -50,7 +50,7 @@ pooled real-game rate, one-sided 95% lower bound of the unpaired difference abov
 
 Counting rules (the lane's): a run row is `ev == end` (ended) or `ev == crash` (a crash row). "Ended" figures leave crash
 rows out; "counted" figures give a crash row floor 0, no win and no boss kill (the lab's convention, `summary.json`
-`nightly`). A boss is reached when `boss_damage_acts` lists its act and killed when the fraction is 1.0. Rates of a pool are
+`nightly`). A boss is reached when `boss_damage_acts` lists its act and killed when the run went past it (strict reading, 2026-11-19: not when the fraction is 1.0). Rates of a pool are
 over its runs. Standard errors: the sample standard deviation of the floors over sqrt(n), sqrt(p(1-p)/n) for rates,
 differences by the sum of the variances (unpaired: the nights play fresh seed blocks), z the difference over its SE. Cells of
 the per-fight tables under 20 fights are suppressed (D13). Results hold no host name, user name or absolute path (the folder is
@@ -75,6 +75,7 @@ from pathlib import Path
 
 MIN_CELL = 20  # D13: a cell under 20 fights is suppressed
 ACT1_BOSS_FLOOR = 17  # cards decided on floors <= 16 are in the deck entering the Act 1 boss
+BOSS_FLOORS = (17, 33, 48)  # the floors of the Act 1, Act 2 and first Act 3 boss (fork rl/run_fields.ACT_BOSS_FLOORS; the second Act 3 boss is on 49)
 BOSS_GAP_MAX = 0.10  # boss figures of a pool are unrecorded when more than this share of its runs past the Act 1 boss lack its entry
 # (judged only when at least MIN_CELL runs are past it)
 STARTER = 11  # Ironclad's 10 starting cards + Ascender's Bane at A10 (an assumption of the deck proxy)
@@ -208,12 +209,34 @@ class Agg:
         return math.sqrt(max(0.0, (self.ss - self.s * self.s / k) / (k - 1)))
 
 
-def boss_hit(row: dict, act: int) -> tuple[bool, bool]:
-    """(reached, killed) for the boss of 0-based act `act`, from boss_damage_acts."""
+def went_past(row: dict, act: int) -> bool:
+    """The strict reading of a boss beaten (the fork's `keep_v2.went_past`, 2026-11-19): the run went past the first boss of 0-based act `act`.
+    A win went past all of them; a crash row none. Otherwise the floor is above the boss's floor: from the row's own node string when that
+    is complete (floor = its length + 1: the emulator arm's rows; the real game's strings leave rooms out), else the cut 17 / 33 / 48, and
+    then a fight the row records as lost (the act's first entry below 1.0, or None) is not passed. The health bar's fraction is not a kill:
+    at the first Act 3 boss it reads 1.0 on 97 in 100 runs that meet the Test Subject, which has three forms and returns twice."""
+    if is_win(row):
+        return True
+    if row.get("crash") or row.get("lost") or row.get("ev") == "crash":
+        return False
+    floor = int(row.get("floor") or 0)
+    nodes = row.get("nodes")
+    if isinstance(nodes, str) and floor == len(nodes) + 1:
+        floors = [i + 2 for i, ch in enumerate(nodes) if ch == "B"]
+        return act < len(floors) and floor > floors[act]
     for a, frac in row.get("boss_damage_acts") or []:
         if a == act:
-            return True, frac == 1.0
-    return False, False
+            if frac is None or frac < 1.0:
+                return False
+            break
+    return floor > BOSS_FLOORS[act]
+
+
+def boss_hit(row: dict, act: int) -> tuple[bool, bool]:
+    """(reached, killed) for the boss of 0-based act `act`: reached when `boss_damage_acts` lists the act, killed when the run went past it
+    (`went_past`; the fraction is no longer read as a kill)."""
+    reached = any(a == act for a, _frac in row.get("boss_damage_acts") or [])
+    return reached, reached and went_past(row, act)
 
 
 def is_win(row: dict) -> bool:
@@ -2164,9 +2187,19 @@ def _crash_label(text: str) -> str:
 
 
 def _boss_of_act(row: dict, act: int) -> tuple[bool, bool]:
-    """(reached, killed) for the boss of 0-based act `act`: any `boss_damage_acts` entry for it; killed when its fraction is full."""
+    """(reached, killed) for the boss of 0-based act `act`: reached when any `boss_damage_acts` entry names it; killed when the run went past it
+    (strict reading, 2026-11-19; this reader's own code: a win, or the act's first entry full and the floor above the boss's, which is read from
+    a complete node string when the row has one). The fraction alone is not a kill: at the first Act 3 boss it reads full on a first form."""
     fractions = [e[1] for e in (row.get("boss_damage_acts") or []) if isinstance(e, (list, tuple)) and len(e) >= 2 and e[0] == act]
-    return bool(fractions), bool(fractions) and max(fractions) >= 1.0
+    if not fractions:
+        return False, False
+    if row.get("end") == "win" or row.get("win") is True:
+        return True, True
+    floor = int(row.get("floor") or 0)
+    nodes = row.get("nodes")
+    bosses_at = [i + 2 for i, ch in enumerate(nodes) if ch == "B"] if isinstance(nodes, str) and floor == len(nodes) + 1 else None
+    cut = bosses_at[act] if bosses_at is not None and act < len(bosses_at) else (17, 33, 48)[act]
+    return True, fractions[0] is not None and fractions[0] >= 1.0 and floor > cut
 
 
 def _act1_boss(row: dict) -> tuple[bool, bool]:

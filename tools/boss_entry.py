@@ -41,6 +41,7 @@ from typing import Any
 
 MIN_CELL = 20  # D13: a cell over fewer runs is suppressed
 BOSS_FLOOR = (17, 33)  # the floors of the Act 1 and Act 2 bosses (rl/run_fields.ACT_BOSS_FLOORS)
+BOSS_FLOORS_ALL = (17, 33, 48)  # with the first Act 3 boss's, for `went_past`
 NODE_LETTER = {1: "M", 2: "E", 3: "R", 4: "S", 5: "T", 6: "B", 7: "?", 8: "A"}  # the emulator's node types (run_train.vocab.NODE_*)
 HUMAN_ROOM = {"monster": "M", "elite": "E", "rest_site": "R", "shop": "S", "treasure": "T", "unknown": "?"}
 # The acts' bosses by emulator id (run_train.vocab.BOSSES); the corpus names the same bosses ENCOUNTER.<slug>.
@@ -437,6 +438,27 @@ def split_nodes(nodes: str) -> list[str]:
     return parts
 
 
+def went_past(row: dict, act: int) -> bool:
+    """The strict reading of a boss killed (the fork's `keep_v2.went_past`, 2026-11-19): the run went past the first boss of 0-based act `act`:
+    a win, or a floor above the boss's (from a complete node string when the row has one: floor = its length + 1; else the cut 17 / 33 / 48,
+    and then a fight the row records as lost, the act's first entry below 1.0, is not passed). The health bar's fraction alone is not a kill."""
+    if row.get("win"):
+        return True
+    if row.get("crash") or row.get("lost"):
+        return False
+    floor = int(row.get("floor") or 0)
+    nodes = row.get("nodes")
+    if isinstance(nodes, str) and floor == len(nodes) + 1:
+        floors = [i + 2 for i, ch in enumerate(nodes) if ch == "B"]
+        return act < len(floors) and floor > floors[act]
+    for a, frac in row.get("boss_damage_acts") or []:
+        if int(a) == act:
+            if frac is None or float(frac) < 1.0:
+                return False
+            break
+    return floor > BOSS_FLOORS_ALL[act]
+
+
 def night_summary(row: dict) -> dict | None:
     """One nightly row (the real arm or the emulator arm) as a summary; None for a crash row (counted as a loss elsewhere)."""
     if row.get("crash"):
@@ -454,7 +476,7 @@ def night_summary(row: dict) -> dict | None:
         lo, hi = (1, BOSS_FLOOR[0]) if a == 0 else (BOSS_FLOOR[0] + 1, BOSS_FLOOR[1])
         dd: dict = {"r": int(a in acts_b), "k": None, "at": None}
         if a in acts_b:
-            dd["k"] = int(acts_b[a] >= 1.0)
+            dd["k"] = int(went_past(row, a))  # beaten = went past it; the bar's 1.0 is not a kill (2026-11-19)
         dd["path"] = nodes[a] if a < len(nodes) else ""
         dd["rests"] = [[None, k] for f, k in rests if lo <= f < hi]
         dd["offers"] = [[None if c == "skip" else c, None] for f, c in cards if lo <= f < hi]
