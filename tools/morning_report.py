@@ -73,6 +73,9 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import strict_rows  # noqa: E402  (the shared strict reading of a row, also read by boss_entry and weekly_numbers)
+
 MIN_CELL = 20  # D13: a cell under 20 fights is suppressed
 ACT1_BOSS_FLOOR = 17  # cards decided on floors <= 16 are in the deck entering the Act 1 boss
 BOSS_FLOORS = (17, 33, 48)  # the floors of the Act 1, Act 2 and first Act 3 boss (fork rl/run_fields.ACT_BOSS_FLOORS; the second Act 3 boss is on 49)
@@ -183,6 +186,10 @@ class Agg:
     a3k: int = 0
     past: int = 0  # ended runs past the Act 1 boss floor (they fought that boss) ...
     bossgap: int = 0  # ... and how many of those carry no Act 1 boss entry (a block whose rows did not record the boss)
+    lost: int = 0  # ended rows the referee lost track of the game on (`lost` set) ...
+    lost_unknown: int = 0  # ... of them real-game rows whose loss floor cannot be read (they beat nothing) ...
+    lost_credited: int = 0  # ... and of them rows that now count a boss killed, which the old reading (a lost row beats nothing) did not
+    a1k_plain: int = 0  # the Act 1 boss killed with the loss rule off (the lab's summary counts every row; a cross-check reads it)
 
     def __add__(self, o: "Agg") -> "Agg":
         return Agg(*(getattr(self, f) + getattr(o, f) for f in self.__dataclass_fields__))
@@ -210,26 +217,14 @@ class Agg:
 
 
 def went_past(row: dict, act: int) -> bool:
-    """The strict reading of a boss beaten (the fork's `keep_v2.went_past`, 2026-11-19): the run went past the first boss of 0-based act `act`.
-    A win went past all of them; a crash row none. Otherwise the floor is above the boss's floor: from the row's own node string when that
-    is complete (floor = its length + 1: the emulator arm's rows; the real game's strings leave rooms out), else the cut 17 / 33 / 48, and
-    then a fight the row records as lost (the act's first entry below 1.0, or None) is not passed. The health bar's fraction is not a kill:
-    at the first Act 3 boss it reads 1.0 on 97 in 100 runs that meet the Test Subject, which has three forms and returns twice."""
-    if is_win(row):
-        return True
-    if row.get("crash") or row.get("lost") or row.get("ev") == "crash":
-        return False
-    floor = int(row.get("floor") or 0)
-    nodes = row.get("nodes")
-    if isinstance(nodes, str) and floor == len(nodes) + 1:
-        floors = [i + 2 for i, ch in enumerate(nodes) if ch == "B"]
-        return act < len(floors) and floor > floors[act]
-    for a, frac in row.get("boss_damage_acts") or []:
-        if a == act:
-            if frac is None or frac < 1.0:
-                return False
-            break
-    return floor > BOSS_FLOORS[act]
+    """The strict reading of a boss beaten (the fork's `keep_v2.went_past`, 2026-11-19; the shared `strict_rows.went_past`): the run went
+    past the first boss of 0-based act `act`. A win went past all of them, a crash row none. Otherwise the floor is above the boss's: from
+    the row's own node string when that is complete (floor = its length + 1; the emulator arm's rows, not the real game's), else the cut 17 /
+    33 / 48, and then a fight the row records as lost (the act's first entry below 1.0, or None) is not passed. A row the referee lost track
+    on (`lost`) beats the bosses below the floor where it lost track and nothing at or after it; a lost row with no readable loss floor beats
+    nothing. The health bar's fraction is not a kill: at the first Act 3 boss it reads 1.0 on 97 in 100 runs that meet the Test Subject,
+    which has three forms and returns twice."""
+    return strict_rows.went_past(row, act)
 
 
 def boss_hit(row: dict, act: int) -> tuple[bool, bool]:
@@ -240,7 +235,8 @@ def boss_hit(row: dict, act: int) -> tuple[bool, bool]:
 
 
 def is_win(row: dict) -> bool:
-    return row.get("end") == "win" or row.get("win") is True
+    """A won run: the emulator arm writes end "win", the real game's end message is "victory" (the first real-game wins, 2026-11-19)."""
+    return strict_rows.is_win(row)
 
 
 def make_agg(ended: list[dict], crashes: int = 0) -> Agg:
@@ -250,6 +246,11 @@ def make_agg(ended: list[dict], crashes: int = 0) -> Agg:
         g.s += f
         g.ss += f * f
         g.wins += 1 if is_win(r) else 0
+        if r.get("lost"):
+            g.lost += 1
+            g.lost_unknown += 1 if strict_rows.loss_floor_unknown(r) else 0
+            g.lost_credited += 1 if any(boss_hit(r, a)[1] for a in (0, 1, 2)) else 0  # a lost row beat nothing before
+        g.a1k_plain += 1 if boss_hit({k: v for k, v in r.items() if k != "lost"}, 0)[1] else 0
         if f > ACT1_BOSS_FLOOR:
             g.past += 1
             g.bossgap += 0 if boss_hit(r, 0)[0] else 1
@@ -277,6 +278,8 @@ def arm_figures(ended: list[dict], crashes: list[dict], real: bool) -> dict:
         "mean_floor_counted": rnd(g.mean(True), 4), "wins": g.wins,
         "chest_stop": sum(1 for r in ended if r.get("end") == "treasure_without_relic_picking"),
         "fight_unfinished": sum(1 for r in ended if r.get("end") == "fight_unfinished"),
+        "lost_rows": g.lost, "lost_loss_floor_unknown": g.lost_unknown, "lost_rows_credited": g.lost_credited,
+        "act1_killed_loss_rule_off": g.a1k_plain,
         "decisions": sum((r.get("asked") if real else r.get("decisions")) or 0 for r in ended),
     }
     for act in (1, 2, 3):
@@ -1713,13 +1716,14 @@ def cross_checks(rep: dict, summ: dict, emu_summ: dict, result: dict, compare: d
     chk("real re-anchors failed = summary.reanchor_failed", summ.get("reanchor_failed"), real.get("reanchor_failed"))
     rf = (summ.get("run_fields") or {}).get("boss_act1") or {}
     chk("real Act 1 boss reached = run_fields.boss_act1.reached", rf.get("reached"), real["act1_reached"])
-    chk("real Act 1 boss killed = run_fields.boss_act1.won", rf.get("won"), real["act1_killed"])
+    chk("real Act 1 boss killed = run_fields.boss_act1.won (the summary counts rows the referee lost track on too: loss rule off)",
+        rf.get("won"), real["act1_killed_loss_rule_off"])
     chk("real wins = summary.wins", summ.get("wins"), real["wins"])
     chk("emulator rows = emulator summary.runs", emu_summ.get("runs"), emu["rows"])
     chk("emulator mean floor = emulator summary.floor.mean", (emu_summ.get("floor") or {}).get("mean"), emu["mean_floor"], 0.0006)
     chk("emulator decisions = emulator summary.decisions", emu_summ.get("decisions"), emu["decisions"])
     ef = (emu_summ.get("run_fields") or {}).get("boss_act1") or {}
-    chk("emulator Act 1 boss killed = run_fields.boss_act1.won", ef.get("won"), emu["act1_killed"])
+    chk("emulator Act 1 boss killed = run_fields.boss_act1.won", ef.get("won"), emu["act1_killed_loss_rule_off"])
     gap = compare.get("floor_gap") or {}
     if gap:
         counted = (rep["paired"].get("counted") or {}).get("floor_emu_minus_real_mean")
@@ -1994,6 +1998,10 @@ def handoff_line(rep: dict) -> str:
                  + (f"; earlier nights: {hist}" if hist else "") + ".")
     else:
         P.append("No `fight_unfinished` run.")
+    if rl.get("lost_rows"):
+        P.append(f"**Rows the referee lost track on:** {n_(rl['lost_rows'])} of {n_(rl['ended'])} ended real runs (a stand-in played the rest of "
+                 f"each on the real game); each counts the bosses below the floor where it lost track ({n_(rl['lost_rows_credited'])} count at "
+                 f"least one boss killed), and {n_(rl['lost_loss_floor_unknown'])} with no readable loss floor count none.")
     fl = ", ".join(f"{v} `{k}`" for k, v in lk["reanchor_fail_labels"].items())
     P.append(f"Lockstep: {n_(lk['decisions'])} decisions, diverged {lk['diverged']} ({num(lk['divergence_pct'])}%), re-anchors "
              f"{lk['reanchors']}, failed {lk['reanchor_failed']}" + (f" ({fl})" if fl else "") + f"; mapping gaps {lk['gaps']}."
@@ -2186,20 +2194,44 @@ def _crash_label(text: str) -> str:
     return "other"
 
 
+def _loss_floor_second(row: dict) -> int | None:
+    """The floor where the referee lost track of the game, written again for the second path: the `divergences` entry numbered like
+    `stats.first_loss.decision` (else the nearest earlier entry that has a floor); None when the row is not lost or has no such floor."""
+    if not row.get("lost"):
+        return None
+    fl = (row.get("stats") or {}).get("first_loss")
+    if not isinstance(fl, dict) or isinstance(fl.get("decision"), bool) or not isinstance(fl.get("decision"), int):
+        return None
+    cands = [(e["decision"], e["floor"]) for e in (row.get("divergences") or [])
+             if isinstance(e, dict) and isinstance(e.get("decision"), int) and isinstance(e.get("floor"), int)
+             and not isinstance(e["decision"], bool) and not isinstance(e["floor"], bool) and e["decision"] <= fl["decision"]]
+    return max(cands, key=lambda c: c[0])[1] if cands else None
+
+
 def _boss_of_act(row: dict, act: int) -> tuple[bool, bool]:
     """(reached, killed) for the boss of 0-based act `act`: reached when any `boss_damage_acts` entry names it; killed when the run went past it
-    (strict reading, 2026-11-19; this reader's own code: a win, or the act's first entry full and the floor above the boss's, which is read from
-    a complete node string when the row has one). The fraction alone is not a kill: at the first Act 3 boss it reads full on a first form."""
+    (strict reading, 2026-11-19; this reader's own code, not `strict_rows`: a win, or the act's first entry full and the floor above the boss's,
+    which is read from a complete node string when the row has one). The fraction alone is not a kill: at the first Act 3 boss it reads full on
+    a first form. A row the referee lost track on is credited with the bosses whose floor is below the floor where it lost track, and with
+    nothing at or after it; a lost row whose loss floor cannot be read, and a crash row, are credited with nothing (a win with no loss floor is a win)."""
     fractions = [e[1] for e in (row.get("boss_damage_acts") or []) if isinstance(e, (list, tuple)) and len(e) >= 2 and e[0] == act]
     if not fractions:
         return False, False
-    if row.get("end") == "win" or row.get("win") is True:
-        return True, True
+    won = row.get("win") or str(row.get("end") or "").lower() in ("win", "victory", "won")
     floor = int(row.get("floor") or 0)
     nodes = row.get("nodes")
     bosses_at = [i + 2 for i, ch in enumerate(nodes) if ch == "B"] if isinstance(nodes, str) and floor == len(nodes) + 1 else None
-    cut = bosses_at[act] if bosses_at is not None and act < len(bosses_at) else (17, 33, 48)[act]
-    return True, fractions[0] is not None and fractions[0] >= 1.0 and floor > cut
+    if bosses_at is not None and act >= len(bosses_at):
+        return True, False  # a complete room string with no such boss in it: the run never got there
+    cut = bosses_at[act] if bosses_at is not None else (17, 33, 48)[act]
+    lost_at = _loss_floor_second(row)
+    if won:
+        return True, lost_at is None or cut < lost_at
+    if row.get("crash") or row.get("ev") == "crash":
+        return True, False
+    if row.get("lost") and lost_at is None:
+        return True, False
+    return True, fractions[0] is not None and fractions[0] >= 1.0 and floor > cut and (lost_at is None or cut < lost_at)
 
 
 def _act1_boss(row: dict) -> tuple[bool, bool]:
@@ -2219,6 +2251,8 @@ def _arm_second_path(path: Path, real: bool) -> dict:
     reached = killed = 0
     by_seed: dict[str, float] = {}  # seed -> floor of its last ended row
     act2 = [0, 0]  # Act 2 boss reached, killed
+    act3 = [0, 0]  # the first Act 3 boss reached, killed
+    lost_rows = lost_unknown = lost_credited = 0  # ended rows the referee lost track on; of them no readable loss floor; of them a boss counted
     past = gap = 0  # ended runs past the Act 1 boss floor, and those of them with no Act 1 boss entry
     wins = 0
     for row in _stream_rows(path):
@@ -2243,15 +2277,23 @@ def _arm_second_path(path: Path, real: bool) -> dict:
             r2, k2 = _boss_of_act(row, 1)
             act2[0] += r2
             act2[1] += k2
-            wins += 1 if (row.get("end") == "win" or row.get("win") is True) else 0
+            r3, k3 = _boss_of_act(row, 2)
+            act3[0] += r3
+            act3[1] += k3
+            wins += 1 if (row.get("win") is True or str(row.get("end") or "").lower() in ("win", "victory", "won")) else 0
+            if row.get("lost"):
+                lost_rows += 1
+                lost_unknown += 1 if (row.get("ev") == "end" and _loss_floor_second(row) is None) else 0
+                lost_credited += 1 if (k or k2 or k3) else 0
     n = len(floors)
     return {"seeds": seeds, "ended": n, "crash_rows": crash_rows, "kinds": dict(kinds), "boss": boss, "ended_seq": ended_seq,
             "mean_ended": math.fsum(floors) / n if n else None,
             "mean_counted": math.fsum(floors) / (n + crash_rows) if n + crash_rows else None,
             "act1_reached": reached, "act1_killed": killed,
             "killed_of_runs": killed / n if n else None, "killed_of_reached": killed / reached if reached else None,
-            "floors": floors, "by_seed": by_seed, "act2_reached": act2[0], "act2_killed": act2[1], "wins": wins,
-            "past": past, "gap": gap}
+            "floors": floors, "by_seed": by_seed, "act2_reached": act2[0], "act2_killed": act2[1],
+            "act3_reached": act3[0], "act3_killed": act3[1], "wins": wins, "lost_rows": lost_rows, "lost_unknown": lost_unknown,
+            "lost_credited": lost_credited, "past": past, "gap": gap}
 
 
 # -- the chance covariate by a second route: its own log reader, set-merging for the variants, per-cell lists of floors, and the
@@ -2475,6 +2517,13 @@ def independent_figures(night: Path, agent: str) -> dict:
         out[f"Act 1 boss killed, {tag}"] = arm["act1_killed"]
         out[f"Act 1 boss killed, share of runs, {tag}"] = arm["killed_of_runs"]
         out[f"Act 1 boss killed, share of those reached, {tag}"] = arm["killed_of_reached"]
+        out[f"Act 2 boss killed, {tag}"] = arm["act2_killed"]
+        out[f"Act 3 boss reached, {tag}"] = arm["act3_reached"]
+        out[f"Act 3 boss killed (strict), {tag}"] = arm["act3_killed"]
+        out[f"wins, {tag}"] = arm["wins"]
+        out[f"rows the referee lost track on, {tag}"] = arm["lost_rows"]
+        out[f"lost rows with no readable loss floor, {tag}"] = arm["lost_unknown"]
+        out[f"lost rows that count a boss killed, {tag}"] = arm["lost_credited"]
     for kind, k in sorted(real["kinds"].items()):
         out[f"crash rows of kind '{kind}', real"] = k
     paired = [(k, emu["boss"][s][1]) for s, k in real["ended_seq"] if s in emu["boss"]]
@@ -2668,6 +2717,13 @@ def report_check_figures(rep: dict) -> dict:
         out[f"Act 1 boss killed, {tag}"] = arm["act1_killed"]
         out[f"Act 1 boss killed, share of runs, {tag}"] = arm["act1_killed_of_runs"]
         out[f"Act 1 boss killed, share of those reached, {tag}"] = arm["act1_killed_of_reached"]
+        out[f"Act 2 boss killed, {tag}"] = arm["act2_killed"]
+        out[f"Act 3 boss reached, {tag}"] = arm["act3_reached"]
+        out[f"Act 3 boss killed (strict), {tag}"] = arm["act3_killed"]
+        out[f"wins, {tag}"] = arm["wins"]
+        out[f"rows the referee lost track on, {tag}"] = arm["lost_rows"]
+        out[f"lost rows with no readable loss floor, {tag}"] = arm["lost_loss_floor_unknown"]
+        out[f"lost rows that count a boss killed, {tag}"] = arm["lost_rows_credited"]
     for kind, k in sorted(rep["crashes"]["by_kind"].items()):
         out[f"crash rows of kind '{kind}', real"] = k
     pe = rep["paired"]["ended"]

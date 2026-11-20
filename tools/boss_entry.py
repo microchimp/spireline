@@ -39,6 +39,9 @@ from collections.abc import Iterable, Iterator
 from pathlib import Path
 from typing import Any
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import strict_rows  # noqa: E402  (the shared strict reading of a row, also read by morning_report and weekly_numbers)
+
 MIN_CELL = 20  # D13: a cell over fewer runs is suppressed
 BOSS_FLOOR = (17, 33)  # the floors of the Act 1 and Act 2 bosses (rl/run_fields.ACT_BOSS_FLOORS)
 BOSS_FLOORS_ALL = (17, 33, 48)  # with the first Act 3 boss's, for `went_past`
@@ -439,24 +442,12 @@ def split_nodes(nodes: str) -> list[str]:
 
 
 def went_past(row: dict, act: int) -> bool:
-    """The strict reading of a boss killed (the fork's `keep_v2.went_past`, 2026-11-19): the run went past the first boss of 0-based act `act`:
-    a win, or a floor above the boss's (from a complete node string when the row has one: floor = its length + 1; else the cut 17 / 33 / 48,
-    and then a fight the row records as lost, the act's first entry below 1.0, is not passed). The health bar's fraction alone is not a kill."""
-    if row.get("win"):
-        return True
-    if row.get("crash") or row.get("lost"):
-        return False
-    floor = int(row.get("floor") or 0)
-    nodes = row.get("nodes")
-    if isinstance(nodes, str) and floor == len(nodes) + 1:
-        floors = [i + 2 for i, ch in enumerate(nodes) if ch == "B"]
-        return act < len(floors) and floor > floors[act]
-    for a, frac in row.get("boss_damage_acts") or []:
-        if int(a) == act:
-            if frac is None or float(frac) < 1.0:
-                return False
-            break
-    return floor > BOSS_FLOORS_ALL[act]
+    """The strict reading of a boss killed (the fork's `keep_v2.went_past`, 2026-11-19; the shared `strict_rows.went_past`): the run went past
+    the first boss of 0-based act `act`: a win, or a floor above the boss's (from a complete node string when the row has one: floor = its
+    length + 1; else the cut 17 / 33 / 48, and then a fight the row records as lost, the act's first entry below 1.0, is not passed). A row the
+    referee lost track on (`lost`) is credited with the bosses below the floor where it lost track and nothing at or after it (nothing when
+    that floor cannot be read); a crash row with nothing. The health bar's fraction alone is not a kill."""
+    return strict_rows.went_past(row, act)
 
 
 def night_summary(row: dict) -> dict | None:
@@ -465,7 +456,7 @@ def night_summary(row: dict) -> dict | None:
         return None
     acts_b = {int(a): float(f) for a, f in row.get("boss_damage_acts") or []}
     floor = int(row.get("floor") or 0)
-    out: dict = {"src": "n", "id": row.get("seed"), "floor": floor, "won": bool(row.get("win")), "end": row.get("end"), "a": [None, None]}
+    out: dict = {"src": "n", "id": row.get("seed"), "floor": floor, "won": strict_rows.is_win(row), "end": row.get("end"), "a": [None, None]}
     cards, rests, nodes = row.get("cards") or [], row.get("rests") or [], split_nodes(row.get("nodes") or "")
     tk = sum(1 for _f, c in cards if c != "skip")
     out["tot"] = {"taken": tk, "skipped": len(cards) - tk, "heal": sum(1 for _f, k in rests if k == "heal"),

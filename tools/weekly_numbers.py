@@ -11,7 +11,9 @@ reason; it never invents one. Every rate carries n and a 95% (Wilson) interval. 
      the block's date and age in days. A crashed run counts as a loss. When no block holds the champion, the newest block's top
      generation is shown and marked as not the champion.
   2. The first Act 3 boss, got past strictly (the run won, or its floor is above 48), per 100 runs and per 100 arrivals at the boss
-     (floor 48 reached, a win, or a boss-damage entry for Act 3): the real game, and the copy on the seeds both arms hold.
+     (floor 48 reached, a win, or a boss-damage entry for Act 3): the real game, and the copy on the seeds both arms hold. The reading is
+     tools/strict_rows.py's, shared with the morning report: a real-game row the referee lost track on counts the first Act 3 boss only
+     when the floor where it lost track is above 48 (a stand-in played the rest of the run), a lost row with no readable floor not at all.
   3. Copy honesty per act, on the paired seeds: the share of runs where both arms end in the same act (conditioned on the real arm's
      act), the mean floor difference (copy minus real), and an alarm when the Act 1 or Act 2 figure moves by more than two points
      from the previous block. The two-point line is the brief's; with a few hundred pairs the sampling noise is larger, so the move's
@@ -41,6 +43,9 @@ from collections.abc import Iterable, Iterator
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import strict_rows  # noqa: E402  (the shared strict reading of a row, also read by morning_report and boss_entry)
 
 DEFAULT_ROOT = Path("D:/spireline")
 Z = 1.959964
@@ -153,8 +158,10 @@ def norm_row(row: dict[str, Any], crash: bool = False) -> dict[str, Any]:
                 a3_entry = True
         except (TypeError, ValueError, IndexError, KeyError):
             continue
+    # passed: the shared strict reading (strict_rows.went_past): a win, or a floor above the boss's; a row the referee lost track on only
+    # counts a boss below the floor where it lost track (the stand-in played the rest), a lost row with no readable floor none
     return {"floor": floor, "win": win, "arrived": bool(win or floor >= ARRIVAL_FLOOR or a3_entry),
-            "passed": bool(win or floor > PASS_FLOOR), "crash": False}
+            "passed": bool(strict_rows.went_past(row, 2)), "crash": False}
 
 
 def load_real(path: Path) -> dict[str, dict[str, Any]]:
