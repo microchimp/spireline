@@ -148,3 +148,14 @@ def test_check_second_path_matches_the_report_path_on_a_night_of_lost_rows(tmp_p
                                   ("lost_loss_floor_unknown", "lost_unknown"), ("lost_rows_credited", "lost_credited")):
         assert first[key_first] == second[key_second], key_first
     assert first["lost_rows"] > 0 and first["lost_rows_credited"] > 0
+
+
+def test_a_stalled_row_is_a_deadline_row_read_by_floor():
+    for end in ("fight_unfinished", "stalled"):
+        assert sr.is_deadline(real_row(48, end=end))
+        assert passed(real_row(48, end=end)) == (True, True, False)  # on the first Act 3 boss's floor: an arrival, not past it
+        assert passed(real_row(49, end=end)) == (True, True, True)
+        assert passed(real_row(48, 48, end=end)) == (True, True, False)  # lost on the boss's floor: Acts 1 and 2 only
+        assert passed(real_row(40, end=end, bar=[[0, 1.0], [1, 1.0]])) == (True, True, False)
+    assert not sr.is_deadline(real_row(48)) and not sr.is_deadline({"floor": 3})
+    assert wn.norm_row(real_row(48, end="stalled"))["arrived"] and not wn.norm_row(real_row(48, end="stalled"))["passed"]

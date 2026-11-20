@@ -15,7 +15,7 @@ everything after the loss was played by the stand-in, not by the agent being mea
 is BELOW the floor where tracking was lost, and with nothing at or after it (a boss fought on the loss floor was played partly by the
 stand-in). Before this rule a lost row beat nothing at all, which came from the copy arm, where `lost` meant a worker that returned no
 data (floor 0). A lost row whose loss floor cannot be found keeps that old reading (beats nothing) and is counted as `loss floor unknown`.
-A crash row (`crash` set, or `ev == "crash"`) beats nothing. A row cut off by a deadline (`end == "fight_unfinished"`) is read by its floor.
+A crash row (`crash` set, or `ev == "crash"`) beats nothing. A row cut off by a deadline (`end` is `fight_unfinished`, or `stalled` since the stall guard of fork main dbac8428) is read by its floor.
 """
 
 from __future__ import annotations
@@ -24,10 +24,17 @@ from typing import Any
 
 BOSS_FLOORS = (17, 33, 48)  # the floors of the Act 1, Act 2 and first Act 3 bosses (the second Act 3 boss is floor 49)
 WIN_ENDS = ("win", "victory", "won")  # the emulator arm writes "win", the real game's end message "victory"
+DEADLINE_ENDS = ("fight_unfinished", "stalled")  # a fight the driver cut off at its action cap; a run the stand-in stopped after three ignored answers
 
 
 def is_win(row: dict[str, Any]) -> bool:
     return bool(row.get("win")) or str(row.get("end") or "").lower() in WIN_ENDS
+
+
+def is_deadline(row: dict[str, Any]) -> bool:
+    """A run the real game did not finish a fight of: `fight_unfinished` or `stalled`. It is an ended row read by its floor, like any other:
+    an arrival at the boss of that floor, not past it (a floor above a boss's is past it)."""
+    return str(row.get("end") or "") in DEADLINE_ENDS
 
 
 def is_crash(row: dict[str, Any]) -> bool:

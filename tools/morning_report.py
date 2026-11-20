@@ -278,6 +278,7 @@ def arm_figures(ended: list[dict], crashes: list[dict], real: bool) -> dict:
         "mean_floor_counted": rnd(g.mean(True), 4), "wins": g.wins,
         "chest_stop": sum(1 for r in ended if r.get("end") == "treasure_without_relic_picking"),
         "fight_unfinished": sum(1 for r in ended if r.get("end") == "fight_unfinished"),
+        "stalled": sum(1 for r in ended if r.get("end") == "stalled"),  # the stand-in stopped a fight after three ignored answers
         "lost_rows": g.lost, "lost_loss_floor_unknown": g.lost_unknown, "lost_rows_credited": g.lost_credited,
         "act1_killed_loss_rule_off": g.a1k_plain,
         "decisions": sum((r.get("asked") if real else r.get("decisions")) or 0 for r in ended),
@@ -1597,9 +1598,12 @@ def build_report(night: Path, agent: str | None, lab: Path, logs: Path | None, w
         by_night = {h["date"]: sum(1 for r in h["real_crash"] if crash_kind(r.get("error") or "")["kind"] == kind) for h in span}
         cumulative[kind] = {"since": first, "count": sum(by_night.values()), "real_rows": sum(len(h["real_rows"]) for h in span),
                             "by_night": by_night}
-    unfinished = [{"seed": r["seed"], "worker": r.get("w"), "floor": r["floor"], "streak": r.get("streak")}
-                  for r in cur["real_end"] if r.get("end") == "fight_unfinished"]
+    unfinished = [{"seed": r["seed"], "worker": r.get("w"), "floor": r["floor"], "streak": r.get("streak"), "end": r["end"],
+                   **({"stalled": r.get("stalled")} if r["end"] == "stalled" else {}),
+                   **({"fight_errors": r["fight_errors"]} if r.get("fight_errors") else {})}
+                  for r in cur["real_end"] if strict_rows.is_deadline(r)]
     unfinished_hist = {h["date"]: {"fight_unfinished": sum(1 for r in h["real_end"] if r.get("end") == "fight_unfinished"),
+                                   "stalled": sum(1 for r in h["real_end"] if r.get("end") == "stalled"),
                                    "ended_rows": len(h["real_end"])} for h in earlier}
 
     # seeds with rows
@@ -1991,13 +1995,20 @@ def handoff_line(rep: dict) -> str:
         P.append("**No crash rows.**")
     fu = rep["fight_unfinished"]["this_night"]
     if fu:
-        hist = "; ".join(f"{v['fight_unfinished']} of {n_(v['ended_rows'])} on {k[5:]}"
-                         for k, v in sorted(rep["fight_unfinished"]["earlier_nights"].items())[-4:])
-        P.append("**fight_unfinished:** " + ", ".join(f"seed {u['seed']} (worker {u['worker']}, floor {u['floor']}, "
-                 f"{(u['streak'] or {}).get('n')} identical actions in a row on a {(u['streak'] or {}).get('screen')} screen)" for u in fu)
-                 + (f"; earlier nights: {hist}" if hist else "") + ".")
+        def _fu_text(u: dict) -> str:
+            if u.get("end") == "stalled":
+                st = u.get("stalled") or {}
+                return (f"seed {u['seed']} (worker {u['worker']}, floor {u['floor']}, stalled: {st.get('answers')} answers ignored on a "
+                        f"{st.get('kind')} screen)")
+            return (f"seed {u['seed']} (worker {u['worker']}, floor {u['floor']}, "
+                    f"{(u['streak'] or {}).get('n')} identical actions in a row on a {(u['streak'] or {}).get('screen')} screen)")
+
+        hist = "; ".join(f"{v['fight_unfinished']}" + (f" and {v['stalled']} stalled" if v.get("stalled") else "")
+                         + f" of {n_(v['ended_rows'])} on {k[5:]}" for k, v in sorted(rep["fight_unfinished"]["earlier_nights"].items())[-4:])
+        label = "fight_unfinished and stalled" if any(u.get("end") == "stalled" for u in fu) else "fight_unfinished"
+        P.append(f"**{label}:** " + ", ".join(_fu_text(u) for u in fu) + (f"; earlier nights: {hist}" if hist else "") + ".")
     else:
-        P.append("No `fight_unfinished` run.")
+        P.append("No `fight_unfinished` or `stalled` run.")
     if rl.get("lost_rows"):
         P.append(f"**Rows the referee lost track on:** {n_(rl['lost_rows'])} of {n_(rl['ended'])} ended real runs (a stand-in played the rest of "
                  f"each on the real game); each counts the bosses below the floor where it lost track ({n_(rl['lost_rows_credited'])} count at "
@@ -2253,6 +2264,7 @@ def _arm_second_path(path: Path, real: bool) -> dict:
     act2 = [0, 0]  # Act 2 boss reached, killed
     act3 = [0, 0]  # the first Act 3 boss reached, killed
     lost_rows = lost_unknown = lost_credited = 0  # ended rows the referee lost track on; of them no readable loss floor; of them a boss counted
+    unfinished = stalled = 0  # ended rows whose end is fight_unfinished (the driver's action cap) / stalled (the stand-in's stall guard)
     past = gap = 0  # ended runs past the Act 1 boss floor, and those of them with no Act 1 boss entry
     wins = 0
     for row in _stream_rows(path):
@@ -2281,6 +2293,8 @@ def _arm_second_path(path: Path, real: bool) -> dict:
             act3[0] += r3
             act3[1] += k3
             wins += 1 if (row.get("win") is True or str(row.get("end") or "").lower() in ("win", "victory", "won")) else 0
+            unfinished += 1 if row.get("end") == "fight_unfinished" else 0
+            stalled += 1 if row.get("end") == "stalled" else 0
             if row.get("lost"):
                 lost_rows += 1
                 lost_unknown += 1 if (row.get("ev") == "end" and _loss_floor_second(row) is None) else 0
@@ -2293,7 +2307,7 @@ def _arm_second_path(path: Path, real: bool) -> dict:
             "killed_of_runs": killed / n if n else None, "killed_of_reached": killed / reached if reached else None,
             "floors": floors, "by_seed": by_seed, "act2_reached": act2[0], "act2_killed": act2[1],
             "act3_reached": act3[0], "act3_killed": act3[1], "wins": wins, "lost_rows": lost_rows, "lost_unknown": lost_unknown,
-            "lost_credited": lost_credited, "past": past, "gap": gap}
+            "lost_credited": lost_credited, "unfinished": unfinished, "stalled": stalled, "past": past, "gap": gap}
 
 
 # -- the chance covariate by a second route: its own log reader, set-merging for the variants, per-cell lists of floors, and the
@@ -2524,6 +2538,8 @@ def independent_figures(night: Path, agent: str) -> dict:
         out[f"rows the referee lost track on, {tag}"] = arm["lost_rows"]
         out[f"lost rows with no readable loss floor, {tag}"] = arm["lost_unknown"]
         out[f"lost rows that count a boss killed, {tag}"] = arm["lost_credited"]
+        out[f"runs ended fight_unfinished, {tag}"] = arm["unfinished"]
+        out[f"runs ended stalled, {tag}"] = arm["stalled"]
     for kind, k in sorted(real["kinds"].items()):
         out[f"crash rows of kind '{kind}', real"] = k
     paired = [(k, emu["boss"][s][1]) for s, k in real["ended_seq"] if s in emu["boss"]]
@@ -2724,6 +2740,8 @@ def report_check_figures(rep: dict) -> dict:
         out[f"rows the referee lost track on, {tag}"] = arm["lost_rows"]
         out[f"lost rows with no readable loss floor, {tag}"] = arm["lost_loss_floor_unknown"]
         out[f"lost rows that count a boss killed, {tag}"] = arm["lost_rows_credited"]
+        out[f"runs ended fight_unfinished, {tag}"] = arm["fight_unfinished"]
+        out[f"runs ended stalled, {tag}"] = arm["stalled"]
     for kind, k in sorted(rep["crashes"]["by_kind"].items()):
         out[f"crash rows of kind '{kind}', real"] = k
     pe = rep["paired"]["ended"]

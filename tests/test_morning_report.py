@@ -195,9 +195,10 @@ def test_crash_kind_tally_over_earlier_nights(rep):
 
 def test_fight_unfinished_with_history(rep):
     fu = rep["fight_unfinished"]
-    assert fu["this_night"] == [{"seed": "SEED0007", "worker": 0, "floor": 20, "streak": {"n": 10, "screen": "shop", "action": 0}}]
-    assert fu["earlier_nights"]["2026-11-03"] == {"fight_unfinished": 1, "ended_rows": 5}
-    assert fu["earlier_nights"]["2026-11-01"] == {"fight_unfinished": 0, "ended_rows": 4}
+    assert fu["this_night"] == [{"seed": "SEED0007", "worker": 0, "floor": 20, "streak": {"n": 10, "screen": "shop", "action": 0},
+                                 "end": "fight_unfinished"}]
+    assert fu["earlier_nights"]["2026-11-03"] == {"fight_unfinished": 1, "stalled": 0, "ended_rows": 5}
+    assert fu["earlier_nights"]["2026-11-01"] == {"fight_unfinished": 0, "stalled": 0, "ended_rows": 4}
 
 
 # ---------------------------------------------------------------------------------------------------- per-fight tables
@@ -755,3 +756,31 @@ def test_a_boss_is_killed_when_the_run_went_past_it_not_when_its_bar_reads_full(
     # the aggregate counts the Act 3 boss by the same reading
     g = mr.make_agg([on_48, past, won])
     assert (g.a3r, g.a3k) == (3, 2)
+
+
+# ---------------------------------------------------------------------------------------------------- stalled rows (stall guard, fork dbac8428)
+def test_a_stalled_row_is_counted_and_listed_beside_fight_unfinished(tmp_path):
+    import shutil
+
+    lab = tmp_path / "LAB"
+    shutil.copytree(LAB, lab)
+    runs = lab / "nightly/2026-11-04/g11/runs.jsonl"
+    stalled = {"ev": "end", "w": 3, "seed": "SEED0099", "character": "IRONCLAD", "end": "stalled", "floor": 48, "asked": 410,
+               "stats": {"decisions": 410, "diverged": 1, "reanchors": 0, "reanchor_failed": 0},
+               "boss_damage_acts": [[0, 1.0], [1, 1.0], [2, 1.0]], "cards": [], "nodes": "", "t_end": 0.0,
+               "stalled": {"floor": 48, "kind": "combat", "action": ["potion", 0, "WEAK_POTION", -1], "answers": 3},
+               "fight_errors": ["stalled after 3 answers"], "streak": {"n": 3, "screen": "combat", "action": 1}}
+    runs.write_text(runs.read_text(encoding="utf-8") + json.dumps(stalled) + "\n", encoding="utf-8")
+    r = mr.build_report(lab / "nightly" / "2026-11-04", None, lab, None, "none", None, NOW)
+    assert (r["real"]["fight_unfinished"], r["real"]["stalled"]) == (1, 1) and r["real"]["ended"] == 9
+    fu = r["fight_unfinished"]["this_night"]
+    assert [(u["seed"], u["end"], u["floor"]) for u in fu] == [("SEED0007", "fight_unfinished", 20), ("SEED0099", "stalled", 48)]
+    assert fu[1]["stalled"]["answers"] == 3 and fu[1]["fight_errors"] == ["stalled after 3 answers"]
+    assert r["fight_unfinished"]["earlier_nights"]["2026-11-03"]["stalled"] == 0
+    text = mr.handoff_line(r)
+    assert "**fight_unfinished and stalled:**" in text and "seed SEED0099 (worker 3, floor 48, stalled: 3 answers ignored on a combat screen)" in text
+    # read as a deadline row, by floor: an arrival at the first Act 3 boss, not past it; the second path counts it too
+    row = next(x for x in mr.read_jsonl(runs) if x.get("seed") == "SEED0099")
+    assert mr.boss_hit(row, 2) == (True, False) and mr.boss_hit(row, 1) == (True, True)
+    second = mr.independent_figures(lab / "nightly" / "2026-11-04", "g11")
+    assert second["runs ended stalled, real"] == 1 and second["runs ended fight_unfinished, real"] == 1
