@@ -82,6 +82,8 @@ Question for the owner (the stop rule's reading, D68 addendum 5 decision 2, is t
 
 The copy half of the rule (+2.0 per 100 runs on 4,000 fresh pairs against generation 18, SE 0.44) is sharp and stays in every row. My recommendation: keep 23 on one block as written. It is strict against a false pass, which matters more than a false fail when a pass buys another month of the same method; a fail at 21 or 22 with the copy half passing is "not shown yet", not "shown wrong", and the owner can read it that way on the day.
 
+**Owner, 2026-11-22 01:20Z: "Keep 23".** The mark stands as written (D68 addendum 6 outcome).
+
 ## 5. Rationalisations found
 
 - "+0.53 Act 3 passes per 100 runs" and "25.5 against 23.8 per arrival" were quoted (STATE, HANDOFF, a memory note) as the v4 run candidate's whole-run translation. Both are about one SE from zero. The floor gain, which was real (2.6 SE), was quoted as "rejected" without its interval.
