@@ -12,8 +12,10 @@ reason; it never invents one. Every rate carries n and a 95% (Wilson) interval. 
      generation is shown and marked as not the champion.
   2. The first Act 3 boss, got past strictly (the run won, or its floor is above 48), per 100 runs and per 100 arrivals at the boss
      (floor 48 reached, a win, or a boss-damage entry for Act 3): the real game, and the copy on the seeds both arms hold. The reading is
-     tools/strict_rows.py's, shared with the morning report: a real-game row the referee lost track on counts the first Act 3 boss only
-     when the floor where it lost track is above 48 (a stand-in played the rest of the run), a lost row with no readable floor not at all.
+     tools/strict_rows.py's, shared with the morning report: the first Act 3 boss counts as got past only when our player played its fight
+     (no decision of it answered by the stand-in that plays on after the referee loses its place), read from the row's own boss-fight
+     record, else from the loss intervals of its divergence records, else (no records) from the row's first loss; a lost row nothing can
+     place counts not at all.
   3. Copy honesty per act, on the paired seeds: the share of runs where both arms end in the same act (conditioned on the real arm's
      act), the mean floor difference (copy minus real), and an alarm when the Act 1 or Act 2 figure moves by more than two points
      from the previous block. The two-point line is the brief's; with a few hundred pairs the sampling noise is larger, so the move's
@@ -158,8 +160,8 @@ def norm_row(row: dict[str, Any], crash: bool = False) -> dict[str, Any]:
                 a3_entry = True
         except (TypeError, ValueError, IndexError, KeyError):
             continue
-    # passed: the shared strict reading (strict_rows.went_past): a win, or a floor above the boss's; a row the referee lost track on only
-    # counts a boss below the floor where it lost track (the stand-in played the rest), a lost row with no readable floor none
+    # passed: the shared strict reading (strict_rows.went_past): a win, or a floor above the boss's, and the boss fight played by our player
+    # (not by the stand-in that plays on while the referee has lost its place); a lost row that nothing can place counts none
     return {"floor": floor, "win": win, "arrived": bool(win or floor >= ARRIVAL_FLOOR or a3_entry),
             "passed": bool(strict_rows.went_past(row, 2)), "crash": False}
 
@@ -167,7 +169,9 @@ def norm_row(row: dict[str, Any], crash: bool = False) -> dict[str, Any]:
 def load_real(path: Path) -> dict[str, dict[str, Any]]:
     """The real arm's runs.jsonl (envproto rows: ev 'end' or 'crash') by seed; a later end row replaces an earlier row of the seed."""
     out: dict[str, dict[str, Any]] = {}
-    for r in read_jsonl(path):
+    rows = list(read_jsonl(path))
+    strict_rows.attach_block_divergences(rows, Path(path).parent)  # a row with no records takes them from the block's divergences.jsonl
+    for r in rows:
         seed = r.get("seed")
         if seed is None:
             continue
@@ -182,7 +186,9 @@ def load_real(path: Path) -> dict[str, dict[str, Any]]:
 def load_arm(path: Path) -> dict[str, dict[str, Any]]:
     """A copy arm's runs.jsonl (the lab's per-run rows: seed, floor, win, end, crash) by seed."""
     out: dict[str, dict[str, Any]] = {}
-    for r in read_jsonl(path):
+    rows = list(read_jsonl(path))
+    strict_rows.attach_block_divergences(rows, Path(path).parent)
+    for r in rows:
         seed = r.get("seed")
         if seed is None or r.get("ev") not in (None, "end"):
             continue

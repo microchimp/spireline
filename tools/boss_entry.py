@@ -444,9 +444,10 @@ def split_nodes(nodes: str) -> list[str]:
 def went_past(row: dict, act: int) -> bool:
     """The strict reading of a boss killed (the fork's `keep_v2.went_past`, 2026-11-19; the shared `strict_rows.went_past`): the run went past
     the first boss of 0-based act `act`: a win, or a floor above the boss's (from a complete node string when the row has one: floor = its
-    length + 1; else the cut 17 / 33 / 48, and then a fight the row records as lost, the act's first entry below 1.0, is not passed). A row the
-    referee lost track on (`lost`) is credited with the bosses below the floor where it lost track and nothing at or after it (nothing when
-    that floor cannot be read); a crash row with nothing. The health bar's fraction alone is not a kill."""
+    length + 1; else the cut 17 / 33 / 48, and then a fight the row records as lost, the act's first entry below 1.0, is not passed), and our
+    player played the boss fight (no decision of it answered by the stand-in that plays while the referee has lost its place: read from the
+    row's boss-fight record, else its loss intervals, else its first loss; nothing when a lost row cannot be placed); a crash row with
+    nothing. The health bar's fraction alone is not a kill."""
     return strict_rows.went_past(row, act)
 
 
@@ -849,7 +850,9 @@ def cmd_nights(a: argparse.Namespace) -> int:
         if not p.is_file():
             continue
         night, arm = run_dir.parent.name, run_dir.name
-        for row in read_jsonl(p):
+        rows = list(read_jsonl(p))
+        strict_rows.attach_block_divergences(rows, run_dir)  # a row with no records takes them from the block's divergences.jsonl
+        for row in rows:
             if "seed" not in row or "floor" not in row:
                 continue
             s = night_summary(row)
