@@ -1,12 +1,12 @@
 {
- "checked": "2026-11-25T10:35:28Z",
+ "checked": "2026-11-25T10:39:44Z",
  "date": "2026-11-25",
  "runner": {
   "alive": true,
   "status": {
    "ok": true,
-   "time": "2026-11-25T10:35:11Z",
-   "age_s": 17,
+   "time": "2026-11-25T10:39:33Z",
+   "age_s": 11,
    "mode": "running",
    "job": "20261125T0836-train",
    "job_kind": "train",
@@ -153,7 +153,7 @@
   "promotions_total": 5,
   "newest_version": 8,
   "last_line": "2026-11-25T08:39:19Z",
-  "last_line_age_s": 6969
+  "last_line_age_s": 7225
  },
  "agent": {
   "ok": true,
@@ -268,8 +268,8 @@
  "quiet": [
   {
    "tag": "lab-train",
-   "time": "2026-11-25T10:27:45Z",
-   "age_s": 463,
+   "time": "2026-11-25T10:37:50Z",
+   "age_s": 114,
    "pid": 25404,
    "pid_alive": true,
    "stale": false,
@@ -318,7 +318,7 @@
  "reasons": [],
  "since": {
   "first_check": false,
-  "previous_check": "2026-11-25T10:35:09Z",
+  "previous_check": "2026-11-25T10:35:28Z",
   "new_alerts": [],
   "alerts_gone": [],
   "promotions": [],
@@ -327,7 +327,7 @@
   "champion_changed": null,
   "new_block": null,
   "previous_push": {
-   "time": "2026-11-25T10:35:09Z",
+   "time": "2026-11-25T10:35:28Z",
    "status": "pushed",
    "why": ""
   }
