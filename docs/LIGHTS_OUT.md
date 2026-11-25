@@ -53,6 +53,10 @@ The page is pushed by the check itself: `git fetch`, then add, commit (`status: 
 forward; ahead only by its own status commits is fine), or has anything staged or modified outside `status/`. Keep the unattended tree clean: a stray edit
 stops the daily push until it is committed or reverted. `health_check.py --allow-dirty-tree` pushes anyway (the commit names only the status files).
 
+## The weekly check (the only Claude input)
+
+A cloud routine, "Spireline weekly check (plain language)", runs every Tuesday at 11:00Z (22:00 Sydney) on a checkout of this repository, with read-only tools, no connectors and no access to the PC. It reads `status/latest.md`, `status/history.csv` and this page, and writes a report of at most twelve lines in everyday words: the colour and whether the machine is still going, what happened in the week, the first-Act-3-boss reading against the January rule, and whether anything needs the owner's hand. If the status page is missing or older than three days it says so first. Its runs are listed at https://claude.ai/code/routines (routine `trig_014yfZM9usLuVFPz5Xk4mjxF`); the first run is 2026-12-01. It changes nothing; repairs are the daily check's or the owner's.
+
 ## How to stop everything
 
 1. Create the file `D:\spireline\referee\health\STOP` (the check then leaves the practice loop stopped and shows AMBER).
