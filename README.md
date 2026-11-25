@@ -10,17 +10,18 @@ and a verdict (DECISIVE / CLOSE / UNCERTAIN / UNSUPPORTED). Phase 1 values are c
 **L0 points**, never P(win). Learned parts (a Gumbel ExIt prior and a DMC run value) come
 later, and only when the ledger calls for them. There are no LLM components and no
 end-to-end RL. The decisions so far are in `docs/DECISIONS.md`; the design is `docs/DESIGN.md`, and the
-current simulator plan is `docs/SIMULATOR.md`. The simulator itself is a private repository
-(`microchimp/spireline-sim`); to get read access, open an issue with the "Request access to the
-simulator" template.
+current simulator plan is `docs/SIMULATOR.md`. The simulator is the public repository
+[`microchimp/spireline-sim`](https://github.com/microchimp/spireline-sim) (MIT), since 2026-11-25.
 
-**Status (2026-10-13): building the simulator first (D16).** The emulator (r33hab/sts2 @
-`b745217`) is built natively on Windows after the security review's GO (D3), its upstream test
-suites have run, and the day-4 benchmarks have run (`bench/`). Spireline's simulator is now its
-own fork of that emulator, to be refereed by the game's own code run headless. Nothing has been
-run against the real game yet. The interfaces, the information-set firewall, canary audits, the
-statistics and the DRAFT Phase-1 pre-registration exist and are tested; there is no search code
-yet.
+**Status (2026-11-25): paused; the machine runs unattended (D69, D70).** Read
+[docs/FINAL_REPORT.md](docs/FINAL_REPORT.md) first: what was built, what was measured, why it fell
+short, what a continuer would do first. In short: the player is at or above the average human until
+Act 3 and a hundred times below at the end (2 wins in 2,000 real runs; first Act 3 boss passed in
+26.2 +-5.4 of 100 fights it finished itself, humans about 70). The simulator fork, the learning
+machine, the lab, the referee and the trained champion are published. The daily status of the
+unattended machine is [status/latest.md](status/latest.md); [docs/LIGHTS_OUT.md](docs/LIGHTS_OUT.md)
+says how it runs and how to read the January decision. The rest of this README describes the
+October 2026 layout of this repository and still holds for the parts it names.
 
 ## Disclaimer
 
@@ -136,6 +137,12 @@ any other commit yourself before building it.
 
 ## Docs
 
+- [docs/FINAL_REPORT.md](docs/FINAL_REPORT.md): the final report (2026-11-25).
+- [docs/LIGHTS_OUT.md](docs/LIGHTS_OUT.md): how the unattended machine runs, its status page, how to stop it, the January reading rule.
+- [docs/paper/spireline-paper.html](docs/paper/spireline-paper.html): the paper, 47 editions (last 2026-11-24).
+- [docs/review/](docs/review/): the weekly sceptic reviews, the last on continuing (2026-11-25).
+- [docs/referee-notes/](docs/referee-notes/): the two-page state, the handoff log and the last phase's briefs and memos, scrubbed of user paths.
+- [tools/](tools/): the strict reader of real-game rows, the morning report, the weekly numbers, the pooled reading of fighters, the health check.
 - [docs/DESIGN.md](docs/DESIGN.md): the full design (v1.1), with a note on what has changed since.
 - [docs/DECISIONS.md](docs/DECISIONS.md): the decision log; it wins where the design disagrees.
 - [docs/SECURITY_REVIEW.md](docs/SECURITY_REVIEW.md): the review of the pinned emulator and mod commits.

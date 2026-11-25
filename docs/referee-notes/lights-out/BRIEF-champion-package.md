@@ -1,0 +1,25 @@
+# Brief: package the whole-run champion (generation 21) for publication
+
+Worker rules: `D:/spireline/referee/backlog/act3-week/COMMON.md` applies in full (no `D:/spireline/src` writes, no E2 scripts, no user names, host names or `C:/Users` paths in anything you write, Windows process APIs only, BelowNormal priority, no heavy runs: the lab's judge job runs on 16 processes right now and must not be slowed). No git in this lane. Emulator Python: `D:/spireline/src/sts2/.venv/Scripts/python.exe` (never `uv run`). Code: the simulator fork `D:/spireline/fork/sts2` (main `9432e74b`; read only; make your own worktree under `D:/spireline/fork/wt-champion-pkg` from main if you need to run anything, and reuse a built `out/` from a worktree whose C# equals main, e.g. `D:/spireline/fork/wt-lab`, via the `--lib` argument; never build).
+
+## Why
+
+The owner is publishing everything useful (2026-11-25, D70): the simulator fork becomes public today and the trained whole-run champion should be downloadable with it, with a page that says what it is, how to run it and what to expect.
+
+## The champion
+
+`D:/spireline/referee/agent/gen21/candidate-fight-v5` (promoted 2026-11-22 09:44Z as generation 21: the generation-20 run brain with fight brain v5). Files today: `agent.json`, `model.json`, `boss_chain.json/.npz`, `combat_net.onnx/.pt`, `combat_policy.pt`, `fight_net.onnx`, `human_prior.npz`, `run_student.npz`, `run_student_legs.json`, `run_value.npz/.onnx/.pt`, `promotion.json`, `promotion-rejected-2026-11-21.json`, folder `arms/` (its played blocks; exclude). The champion pointer is `D:/spireline/referee/agent/current.json`.
+
+## Build
+
+1. **Inventory.** For each file: what it is, which code loads it (`rl/gen0.py`, `rl/gen_loop.py`, `rl/run_agent*.py`, `rl/fight_gym.py`, `docs/rl/*.md`), size, sha256. Which files are needed to play; which are records (`promotion*.json`: include, they are our judgement records, after checking they hold no `C:/Users` paths).
+2. **The human prior.** `human_prior.npz` is derived from the Spire Codex public run export (Spireline D13/D38/D55: aggregates and derived positions only, no cell under 20 runs, the exam fifth never used, no seeds or run ids). Find its builder (`rl/human_prior*.py`, `tools/` or `referee/`), state the aggregation and the per-cell floor it applies, and check the file itself: the arrays' names and shapes, any count array's minimum, and that it holds no run ids or seeds (strings, object arrays). If compliance cannot be shown from the code and the file, exclude it from the package and say what the champion loses without it (does the loader need it? can it run with the prior absent?).
+3. **Smoke run.** From your worktree, play 2 whole runs of the champion on 1 process using the lab's own play path (`rl/gen0.py` has the arm player used by `run_arm`; `docs/rl/KEEP_TEST_V3.md` and `rl/gen_loop.py` name the command and its arguments: config `a3-v1`, a seeds file with 2 seeds you make up, `--lib <built out/>`, `--agent-root` pointing at a copy of the champion folder unzipped from your package, not the live one). Prove the package's files load and a run finishes; record the command and its output tail. If the play path cannot point at a copy without touching the live folders, run the smoke on the live folder read-only and say so.
+4. **Package.** `D:/spireline/referee/exports/champion-gen21/spireline-champion-gen21.zip` holding the folder `champion-gen21/` with the included files plus `RUN.md` and `MANIFEST.txt` (sha256 and size per file); the same `RUN.md` and `MANIFEST.txt` also beside the zip.
+5. **`RUN.md`** (for a reader with a clone of `https://github.com/microchimp/spireline-sim` at `9432e74b` and a built `out/`): what the champion is (one paragraph: a self-play-trained Ironclad player for Ascension 10 on the simulator; run brain = run_value/run_student/boss_chain, fight brain v5 = combat_net/fight_net; search config `a3-v1`); the exact play command and how long 100 runs take on one process; the expected figures with their margins (copy game, fresh base arm of generation 20, 4,000 runs: 5.30 past the first Act 3 boss per 100 runs, 23.8 per 100 arrivals, 13 wins; the real game, 11-20 block, 2,000 runs: 19.5 per 100 arrivals, +-4.2, 26.2 per 100 fights the player finished itself, +-5.4, 2 wins; the human average from the corpus: about 70 per 100 arrivals and 11 wins in 100 runs); the attribution line "Spire Codex public run export for v0.107.1" for the human prior; licence MIT (as the fork); no game files inside.
+
+## Done
+
+- The zip, MANIFEST.txt and RUN.md in `D:/spireline/referee/exports/champion-gen21/`; nothing written anywhere else except your worktree and the memo.
+- Memo `D:/spireline/referee/backlog/lights-out/CHAMPION-PACKAGE.md` (at most 40 lines): the inventory table, the human-prior finding with the code lines, the smoke command and its tail, the zip's size and sha256, anything unverified.
+- Report at most 5 lines: zip path, size, the human-prior verdict (included or excluded and why), the smoke result, what is unverified.

@@ -1,0 +1,15 @@
+# Lens C: process, machine and money. Where it went and what it bought
+
+Read `COMMON.md` in this folder first; its sources and rules hold. Memo: `D:/spireline/referee/backlog/analysis-2026-11-18/C-process.md`. Scripts: `scripts/C-*.py`. No network.
+
+## Questions
+
+1. **Where the machine went.** From `LAB/runner.log` (every job: kind, rc, wall and cpu seconds), the gym-loop logs and the hand-run lane logs under `logs/gym-loop/`, account for the core-hours and GPU-hours since 2026-10-22 by purpose and by week: the champion's plain runs (data), judgements of candidates, fits and training (GPU), the fight loop (training and exams), real-game nights, fidelity and bench work, idle or blocked time (QUIET lines, pauses, waits). Then yield: promotions per 1,000 core-hours, and the same for promotions that moved Act 3 kills or wins. List the waste with its cost: the silently retrying job of 2026-11-09 (210 core-hours), the round script's second fit of 2026-11-18 (3.5 GPU-hours), the fight loop's nine days improving a part no run player carried (11-09 to 11-18), judgements refused by rules later judged mis-targeted, blocks played twice, anything else you find. Say what share of the machine bought nothing.
+
+2. **Where the Claude budget went.** HANDOFF's orchestrator lines carry "Budget N of M" per week; DECISIONS D46, D60 and D63 set the ceilings and the policy (Sonnet builds, Opus decides, Haiku checks; writing under a quarter). Reconstruct the weekly spend and, as far as the lines allow, its split: building (lanes that landed code), measuring (lanes that ran judgements or sweeps), writing (paper editions, decisions, handoff), orchestration (checks, status, hand-checks). Count the lanes, the landings, the landings later reverted or superseded, the decisions reversed by an addendum, the briefs whose work was discarded. What did a unit of budget buy, by week?
+
+3. **Process failures and what they cost.** From HANDOFF and DECISIONS: the races (the keep rule v3 switch lost to a marker by two minutes, 2026-11-18), the locks and pauses that stopped work (QUIET tags, LAB/PAUSE stopping a hand-started job on 11-11, the publish lock), the silent failures (the dead pool worker, the retrying job), the workers' faults (a stale fit reused by name, a fit discarded unread, CRLF stripped), the orchestrator's faults (dates written ahead of the clock, a watcher stopped and forgotten). For each: cost, whether the fix was a rule in a memory file or a mechanism in code, and whether it recurred. Which artefacts does nobody read (check the paper's and HANDOFF's size against what decisions cite)? What would a sceptic cut from the weekly cadence?
+
+4. **What we should do.** The three changes that would most raise what a core-hour and a budget point buy, each with its cost and expected effect; what to stop outright; what a lean week looks like (machine plan, lanes, writing) if the owner continues, and what an orderly stop looks like (what to keep, record and hand over) if they do not.
+
+5. **What would change your conclusion.** The figure or event within a week that would most change 4.

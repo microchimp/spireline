@@ -389,7 +389,7 @@ def test_cli_writes_three_files_and_no_paths(tmp_path, capsys):
     assert data["night"]["folder"] == "nightly/2026-11-04" and data["real"]["ended"] == 8
     assert data["fights"]["real"] is not None  # the copied logs were found beside the lab, as on the real machine
     blob = "".join((out / n).read_text(encoding="utf-8") for n in ("morning_report.json", "handoff_line.md", "edition_figures.md"))
-    for bad in (str(FIX), str(FIX).replace("\\", "/"), "Users", "pmpal", "C:\\", ":/"):
+    for bad in (str(FIX), str(FIX).replace("\\", "/"), "Users", "someone", "C:\\", ":/"):
         assert bad not in blob, bad
     assert "wrote morning_report.json" in capsys.readouterr().out
 
@@ -460,7 +460,7 @@ def test_check_cli_prints_both_paths_and_no_paths(capsys):
     assert mr.main([str(NIGHT), "--check", "--now", "2026-11-04T01:00:00Z"]) == 0
     out = capsys.readouterr().out
     assert out.startswith("morning_report --check: night 2026-11-04 (g11)") and "path 1" in out and "path 2" in out
-    for bad in (str(FIX), str(FIX).replace("\\", "/"), "Users", "pmpal", "C:\\"):
+    for bad in (str(FIX), str(FIX).replace("\\", "/"), "Users", "someone", "C:\\"):
         assert bad not in out, bad
 
 
@@ -504,7 +504,7 @@ def test_check_with_out_writes_the_files_and_keeps_the_table_and_exit_code(tmp_p
     data = json.loads((out / "morning_report.json").read_text(encoding="utf-8"))
     assert data["night"]["folder"] == "nightly/2026-11-04" and data["real"]["ended"] == 8
     blob = "".join((out / n).read_text(encoding="utf-8") for n in ("morning_report.json", "handoff_line.md", "edition_figures.md"))
-    for bad in (str(FIX), str(FIX).replace("\\", "/"), "Users", "pmpal", "C:\\", ":/"):
+    for bad in (str(FIX), str(FIX).replace("\\", "/"), "Users", "someone", "C:\\", ":/"):
         assert bad not in blob, bad
 
 
@@ -695,7 +695,7 @@ def test_ledger_line_reads_old_and_v2_rows(tmp_path, capsys):
     data = json.loads((out / "morning_report.json").read_text(encoding="utf-8"))
     assert data["ledger"]["rule"] == "v2" and data["confirmation"] is None  # the ledger's promoted row is generation 12; the night is 11
     blob = "".join((out / n).read_text(encoding="utf-8") for n in ("morning_report.json", "handoff_line.md", "edition_figures.md"))
-    for bad in (str(tmp_path), str(tmp_path).replace("\\", "/"), "Users", "pmpal", "C:\\"):
+    for bad in (str(tmp_path), str(tmp_path).replace("\\", "/"), "Users", "someone", "C:\\"):
         assert bad not in blob, bad
     # without a ledger beside the lab the report says so and is otherwise unchanged
     assert mr.build_report(NIGHT, None, LAB, LOGS, str(WINLOG), "test usage", NOW)["ledger"] == {"available": False, "line": "no promotions ledger was found"}

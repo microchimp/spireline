@@ -50,3 +50,5 @@ About lights-out: that unattended machines stall. In the past month there was ab
 4. **Before going dark (today, cheap)**: let lane 25 land (the fresh-champion base block, so promotions keep working unattended), record v7's verdict, write the reading instructions into STATE, push everything. No new lanes.
 
 The owner's choices: close now (stop the machine too), lights-out as above, or continue as before. The orchestrator recommends lights-out.
+
+**Correction, 2026-11-25 10:12Z.** This review and the records of 06:20Z said that the automatic judge had never used route S because of a label mismatch between the fight loop's marker and the lab. That was a misreading of the records: keep rule v3 is the rule that carries route S, and the rule's own document (`docs/rl/KEEP_TEST_V3.md` in the fork) says that when the boss-door exam S1 does not hold, v3 decides and the ledger records it. v6 had no eligible arm for a ruler (S1 unavailable) and v7's S1 did not hold (+1.19 +-1.32 per 100 arrivals); both were judged as designed. Nothing in the recommendation changes; the "first fix if the project continues" is withdrawn (D70).

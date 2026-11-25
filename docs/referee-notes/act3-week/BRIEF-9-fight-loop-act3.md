@@ -1,0 +1,19 @@
+# Lane 9: the fight loop on fork main with the Act 3 cells, and the Act 3 practice switched on
+
+Read `COMMON.md` in this folder first, then `TEST-SUBJECT.md` (lane 5: sections 3 and 4 give the exact commands) and `GYM-WIRING.md` (lane 6c: what the daemon does on fork main now). Sonnet lane. No heavy work (no emulator runs beyond what the daemon itself does). Memo `FIGHT-LOOP-ACT3.md` here, one page.
+
+## Why
+
+The real block of 2026-11-19 confirmed the copy: in the real game the Test Subject let 3 of 96 arrivals past (the other two first Act 3 bosses about 19 in 100; humans 70 in 100 at each). The fight brain has never practised an Act 3 fight. Lane 5 built the Act 3 exam cells and a practice stratum (off by default); lane 6c wired the fight loop to the run judge. Both are on fork main (`24afec9c`) but the running daemon (process 5876, `rl/gym_loop.py run ...`, started before them from `D:/spireline/fork/wt-gym-loop-run`) runs old code, and the live exam has no Act 3 cells. The orchestrator decided (D68 addendum 3, point 3, and this brief): the cells go live and the practice stratum goes on at lane 5's default share.
+
+## What you may touch (granted by this brief, beyond COMMON.md)
+
+`D:/spireline/referee/gym-loop/exam/`, `D:/spireline/referee/gym-loop/starts/` (including `starts/mix.json`), the worktree `D:/spireline/fork/wt-gym-loop-run` (move it to fork main), and the daemon process 5876 (stop it by its PID, never by image name; start the new one). Not `D:/spireline/referee/LAB/*` (the lab is the orchestrator's; its `LAB/mix.json` is a different file: leave it), not `QUIET.lock`, not `referee/agent/*`.
+
+## Tasks
+
+1. Map how practice games are played today and who reads `gym-loop/starts/mix.json` (the daemon with `--procs 0` plays none itself; find the job or process that does, and confirm the Act 3 stratum would reach it). Half a page in the memo, with file and line references.
+2. Back up `gym-loop/exam/` and `gym-loop/starts/mix.json` (copies beside them with a date suffix). Run lane 5's two steps: `rl/fight_exam.py add-act3 --exam-dir D:/spireline/referee/gym-loop/exam --starts-dir D:/spireline/referee/backlog/act3-week/test-subject` from a tree at fork main (`D:/spireline/fork/sts2` is at `24afec9c`; its `out/` is stale, so set `STS2_LIB_PATH=D:/spireline/fork/wt-chain/out` and `STS2_ALLOW_STALE_NATIVE=1` if the command needs the engine), then copy `human-starts-act3.*`, `human-outcomes-act3.json`, `own-starts-act3.*` into `gym-loop/starts/`. Check the Acts 1 and 2 files are byte-identical before and after (lane 5 says the command leaves them unchanged).
+3. Then set `gym-loop/starts/mix.json` to carry `{"act3": {"share": 0.1, "human_share": 0.5, "own_encounters": [80]}}` (lane 5's default), atomically (temp file and rename), keeping everything else in the file.
+4. Restart the daemon on fork main: `git -C D:/spireline/fork/wt-gym-loop-run` to `main` at `24afec9c` (fetch, checkout or merge ff-only; it must end at fork main's tip); `out/` stays (no C# change this week; check `git diff --stat c7e10c95..24afec9c -- src/` is empty, else stop and report); stop process 5876 by PID at a moment when it is idle (its log shows "generation off" or between steps; wait for a running gate or training step to end); start it with the same command line and the same working folder as today (read them from the process: `wmic process where processid=5876 get commandline,executablepath`; the working folder is the worktree), detached (`nohup`/`start`), BelowNormal priority. Confirm in its log that it starts, reads the Act 3 cells and the stratum, and that the `--wiring on` default of lane 6c is in effect.
+5. Report in five lines: who plays practice games and whether the stratum reaches them, the exam's Act 3 cell count and the files changed, the new daemon's PID and the log line that shows the stratum on, anything that did not work, your context size.
