@@ -80,9 +80,9 @@ might touch while doing so.
 | Item | Decision | Date | By |
 |---|---|---|---|
 | Section 1 (fork builds: who runs them, F3) | GO: Claude builds and tests the fork (Option A), offline from the recorded package cache | 2026-10-13 | owner, in chat |
-| Section 1 (repository visibility, F5) | Private repository `microchimp/spireline-sim`, no outside access for now (owner, 2026-10-13: nothing useful to share yet). Requests can still be filed with the issue template; personal-account repos cannot grant read-only access, so access later needs an organisation | 2026-10-13 | owner, in chat |
+| Section 1 (repository visibility, F5) | Private repository `microchimp/spireline-sim`, no outside access for now (owner, 2026-10-13: nothing useful to share yet). Requests can still be filed with the issue template; personal-account repos cannot grant read-only access, so access later needs an organisation. **Updated 2026-11-25 (D70): the repository is public; the owner's instruction "publish everything to github that might be useful to someone else including the simulator" resolves F5; the issue template is removed.** | 2026-10-13, 2026-11-25 | owner, in chat |
 | Section 3 (referee, stages H1-H8) | GO, with these choices: (1) run the archived game's code headless for checking only; (2) download the official headless Godot .NET build rather than stubbing Godot, so as little as possible is faked (H4); (3) decompile `sts2.dll` locally with the pinned `ilspycmd` 8.2.0.7535, output never leaves the PC, which amends E15's "only after a patch update" for v0.107.1 (H5); (4) no firewall rule for now: the harness never initialises Sentry or Steamworks, and each session checks the referee opened no network connection (H2) | 2026-10-13 | owner, in chat |
-| Section 4 (publishing the harness) | Private for now: the harness lives in the private simulator repo; publishing waits | 2026-10-13 | owner, in chat |
+| Section 4 (publishing the harness) | Private for now: the harness lives in the private simulator repo; publishing waits. **Updated 2026-11-25 (D70): published with the repository (`referee/`, the driver; no game files, assets or decompiled source).** | 2026-10-13, 2026-11-25 | owner, in chat |
 
 ## Amendment 1a (2026-10-22): H7 relaxed for training
 
