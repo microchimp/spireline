@@ -8,7 +8,7 @@ Written by the daily health check from the machine's own files. It plays nothing
 
 **The practice loop** (the loop that plays fights to train the fighter) is running (since 2026-11-21 13:53Z). Its newest daily summary, for 2026-11-24, says it played 13,428 fights: 19.7 hours playing, 4.3 hours waiting (it waits while the judge or the weekly test holds the machine). Its log last wrote 116 minutes ago. 5 fighter versions have been promoted in all; the newest is v8 (2026-11-25).
 
-**The whole-run judge** (the test that decides whether a new fighter is kept) has the champion at generation 21 (promoted 2026-11-22); the newest generation folder is gen22. It has finished 50 judgements in all; the last, on 2026-11-25, was rejected for candidate-fight-v7 on 3400 paired runs. A judge job is running now (its lock line is 7 minutes old).
+**The whole-run judge** (the test that decides whether a new fighter is kept) has the champion at generation 21 (promoted 2026-11-22); the newest generation folder is gen22. It has finished 50 judgements in all; the last, on 2026-11-25, was rejected for candidate-fight-v7 on 3400 paired runs. A judge job is running now (its lock line is 8 minutes old).
 
 **The weekly real-game test** last ran on 2026-11-20 (it began 2026-11-20 19:04Z and finished 2026-11-21 01:40Z). The next is due 2026-11-27, in 2.4 days.
 
@@ -20,12 +20,12 @@ Written by the daily health check from the machine's own files. It plays nothing
 
 ## Since the last check
 
-Since the check of 2026-11-25 10:33Z:
+Since the check of 2026-11-25 10:35Z:
 - Nothing new.
 
 ## Repairs
 
-- The previous check could not publish its status (skipped: the tree has 1 staged and 3 modified file(s) outside status/ (ocs/LIGHTS_OUT.md, pc-setup/register-health-tasks.ps1, tests/test_health_check.py); the push is skipped until they are committed or reverted).
+- Nothing needed repair.
 
 ## The figures
 
@@ -33,7 +33,7 @@ Since the check of 2026-11-25 10:33Z:
 | --- | --- |
 | colour | GREEN |
 | checked | 2026-11-25 10:35Z |
-| runner status age (s) | 18 |
+| runner status age (s) | 17 |
 | runner processes | 2 |
 | runner job now | 20261125T0836-train (train) |
 | jobs finished, last 24 h | 2 |
@@ -42,7 +42,7 @@ Since the check of 2026-11-25 10:33Z:
 | last tree checked out | 9432e74 |
 | practice loop processes | 2 |
 | practice loop running since | 2026-11-21 13:53Z |
-| practice loop log age (s) | 6950 |
+| practice loop log age (s) | 6969 |
 | newest daily summary | 2026-11-24: 13428 fights, 19.7 h played, 4.3 h waited |
 | fighters promoted in all | 5 |
 | newest fighter version | 8 |
@@ -57,5 +57,5 @@ Since the check of 2026-11-25 10:33Z:
 | door passes, all arrivals | 68 of 348, 19.5 in 100, give or take 4.3 |
 | lost-track arrivals | 88 of 348, 25.3 in 100, give or take 4.7 |
 | disk free (GB) | 1625.2 |
-| lock-file lines | lab-train (7 minutes) |
+| lock-file lines | lab-train (8 minutes) |
 | open alert files | 0 |

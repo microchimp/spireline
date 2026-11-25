@@ -1,12 +1,12 @@
 {
- "checked": "2026-11-25T10:35:09Z",
+ "checked": "2026-11-25T10:35:28Z",
  "date": "2026-11-25",
  "runner": {
   "alive": true,
   "status": {
    "ok": true,
-   "time": "2026-11-25T10:34:51Z",
-   "age_s": 18,
+   "time": "2026-11-25T10:35:11Z",
+   "age_s": 17,
    "mode": "running",
    "job": "20261125T0836-train",
    "job_kind": "train",
@@ -153,7 +153,7 @@
   "promotions_total": 5,
   "newest_version": 8,
   "last_line": "2026-11-25T08:39:19Z",
-  "last_line_age_s": 6950
+  "last_line_age_s": 6969
  },
  "agent": {
   "ok": true,
@@ -269,7 +269,7 @@
   {
    "tag": "lab-train",
    "time": "2026-11-25T10:27:45Z",
-   "age_s": 444,
+   "age_s": 463,
    "pid": 25404,
    "pid_alive": true,
    "stale": false,
@@ -318,7 +318,7 @@
  "reasons": [],
  "since": {
   "first_check": false,
-  "previous_check": "2026-11-25T10:33:08Z",
+  "previous_check": "2026-11-25T10:35:09Z",
   "new_alerts": [],
   "alerts_gone": [],
   "promotions": [],
@@ -327,14 +327,12 @@
   "champion_changed": null,
   "new_block": null,
   "previous_push": {
-   "time": "2026-11-25T10:33:08Z",
-   "status": "skipped",
-   "why": "the tree has 1 staged and 3 modified file(s) outside status/ (ocs/LIGHTS_OUT.md, pc-setup/register-health-tasks.ps1, tests/test_health_check.py); the push is skipped until they are committed or reverted"
+   "time": "2026-11-25T10:35:09Z",
+   "status": "pushed",
+   "why": ""
   }
  },
- "repairs": [
-  "The previous check could not publish its status (skipped: the tree has 1 staged and 3 modified file(s) outside status/ (ocs/LIGHTS_OUT.md, pc-setup/register-health-tasks.ps1, tests/test_health_check.py); the push is skipped until they are committed or reverted)."
- ],
+ "repairs": [],
  "git": {
   "status": "ready",
   "can_push": true,
