@@ -1,18 +1,18 @@
 {
- "checked": "2026-11-25T10:39:44Z",
- "date": "2026-11-25",
+ "checked": "2026-11-26T10:00:01Z",
+ "date": "2026-11-26",
  "runner": {
   "alive": true,
   "status": {
    "ok": true,
-   "time": "2026-11-25T10:39:33Z",
-   "age_s": 11,
-   "mode": "running",
-   "job": "20261125T0836-train",
-   "job_kind": "train",
-   "step": "train",
-   "since": "2026-11-25T08:36:38Z",
-   "tree": "9432e74"
+   "time": "2026-11-26T09:59:58Z",
+   "age_s": 3,
+   "mode": "idle",
+   "job": "-",
+   "job_kind": "",
+   "step": null,
+   "since": "2026-11-25T16:28:10Z",
+   "tree": "a18407c"
   },
   "process_pids": [
    25404,
@@ -25,8 +25,8 @@
    "failed_steps": [],
    "backoff_kinds": [],
    "limit_kills": [],
-   "tree": "9432e74",
-   "last_line": "2026-11-25T10:10:21Z",
+   "tree": "a18407c",
+   "last_line": "2026-11-26T09:57:08Z",
    "failed_any": false
   }
  },
@@ -50,14 +50,6 @@
  "gym": {
   "ok": true,
   "daily": [
-   {
-    "written": "2026-11-19T00:00:20Z",
-    "date": "2026-11-18",
-    "segments": 0,
-    "fights": 0,
-    "played_h": 2.7,
-    "waited_h": 21.3
-   },
    {
     "written": "2026-11-20T00:00:21Z",
     "date": "2026-11-19",
@@ -105,9 +97,17 @@
     "fights": 13428,
     "played_h": 19.7,
     "waited_h": 4.3
+   },
+   {
+    "written": "2026-11-26T00:00:16Z",
+    "date": "2026-11-25",
+    "segments": 10,
+    "fights": 4555,
+    "played_h": 8.6,
+    "waited_h": 15.4
    }
   ],
-  "daily_total": 12,
+  "daily_total": 13,
   "promoted": [
    {
     "time": "2026-11-20T19:03:29Z",
@@ -152,25 +152,18 @@
   ],
   "promotions_total": 5,
   "newest_version": 8,
-  "last_line": "2026-11-25T08:39:19Z",
-  "last_line_age_s": 7225
+  "last_line": "2026-11-26T09:49:01Z",
+  "last_line_age_s": 660
  },
  "agent": {
   "ok": true,
   "newest_generation": 22,
   "champion": {
-   "generation": 21,
-   "promoted": "2026-11-22T09:44:43Z",
-   "folder": "candidate-fight-v5"
+   "generation": 22,
+   "promoted": "2026-11-25T16:28:07Z",
+   "folder": "candidate-fight-v8"
   },
   "judgements": [
-   {
-    "written": "2026-11-18T16:05:04Z",
-    "cand_gen": "18",
-    "candidate": "candidate-fight-v3",
-    "seeds": "2000",
-    "decision": "promoted"
-   },
    {
     "written": "2026-11-18T16:09:35Z",
     "cand_gen": "18",
@@ -247,9 +240,16 @@
     "candidate": "candidate-fight-v7",
     "seeds": "3400",
     "decision": "rejected"
+   },
+   {
+    "written": "2026-11-25T16:28:07Z",
+    "cand_gen": "22",
+    "candidate": "candidate-fight-v8",
+    "seeds": "2000",
+    "decision": "promoted"
    }
   ],
-  "judgement_count": 50
+  "judgement_count": 51
  },
  "blocks": {
   "ok": true,
@@ -258,7 +258,7 @@
   "count": 14,
   "name": "2026-11-20T1904",
   "start": "2026-11-20T19:04:00Z",
-  "age_days": 4.65,
+  "age_days": 5.62,
   "generations": [
    20
   ],
@@ -267,10 +267,10 @@
  },
  "quiet": [
   {
-   "tag": "lab-train",
-   "time": "2026-11-25T10:37:50Z",
-   "age_s": 114,
-   "pid": 25404,
+   "tag": "gym-loop",
+   "time": "2026-11-26T09:49:01Z",
+   "age_s": 660,
+   "pid": 10516,
    "pid_alive": true,
    "stale": false,
    "stuck": false
@@ -318,16 +318,24 @@
  "reasons": [],
  "since": {
   "first_check": false,
-  "previous_check": "2026-11-25T10:35:28Z",
+  "previous_check": "2026-11-25T10:39:44Z",
   "new_alerts": [],
   "alerts_gone": [],
   "promotions": [],
-  "judgements": [],
+  "judgements": [
+   {
+    "written": "2026-11-25T16:28:07Z",
+    "cand_gen": "22",
+    "candidate": "candidate-fight-v8",
+    "seeds": "2000",
+    "decision": "promoted"
+   }
+  ],
   "new_generation": null,
-  "champion_changed": null,
+  "champion_changed": 22,
   "new_block": null,
   "previous_push": {
-   "time": "2026-11-25T10:35:28Z",
+   "time": "2026-11-25T10:39:44Z",
    "status": "pushed",
    "why": ""
   }

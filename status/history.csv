@@ -1,2 +1,3 @@
 date,colour,runner_alive,daemon_alive,fights_last_day,promotions_total,newest_generation,last_block,door_rate_player_finished,door_rate_all,disk_free_gb,repairs
 2026-11-25,GREEN,yes,yes,13428,5,22,2026-11-20T1904,26.2,19.5,1625.2,none
+2026-11-26,GREEN,yes,yes,4555,5,22,2026-11-20T1904,26.2,19.5,1625.2,none
