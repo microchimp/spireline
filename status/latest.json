@@ -1,17 +1,17 @@
 {
- "checked": "2026-11-26T10:00:01Z",
- "date": "2026-11-26",
+ "checked": "2026-11-27T10:00:02Z",
+ "date": "2026-11-27",
  "runner": {
   "alive": true,
   "status": {
    "ok": true,
-   "time": "2026-11-26T09:59:58Z",
-   "age_s": 3,
+   "time": "2026-11-27T09:59:53Z",
+   "age_s": 9,
    "mode": "idle",
    "job": "-",
    "job_kind": "",
    "step": null,
-   "since": "2026-11-25T16:28:10Z",
+   "since": "2026-11-27T03:09:42Z",
    "tree": "a18407c"
   },
   "process_pids": [
@@ -20,13 +20,13 @@
   ],
   "log": {
    "ok": true,
-   "jobs_finished_24h": 2,
+   "jobs_finished_24h": 1,
    "failed_jobs": [],
    "failed_steps": [],
    "backoff_kinds": [],
    "limit_kills": [],
    "tree": "a18407c",
-   "last_line": "2026-11-26T09:57:08Z",
+   "last_line": "2026-11-27T09:55:57Z",
    "failed_any": false
   }
  },
@@ -50,14 +50,6 @@
  "gym": {
   "ok": true,
   "daily": [
-   {
-    "written": "2026-11-20T00:00:21Z",
-    "date": "2026-11-19",
-    "segments": 0,
-    "fights": 0,
-    "played_h": 1.5,
-    "waited_h": 22.5
-   },
    {
     "written": "2026-11-21T00:00:24Z",
     "date": "2026-11-20",
@@ -105,9 +97,17 @@
     "fights": 4555,
     "played_h": 8.6,
     "waited_h": 15.4
+   },
+   {
+    "written": "2026-11-27T00:00:15Z",
+    "date": "2026-11-26",
+    "segments": 34,
+    "fights": 15392,
+    "played_h": 21.7,
+    "waited_h": 2.3
    }
   ],
-  "daily_total": 13,
+  "daily_total": 14,
   "promoted": [
    {
     "time": "2026-11-20T19:03:29Z",
@@ -148,29 +148,30 @@
     "over": 7,
     "rule": "v5",
     "route": "route F, stage 2"
+   },
+   {
+    "time": "2026-11-27T03:05:35Z",
+    "candidate": "c0522",
+    "version": 9,
+    "over": 8,
+    "rule": "v5",
+    "route": "route A3, stage 2"
    }
   ],
-  "promotions_total": 5,
-  "newest_version": 8,
-  "last_line": "2026-11-26T09:49:01Z",
-  "last_line_age_s": 660
+  "promotions_total": 6,
+  "newest_version": 9,
+  "last_line": "2026-11-27T09:50:20Z",
+  "last_line_age_s": 582
  },
  "agent": {
   "ok": true,
-  "newest_generation": 22,
+  "newest_generation": 23,
   "champion": {
    "generation": 22,
    "promoted": "2026-11-25T16:28:07Z",
    "folder": "candidate-fight-v8"
   },
   "judgements": [
-   {
-    "written": "2026-11-18T16:09:35Z",
-    "cand_gen": "18",
-    "candidate": "candidate-cheap-v3d",
-    "seeds": "4000",
-    "decision": "rejected"
-   },
    {
     "written": "2026-11-19T07:23:00Z",
     "cand_gen": "19",
@@ -247,9 +248,16 @@
     "candidate": "candidate-fight-v8",
     "seeds": "2000",
     "decision": "promoted"
+   },
+   {
+    "written": "2026-11-27T08:45:33Z",
+    "cand_gen": "23",
+    "candidate": "candidate-fight-v9",
+    "seeds": "800",
+    "decision": "rejected"
    }
   ],
-  "judgement_count": 51
+  "judgement_count": 52
  },
  "blocks": {
   "ok": true,
@@ -258,7 +266,7 @@
   "count": 14,
   "name": "2026-11-20T1904",
   "start": "2026-11-20T19:04:00Z",
-  "age_days": 5.62,
+  "age_days": 6.62,
   "generations": [
    20
   ],
@@ -268,8 +276,8 @@
  "quiet": [
   {
    "tag": "gym-loop",
-   "time": "2026-11-26T09:49:01Z",
-   "age_s": 660,
+   "time": "2026-11-27T09:50:20Z",
+   "age_s": 582,
    "pid": 10516,
    "pid_alive": true,
    "stale": false,
@@ -279,7 +287,7 @@
  "alerts": [],
  "disk": {
   "ok": true,
-  "free_gb": 1625.2,
+  "free_gb": 1625.0,
   "total_gb": 1863.0
  },
  "files": {
@@ -318,24 +326,33 @@
  "reasons": [],
  "since": {
   "first_check": false,
-  "previous_check": "2026-11-25T10:39:44Z",
+  "previous_check": "2026-11-26T10:00:01Z",
   "new_alerts": [],
   "alerts_gone": [],
-  "promotions": [],
-  "judgements": [
+  "promotions": [
    {
-    "written": "2026-11-25T16:28:07Z",
-    "cand_gen": "22",
-    "candidate": "candidate-fight-v8",
-    "seeds": "2000",
-    "decision": "promoted"
+    "time": "2026-11-27T03:05:35Z",
+    "candidate": "c0522",
+    "version": 9,
+    "over": 8,
+    "rule": "v5",
+    "route": "route A3, stage 2"
    }
   ],
-  "new_generation": null,
-  "champion_changed": 22,
+  "judgements": [
+   {
+    "written": "2026-11-27T08:45:33Z",
+    "cand_gen": "23",
+    "candidate": "candidate-fight-v9",
+    "seeds": "800",
+    "decision": "rejected"
+   }
+  ],
+  "new_generation": 23,
+  "champion_changed": null,
   "new_block": null,
   "previous_push": {
-   "time": "2026-11-25T10:39:44Z",
+   "time": "2026-11-26T10:00:01Z",
    "status": "pushed",
    "why": ""
   }
