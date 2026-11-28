@@ -2,3 +2,4 @@ date,colour,runner_alive,daemon_alive,fights_last_day,promotions_total,newest_ge
 2026-11-25,GREEN,yes,yes,13428,5,22,2026-11-20T1904,26.2,19.5,1625.2,none
 2026-11-26,GREEN,yes,yes,4555,5,22,2026-11-20T1904,26.2,19.5,1625.2,none
 2026-11-27,GREEN,yes,yes,15392,6,23,2026-11-20T1904,26.2,19.5,1625.0,none
+2026-11-28,RED,no,yes,8521,7,23,2026-11-27T1904,27.7,23.4,1624.8,none

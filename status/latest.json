@@ -1,18 +1,11 @@
 {
- "checked": "2026-11-27T10:00:02Z",
- "date": "2026-11-27",
+ "checked": "2026-11-28T10:00:02Z",
+ "date": "2026-11-28",
  "runner": {
-  "alive": true,
+  "alive": false,
   "status": {
-   "ok": true,
-   "time": "2026-11-27T09:59:53Z",
-   "age_s": 9,
-   "mode": "idle",
-   "job": "-",
-   "job_kind": "",
-   "step": null,
-   "since": "2026-11-27T03:09:42Z",
-   "tree": "a18407c"
+   "ok": false,
+   "why": "the first line of LAB/status.txt is not in the usual form"
   },
   "process_pids": [
    25404,
@@ -20,14 +13,36 @@
   ],
   "log": {
    "ok": true,
-   "jobs_finished_24h": 1,
-   "failed_jobs": [],
-   "failed_steps": [],
+   "jobs_finished_24h": 3,
+   "failed_jobs": [
+    {
+     "time": "2026-11-28T03:10:04Z",
+     "job": "20261128T0240-train",
+     "rc": 1
+    },
+    {
+     "time": "2026-11-28T03:10:11Z",
+     "job": "20261128T0310-train",
+     "rc": 1
+    }
+   ],
+   "failed_steps": [
+    {
+     "time": "2026-11-28T03:10:04Z",
+     "step": "train/train",
+     "rc": 3
+    },
+    {
+     "time": "2026-11-28T03:10:10Z",
+     "step": "train/train",
+     "rc": 3
+    }
+   ],
    "backoff_kinds": [],
    "limit_kills": [],
    "tree": "a18407c",
-   "last_line": "2026-11-27T09:55:57Z",
-   "failed_any": false
+   "last_line": "2026-11-28T09:58:18Z",
+   "failed_any": true
   }
  },
  "daemon": {
@@ -50,14 +65,6 @@
  "gym": {
   "ok": true,
   "daily": [
-   {
-    "written": "2026-11-21T00:00:24Z",
-    "date": "2026-11-20",
-    "segments": 13,
-    "fights": 1371,
-    "played_h": 5.0,
-    "waited_h": 19.0
-   },
    {
     "written": "2026-11-22T00:00:19Z",
     "date": "2026-11-21",
@@ -105,9 +112,17 @@
     "fights": 15392,
     "played_h": 21.7,
     "waited_h": 2.3
+   },
+   {
+    "written": "2026-11-28T00:00:21Z",
+    "date": "2026-11-27",
+    "segments": 18,
+    "fights": 8521,
+    "played_h": 12.6,
+    "waited_h": 11.4
    }
   ],
-  "daily_total": 14,
+  "daily_total": 15,
   "promoted": [
    {
     "time": "2026-11-20T19:03:29Z",
@@ -156,12 +171,20 @@
     "over": 8,
     "rule": "v5",
     "route": "route A3, stage 2"
+   },
+   {
+    "time": "2026-11-28T02:37:41Z",
+    "candidate": "c0536",
+    "version": 10,
+    "over": 9,
+    "rule": "v5",
+    "route": "route A3, stage 2"
    }
   ],
-  "promotions_total": 6,
-  "newest_version": 9,
-  "last_line": "2026-11-27T09:50:20Z",
-  "last_line_age_s": 582
+  "promotions_total": 7,
+  "newest_version": 10,
+  "last_line": "2026-11-28T09:32:47Z",
+  "last_line_age_s": 1635
  },
  "agent": {
   "ok": true,
@@ -262,32 +285,37 @@
  "blocks": {
   "ok": true,
   "active": false,
-  "last_ok": "2026-11-21T01:40:25Z",
-  "count": 14,
-  "name": "2026-11-20T1904",
-  "start": "2026-11-20T19:04:00Z",
-  "age_days": 6.62,
+  "last_ok": "2026-11-28T01:39:59Z",
+  "count": 15,
+  "name": "2026-11-27T1904",
+  "start": "2026-11-27T19:04:00Z",
+  "age_days": 0.62,
   "generations": [
-   20
+   22
   ],
-  "next_due": "2026-11-27T19:03:00Z",
+  "next_due": "2026-12-04T19:03:00Z",
   "overdue": false
  },
  "quiet": [
   {
    "tag": "gym-loop",
-   "time": "2026-11-27T09:50:20Z",
-   "age_s": 582,
+   "time": "2026-11-28T09:32:51Z",
+   "age_s": 1631,
    "pid": 10516,
    "pid_alive": true,
    "stale": false,
    "stuck": false
   }
  ],
- "alerts": [],
+ "alerts": [
+  {
+   "name": "train.txt",
+   "mtime": "2026-11-28T03:10:10Z"
+  }
+ ],
  "disk": {
   "ok": true,
-  "free_gb": 1625.0,
+  "free_gb": 1624.8,
   "total_gb": 1863.0
  },
  "files": {
@@ -297,62 +325,72 @@
  },
  "door": {
   "ok": true,
-  "block": "2026-11-20T1904",
-  "generation": 20,
+  "block": "2026-11-27T1904",
+  "generation": 22,
   "ended_rows": 1994,
   "crash_rows": 6,
-  "arrivals": 348,
+  "arrivals": 449,
   "all": {
-   "k": 68,
-   "n": 348,
-   "per100": 19.5,
-   "two_se": 4.3
+   "k": 105,
+   "n": 449,
+   "per100": 23.4,
+   "two_se": 4.0
   },
   "player_finished": {
-   "k": 68,
-   "n": 260,
-   "per100": 26.2,
-   "two_se": 5.5
+   "k": 105,
+   "n": 379,
+   "per100": 27.7,
+   "two_se": 4.6
   },
   "lost_track": {
-   "k": 88,
-   "n": 348,
-   "per100": 25.3,
-   "two_se": 4.7
+   "k": 70,
+   "n": 449,
+   "per100": 15.6,
+   "two_se": 3.4
   },
   "january": "close"
  },
- "colour": "GREEN",
- "reasons": [],
+ "colour": "RED",
+ "reasons": [
+  {
+   "level": "RED",
+   "text": "the lab runner's status file cannot be read (the first line of LAB/status.txt is not in the usual form)"
+  },
+  {
+   "level": "RED",
+   "text": "a new alert file appeared: train.txt"
+  },
+  {
+   "level": "AMBER",
+   "text": "the lab runner's log shows trouble in the last day (2 job(s) ended with an error; 2 step(s) failed)"
+  }
+ ],
  "since": {
   "first_check": false,
-  "previous_check": "2026-11-26T10:00:01Z",
-  "new_alerts": [],
+  "previous_check": "2026-11-27T10:00:02Z",
+  "new_alerts": [
+   {
+    "name": "train.txt",
+    "mtime": "2026-11-28T03:10:10Z"
+   }
+  ],
   "alerts_gone": [],
   "promotions": [
    {
-    "time": "2026-11-27T03:05:35Z",
-    "candidate": "c0522",
-    "version": 9,
-    "over": 8,
+    "time": "2026-11-28T02:37:41Z",
+    "candidate": "c0536",
+    "version": 10,
+    "over": 9,
     "rule": "v5",
     "route": "route A3, stage 2"
    }
   ],
-  "judgements": [
-   {
-    "written": "2026-11-27T08:45:33Z",
-    "cand_gen": "23",
-    "candidate": "candidate-fight-v9",
-    "seeds": "800",
-    "decision": "rejected"
-   }
-  ],
-  "new_generation": 23,
+  "judgements": [],
+  "new_generation": null,
   "champion_changed": null,
-  "new_block": null,
+  "new_block": "2026-11-27T1904",
   "previous_push": {
-   "time": "2026-11-26T10:00:01Z",
+   "time": "2026-11-27T10:00:02Z",
    "status": "pushed",
    "why": ""
   }
